@@ -97,12 +97,19 @@ function CandlestickChart({
         </span>
       </div>
 
-      <svg
-        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-        className="h-auto w-full overflow-visible"
-        role="img"
-        aria-label={labels.description}
-      >
+      {/*
+        Below ~34rem the axis labels stop being readable — measured at 6px on a
+        375px viewport — so the figure scrolls sideways rather than shrinking
+        the type into illegibility. A price chart has an irreducible amount of
+        detail; swiping it is honest, squinting at it is not.
+      */}
+      <div className="chart-scroll">
+        <svg
+          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+          className="h-auto w-full overflow-visible"
+          role="img"
+          aria-label={labels.description}
+        >
         {ticks.map((price) => (
           <g key={price}>
             <line
@@ -117,7 +124,7 @@ function CandlestickChart({
               x={VIEW_W - PAD_RIGHT + 8}
               y={y(price)}
               dominantBaseline="middle"
-              className="fill-chart-axis font-mono text-[11px]"
+              className="fill-chart-axis font-mono text-[13px]"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {labels.formatPrice(price)}
@@ -195,14 +202,15 @@ function CandlestickChart({
               x={x(i)}
               y={VIEW_H - 8}
               textAnchor="middle"
-              className="fill-chart-axis font-mono text-[11px]"
+              className="fill-chart-axis font-mono text-[13px]"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {labels.formatDate(candle.t)}
             </text>
           ) : null
         )}
-      </svg>
+        </svg>
+      </div>
 
       {marked.length ? (
         <ol className="mt-3 flex flex-col gap-1.5">

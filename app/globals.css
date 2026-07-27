@@ -556,6 +556,19 @@
   font-feature-settings: "tnum";
 }
 
+/* A price chart has an irreducible amount of detail. Below this width the axis
+   labels stop being readable — measured at 6px on a 375px viewport before this
+   existed — so the figure scrolls horizontally instead of shrinking the type
+   into illegibility. */
+@utility chart-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+
+  & > svg {
+    min-width: 34rem;
+  }
+}
+
 /* Named durations.
    `--ease-*` is a Tailwind theme namespace, so `ease-quiet` is generated for
    us. `--duration-*` is not, so without these the only way to reach a motion

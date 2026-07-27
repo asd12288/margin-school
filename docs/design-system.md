@@ -90,7 +90,26 @@ Those recipes ship their own variable scale (`--check-rotate-dur`, `--shake-dur-
 
 Radix sets `--radix-popper-transform-origin` on positioned content, so the origin-aware growth the dropdown recipe orchestrates in JS comes free — the utilities deliberately do **not** set `transform-origin`, leaving each component's own `origin-(--radix-…)` class to win.
 
-Not applied, and why: **page side-by-side** and **like button** target surfaces that do not exist yet (the study-area player, favourites); **notification badge**, **plus-to-menu morph**, **spinning counter** and **card tilt** have no home in the current UI or read as flashier than the product should; **tabs sliding** needs a shared measured indicator that shadcn's tab markup does not have. The skeleton recipe's content cross-fade is also unbuilt — nothing streams real data yet, so it would be dead CSS.
+**Tabs sliding** is the one recipe that genuinely needs JavaScript. A pill cannot tween between two siblings' boxes, so `TabsList` owns a single indicator element, measures the active trigger and writes its offset and size; CSS owns the tween. Upstream paints the active state on the trigger itself, which is why stock tabs snap — that background and the line variant's `::after` underline both had to move onto the indicator, or you get a second stationary pill under the travelling one.
+
+Three details in there are load-bearing:
+
+- **The transition stays armed and is suspended only around un-animated writes**, never the reverse. Parking at `data-animate="false"` and flipping to `"true"` alongside the new position silently kills the tween — a transition only starts if the property was already transitionable in the previous computed style, and doing both in one recalculation means it never was.
+- **First paint and resize must not animate**, or the pill flies in from `translateX(0)` at `width: 0` and lurches after every resize.
+- **A `MutationObserver` on `data-state`, not a click handler** — so keyboard and programmatic changes move the pill too. A `ResizeObserver` on the list and every trigger covers late-loading fonts and locale switches, where French labels run 15–20% longer.
+
+Not applied, and why: **page side-by-side** and **like button** target surfaces that do not exist yet (the study-area player, favourites); **notification badge**, **plus-to-menu morph**, **spinning counter** and **card tilt** have no home in the current UI or read as flashier than the product should. The skeleton recipe's content cross-fade is also unbuilt — nothing streams real data yet, so it would be dead CSS.
+
+## Responsive
+
+Audited at 375px by measuring rather than eyeballing. No element overflows the viewport and the document does not scroll horizontally.
+
+Two things the audit turned up:
+
+- **The chart.** Its axis labels rendered at **6px** on a phone, because a 720-unit viewBox scaled into 343px shrinks the type with everything else. The figure now scrolls horizontally inside `chart-scroll` below `34rem` and the axis type is set at 13 units, so labels never render under ~10px. A price chart has an irreducible amount of detail; swiping it is honest, squinting at it is not.
+- **Touch targets.** Checkbox, radio and switch measure 16–18px visually, which looks like a WCAG 2.5.8 failure and is not — all three already carry `after:-inset-x-3 after:-inset-y-2`, so the real hit area is comfortably over 24px. A pseudo-element does not show up in `getBoundingClientRect`, which is what makes this easy to "fix" twice.
+
+Course card titles are 20px links, which is also fine: the whole card is the target via `after:absolute after:inset-0`.
 
 The skill is installed at [.agents/skills/transitions-dev](../.agents/skills/transitions-dev/) (plus `transitions-polish`), giving the `transitions reveal` / `review` / `apply` / `refine` commands and all 27 reference recipes offline.
 
