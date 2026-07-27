@@ -23,6 +23,25 @@ const nextConfig: NextConfig = {
    * does.
    */
   cacheComponents: true,
+
+  experimental: {
+    /**
+     * The root layout lives at `app/[locale]/layout.tsx` — a top-level
+     * dynamic segment, which is one of the two documented cases where
+     * `app/[locale]/not-found.tsx` cannot be reached for every 404.
+     *
+     * Confirmed empirically (Task 9, Step 6): a `notFound()` thrown from
+     * inside a matched route — e.g. `requireRole`, or `/debug/observability`
+     * without a token — renders our styled `app/[locale]/not-found.tsx`
+     * correctly. But a URL that matches no route at all (a typo'd path, or
+     * `/de/anything` after the locale middleware rewrites it to
+     * `/fr/de/anything`) never enters the `[locale]` segment's render tree,
+     * so it fell through to Next's generic unstyled 404 instead. This flag,
+     * plus `app/global-not-found.tsx`, is the documented fallback for
+     * exactly that gap.
+     */
+    globalNotFound: true,
+  },
 };
 
 export default withSentryConfig(withNextIntl(nextConfig), {
