@@ -138,7 +138,6 @@
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
-  --color-accent-muted: var(--accent-muted);
 
   /* The vivid brand accent, distinct from `--accent`.
    *
@@ -372,7 +371,6 @@
      behind every dropdown item. */
   --accent: var(--neutral-100);
   --accent-foreground: var(--neutral-900);
-  --accent-muted: var(--neutral-50);
 
   --brand: var(--violet-600);
   --brand-foreground: var(--neutral-0);
@@ -493,7 +491,6 @@
 
   --accent: oklch(0.929 0.008 265 / 0.1);
   --accent-foreground: var(--neutral-100);
-  --accent-muted: oklch(0.929 0.008 265 / 0.06);
 
   --brand: var(--violet-400);
   --brand-foreground: var(--neutral-1000);
