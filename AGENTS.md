@@ -37,7 +37,8 @@ npm run db:stop     # stop the stack
 | Libraries, services, versions | [docs/stack.md](docs/stack.md) |
 | Courses, lessons, blocks, i18n, progress | [docs/content-model.md](docs/content-model.md) |
 | Any route, page, loading or empty state | [docs/ux-architecture.md](docs/ux-architecture.md) |
-| Env vars, local setup, Sentry, PostHog | [docs/environments.md](docs/environments.md) |
+| Env vars, local setup, how the tools are wired | [docs/environments.md](docs/environments.md) |
+| Adding analytics events or error handling | [docs/observability.md](docs/observability.md) |
 | Why something is the way it is | [docs/decisions/](docs/decisions/) |
 
 ## Hard rules

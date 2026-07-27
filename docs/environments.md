@@ -89,15 +89,7 @@ The Supabase integration scopes its variables to Production, Preview and Develop
 
 ### Using monitoring in new code
 
-This wiring only pays off if new code actually uses it. The conventions:
-
-- **Never call `posthog.capture` directly.** Use `capture()` from [`lib/analytics/posthog.ts`](../lib/analytics/posthog.ts). It no-ops safely when analytics is not running and never throws, so a failed analytics call cannot break a user flow.
-- **Event names are `snake_case` verb phrases** describing what the user did: `lesson_completed`, `course_started`, `quiz_answered`. Not `LessonComplete`, not `click_button`.
-- **Never put personal data in event properties.** No emails, no names, no free text a learner typed.
-- **Do not add `environment` or `release` to individual events** — they are registered globally and would only drift.
-- **Server errors are captured automatically** by `onRequestError` in [`instrumentation.ts`](../instrumentation.ts). Only call `Sentry.captureException` for errors you deliberately caught and handled but still want visibility on.
-- **Add context, not noise.** `Sentry.setContext` / `setTag` on a caught error beats a second capture call.
-- When adding a new user-facing flow, add its analytics events in the same change. Retrofitting instrumentation means a gap in the funnel exactly where you needed the data.
+See [observability.md](observability.md) — what we measure, the event taxonomy, and the conventions for adding more. This document covers only how the tools are wired per environment.
 
 ## Analytics consent
 

@@ -9,6 +9,8 @@ Written for AI agents first, humans second: short, opinionated, and explicit abo
 | [stack.md](stack.md) | Which libraries and services, and the architectural rules that come with them |
 | [content-model.md](content-model.md) | Courses, lessons, blocks, concepts, localisation, progress. **The contract** |
 | [ux-architecture.md](ux-architecture.md) | Loading tiers, skeleton rules, the five states every surface ships with |
+| [environments.md](environments.md) | Local / preview / production, and how the tools are wired |
+| [observability.md](observability.md) | What we measure, the event taxonomy, and rules for adding more |
 | [decisions/](decisions/) | Why things are the way they are. Read before undoing anything that looks missing |
 
 ## Maintenance
