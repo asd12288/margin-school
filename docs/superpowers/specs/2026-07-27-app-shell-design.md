@@ -157,12 +157,17 @@ failure [i18n/routing.ts](../../../i18n/routing.ts) already records from the
 
 - the shell — logo, nav, locale switcher, theme toggle — is static and cached;
 - `account-slot` alone is a `<Suspense>` boundary that reads cookies, falling back
-  to a fixed-size avatar skeleton so nothing shifts (skeleton rule 1);
-- `unstable_instant = { prefetch: 'static' }` on both shells makes the build
-  **fail** if anyone later fetches personal data above that boundary.
+  to a fixed-size avatar skeleton so nothing shifts (skeleton rule 1).
 
-That last point is the reason Cache Components is worth enabling now: the rule
-stops being a convention someone has to remember and becomes a build error.
+**Cache Components is what enforces this**, and that is the reason to enable it
+now: with the flag on, reading uncached dynamic data outside a Suspense boundary
+fails the build rather than silently making the route dynamic. The rule stops
+being a convention someone has to remember.
+
+`unstable_instant = { prefetch: 'static' }` on both shells is a narrower opt-in
+layered on top — it validates that *client navigation* into a route is instant at
+every shared layout boundary, which the flag alone does not check. Useful, but it
+is not what produces the build failure above.
 
 ---
 
