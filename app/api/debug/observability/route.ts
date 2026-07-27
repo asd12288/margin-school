@@ -5,6 +5,39 @@ import { APP_ENV, RELEASE } from "@/lib/env";
 import { hasDebugAccess } from "@/lib/observability/debug-access";
 
 /**
+ * Proves this environment can actually reach its database, and whether the
+ * schema has been applied there. Deliberately defensive: a missing connection
+ * string or an unreachable host is reported, never thrown, so the rest of the
+ * report still renders.
+ */
+async function checkDatabase() {
+  const started = Date.now();
+
+  try {
+    const { sql } = await import("drizzle-orm");
+    const { db } = await import("@/lib/db/client");
+
+    await db.execute(sql`select 1`);
+
+    const applied = await db.execute<{ exists: boolean }>(
+      sql`select to_regclass('public.profile') is not null as exists`,
+    );
+
+    return {
+      reachable: true,
+      latencyMs: Date.now() - started,
+      profileTableExists: Boolean(applied[0]?.exists),
+    };
+  } catch (error) {
+    return {
+      reachable: false,
+      latencyMs: Date.now() - started,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
+/**
  * Verification endpoint for the observability wiring. Works in every
  * environment — you cannot verify production monitoring from staging —
  * and is gated by OBSERVABILITY_DEBUG_TOKEN.
@@ -54,7 +87,14 @@ export async function GET(request: Request) {
         process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
       ),
       secretKeyConfigured: Boolean(process.env.SUPABASE_SECRET_KEY),
-      databaseUrlConfigured: Boolean(process.env.DATABASE_URL),
+    },
+    database: {
+      connectionSource: process.env.DATABASE_URL
+        ? "DATABASE_URL"
+        : process.env.POSTGRES_URL
+          ? "POSTGRES_URL"
+          : null,
+      ...(await checkDatabase()),
     },
   });
 }
