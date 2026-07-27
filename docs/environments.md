@@ -6,7 +6,7 @@ Three environments. The rule that makes them safe is simple: **local development
 | --- | --- | --- | --- |
 | `APP_ENV` | `local` | `preview` | `production` |
 | App | `next dev` on the host | Vercel preview deploy per branch | Vercel production |
-| Database | Supabase Docker stack | staging project — **not yet created**, see below | Supabase `margin-school`, Paris (`eu-west-3`) |
+| Database | Supabase Docker stack | **shares production** — deliberate, see [ADR-0010](decisions/0010-no-staging-database.md) | Supabase `margin-school`, Paris (`eu-west-3`) |
 | Sentry | off unless opted in | on, tagged `preview` | on, tagged `production` |
 | PostHog | off unless opted in | on, tagged `preview` | on, tagged `production` |
 | Env source | `.env.local` (git-ignored) | Vercel, Preview scope | Vercel, Production scope |
@@ -39,17 +39,24 @@ npm run db:stop      # stop the stack
 
 Every branch gets a Vercel preview deployment. Sentry and PostHog are live and tagged `preview`, so preview traffic is visible but never mixed into production analysis.
 
-**Open: preview has no database yet.** It needs a separate Supabase staging project so preview deploys can never write to production. Until that exists, preview builds work for everything except data access. Do not resolve this by pointing preview at the production project.
+**Preview shares the production database.** This is a deliberate, time-boxed decision — there is no schema and no user data yet, so a separate staging project would cost money to protect nothing. See [ADR-0010](decisions/0010-no-staging-database.md) for the trigger that reverses it: **before the first real user data exists.** After that point, a preview deploy writing to production is a genuine incident risk.
+
+Preview deployments are behind Vercel Deployment Protection (SSO). Automated checks need a **Protection Bypass for Automation** secret from Project Settings → Deployment Protection. Note that the SSO redirect drops the query string, so a first visit to a token-gated URL lands without its token — navigate again once the session cookie is set.
 
 ## Production
 
 Vercel production, deployed from `main`. Supabase `margin-school` in Paris (`eu-west-3`), Postgres 17.
 
-`DATABASE_URL` is **not yet set** in Vercel production — it needs the database password, which is not available to tooling. Set it yourself:
+### Database connection strings
 
-```bash
-vercel env add DATABASE_URL production
-```
+The Supabase integration already provides these in Vercel — **do not add a duplicate `DATABASE_URL`**:
+
+| Variable | Host | Use for |
+| --- | --- | --- |
+| `POSTGRES_URL` | `aws-0-eu-west-3.pooler.supabase.com` | Application queries. Pooled, which is what serverless needs |
+| `POSTGRES_URL_NON_POOLING` | direct | Migrations, and anything needing prepared statements or long transactions |
+
+Locally, `.env.local` sets `DATABASE_URL` to the Docker Postgres. When Drizzle lands, read `DATABASE_URL ?? POSTGRES_URL` so one code path covers both, and point migrations at the non-pooling URL.
 
 ## Observability
 

@@ -15,6 +15,7 @@ Why things are the way they are. An agent or developer who does not know *why* a
 | [0007](0007-stripe-direct.md) | Stripe direct, not a merchant of record | Accepted |
 | [0008](0008-admin-cms-choice.md) | Admin authoring: Payload vs custom | **Open** — decide before Phase 7 |
 | [0009](0009-french-english-day-one.md) | French and English from day one | Accepted |
+| [0010](0010-no-staging-database.md) | Preview shares the production database | Accepted — **time-boxed** |
 
 ## Format
 
