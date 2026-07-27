@@ -1,7 +1,7 @@
 "use client";
 
+import * as React from "react";
 import { useParams } from "next/navigation";
-import { useTransition } from "react";
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
@@ -19,12 +19,17 @@ export interface LocaleSwitcherLabels {
  *
  * The trick that makes translated segments work: `usePathname` from
  * i18n/navigation returns the **canonical** route (`/account`), not the URL
- * the reader is looking at (`/fr/compte`). Passing that back to `router.replace`
- * with a different locale produces that locale's URL — `/en/account`. Doing
- * this with `next/navigation`'s `usePathname` would put `/fr/compte` under an
- * `/en` prefix and 404.
+ * the reader is looking at (`/fr/compte`). Passing that back to
+ * `router.replace` with a different locale produces that locale's URL —
+ * `/en/account`. Doing this with `next/navigation`'s `usePathname` would put
+ * `/fr/compte` under an `/en` prefix and 404.
  *
  * `params` is forwarded so dynamic routes keep their slug across the switch.
+ *
+ * The keyboard model is the ARIA radio pattern, and it is not decoration: a
+ * radiogroup is one tab stop, and arrow keys move between options. Declaring
+ * the role without the roving tabindex below would announce "radio, 1 of 2"
+ * to a screen reader and then ignore the arrow key they press next.
  */
 function LocaleSwitcher({
   labels,
@@ -36,7 +41,14 @@ function LocaleSwitcher({
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
-  const [pending, startTransition] = useTransition();
+  const [pending, startTransition] = React.useTransition();
+  const buttons = React.useRef<Array<HTMLButtonElement | null>>([]);
+
+  // Falls back to the first option if the URL carries no recognisable locale,
+  // so the group always has exactly one tab stop rather than becoming
+  // unreachable by keyboard.
+  const current = routing.locales.indexOf(params.locale as Locale);
+  const activeIndex = current === -1 ? 0 : current;
 
   function switchTo(locale: Locale) {
     startTransition(() => {
@@ -48,6 +60,20 @@ function LocaleSwitcher({
         { locale }
       );
     });
+  }
+
+  function handleKeyDown(event: React.KeyboardEvent, index: number) {
+    const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
+    const back = event.key === "ArrowLeft" || event.key === "ArrowUp";
+    if (!forward && !back) return;
+
+    event.preventDefault();
+
+    const count = routing.locales.length;
+    const next = (index + (forward ? 1 : -1) + count) % count;
+
+    buttons.current[next]?.focus();
+    switchTo(routing.locales[next]);
   }
 
   return (
@@ -62,16 +88,22 @@ function LocaleSwitcher({
       )}
       {...props}
     >
-      {routing.locales.map((locale) => {
-        const selected = params.locale === locale;
+      {routing.locales.map((locale, index) => {
+        const selected = index === activeIndex;
 
         return (
           <button
             key={locale}
+            ref={(node) => {
+              buttons.current[index] = node;
+            }}
             type="button"
             role="radio"
             aria-checked={selected}
+            // Roving tabindex: one tab stop for the whole group.
+            tabIndex={selected ? 0 : -1}
             onClick={() => switchTo(locale)}
+            onKeyDown={(event) => handleKeyDown(event, index)}
             className={cn(
               "rounded-4xl px-2.5 py-1 text-xs outline-none",
               "transition-[background-color,color] duration-fast ease-quiet",
