@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { TEST_EMAILS, TEST_PASSWORD } from "./test-users.ts";
 
 /**
  * Seeds two users in the **local** stack for end-to-end tests.
@@ -16,15 +17,29 @@ if (!url || !secret) {
   throw new Error("Set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SECRET_KEY (see .env.local).");
 }
 
-if (!url.includes("127.0.0.1") && !url.includes("localhost")) {
+// This script writes accounts with a known password using a key that
+// ignores row level security, so the one thing it must never do is run
+// against a real project. A substring check on the whole URL is not enough
+// to guarantee that: `https://127.0.0.1.evil-project.supabase.co` is a real
+// remote host whose name merely contains "127.0.0.1", and
+// `https://prod-ref.supabase.co/?ref=localhost` satisfies it purely because
+// of its query string. Only an exact match on the parsed hostname is safe.
+const LOCAL_HOSTNAMES = new Set(["127.0.0.1", "localhost", "::1", "[::1]"]);
+
+let hostname: string;
+try {
+  hostname = new URL(url).hostname;
+} catch {
+  throw new Error(`Refusing to seed test users: could not parse Supabase URL: ${url}`);
+}
+
+if (!LOCAL_HOSTNAMES.has(hostname)) {
   throw new Error(`Refusing to seed test users against a non-local Supabase: ${url}`);
 }
 
-export const TEST_PASSWORD = "test-password-123";
-
 const USERS = [
-  { email: "student@test.local", role: "student" as const },
-  { email: "editor@test.local", role: "editor" as const },
+  { email: TEST_EMAILS.student, role: "student" as const },
+  { email: TEST_EMAILS.editor, role: "editor" as const },
 ];
 
 const admin = createClient(url, secret, {

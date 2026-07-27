@@ -1,5 +1,6 @@
 import { test as base, expect } from "@playwright/test";
 import { createClient } from "@supabase/supabase-js";
+import { TEST_EMAILS, TEST_PASSWORD } from "../../../scripts/test-users";
 
 /**
  * A real Supabase session, without any sign-in UI.
@@ -36,12 +37,12 @@ import { createClient } from "@supabase/supabase-js";
 // shadows the global `URL` constructor used below to parse it.
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? "";
-const PASSWORD = "test-password-123";
 
-const EMAIL = {
-  student: "student@test.local",
-  editor: "editor@test.local",
-} as const;
+// Shared with `scripts/seed-test-users.ts` via `scripts/test-users.ts` so the
+// two can't drift — that module holds only the constants (no side effects),
+// since `seed-test-users.ts` itself runs the seed as a top-level side effect
+// on import and can't be imported directly here.
+const EMAIL = TEST_EMAILS;
 
 export type TestRole = keyof typeof EMAIL;
 
@@ -57,7 +58,7 @@ export const test = base.extend<{ signInAs: (role: TestRole) => Promise<void> }>
 
       const { data, error } = await supabase.auth.signInWithPassword({
         email: EMAIL[role],
-        password: PASSWORD,
+        password: TEST_PASSWORD,
       });
 
       if (error || !data.session) {
