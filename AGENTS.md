@@ -13,10 +13,19 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 ## Commands
 
+Node 24 (`.nvmrc`) — run `fnm use` first. Local development needs the Docker stack running.
+
 ```bash
-npm run dev     # dev server
-npm run build   # production build
-npm run lint    # eslint
+npm run db:start    # start local Supabase (Postgres, Auth, Storage, Studio, mail)
+npm run dev         # dev server on the host — http://localhost:3000
+npm run build       # production build
+npm run lint        # eslint
+
+npm run db:studio   # database UI    → http://127.0.0.1:54323
+npm run mail        # auth emails    → http://127.0.0.1:54324
+npm run db:reset    # wipe and re-run all migrations
+npm run db:status   # local stack credentials
+npm run db:stop     # stop the stack
 ```
 
 ## Read before you write
@@ -28,6 +37,7 @@ npm run lint    # eslint
 | Libraries, services, versions | [docs/stack.md](docs/stack.md) |
 | Courses, lessons, blocks, i18n, progress | [docs/content-model.md](docs/content-model.md) |
 | Any route, page, loading or empty state | [docs/ux-architecture.md](docs/ux-architecture.md) |
+| Env vars, local setup, Sentry, PostHog | [docs/environments.md](docs/environments.md) |
 | Why something is the way it is | [docs/decisions/](docs/decisions/) |
 
 ## Hard rules
@@ -42,6 +52,10 @@ These are decisions, not preferences. If one blocks you, stop and ask — do not
 6. **Every route declares a loading tier** (prerendered / streamed / optimistic). Never add a spinner without checking [docs/ux-architecture.md](docs/ux-architecture.md).
 7. **Every user-facing string is translatable, FR and EN.** Never hardcode display text.
 8. **Access checks go through the entitlement boundary** (`canAccess`). Never check subscription status inline. See [ADR-0006](docs/decisions/0006-entitlement-boundary-before-billing.md).
+9. **`.env.local` points at local Docker only.** Never put cloud credentials in it and never run `vercel env pull` for daily development.
+10. **Read the environment from `lib/env.ts`.** Never branch on `NODE_ENV` or `VERCEL_ENV` directly.
+11. **Track events with `capture()` from `lib/analytics/posthog.ts`**, never `posthog.capture` directly. Event names are `snake_case` verb phrases. Never put personal data in properties. Add a flow's events in the same change as the flow.
+12. **Every processor stays in the EU.** Check a service's region before adding it.
 
 ## Keeping these docs true
 

@@ -1,0 +1,97 @@
+# Environments
+
+Three environments. The rule that makes them safe is simple: **local development never touches cloud data, and preview never touches production data.**
+
+| | Local | Preview | Production |
+| --- | --- | --- | --- |
+| `APP_ENV` | `local` | `preview` | `production` |
+| App | `next dev` on the host | Vercel preview deploy per branch | Vercel production |
+| Database | Supabase Docker stack | staging project — **not yet created**, see below | Supabase `margin-school`, Paris (`eu-west-3`) |
+| Sentry | off unless opted in | on, tagged `preview` | on, tagged `production` |
+| PostHog | off unless opted in | on, tagged `preview` | on, tagged `production` |
+| Env source | `.env.local` (git-ignored) | Vercel, Preview scope | Vercel, Production scope |
+
+`APP_ENV` is resolved once, in [`lib/env.ts`](../lib/env.ts), from `NEXT_PUBLIC_APP_ENV` and falling back to Vercel's own `VERCEL_ENV`. Nothing else in the codebase should sniff the environment.
+
+## Local
+
+Everything stateful runs in Docker via the Supabase CLI — Postgres, Auth, Storage, Realtime, Studio, and a mail catcher. Versions match production (Postgres 17.6), and the stack is disposable.
+
+```bash
+npm run db:start     # start the Docker stack
+npm run dev          # Next dev server on the host
+npm run db:studio    # database UI      → http://127.0.0.1:54323
+npm run mail         # auth emails      → http://127.0.0.1:54324
+npm run db:reset     # wipe and re-run all migrations
+npm run db:stop      # stop the stack
+```
+
+**The app runs on the host, not in Docker.** Docker holds the stateful services; the Next process is stateless and gains nothing from a container while losing meaningful hot-reload speed to macOS bind mounts.
+
+### Rules
+
+1. **`.env.local` points at local Docker only.** Never put cloud credentials in it.
+2. **Never run `vercel env pull`** for daily development. It overwrites `.env.local` with cloud credentials, and that is how someone eventually truncates a production table from their laptop. If you need to inspect deployed config, use `vercel env ls`.
+3. Regenerate `.env.local` any time from `supabase status -o env` — see [`.env.example`](../.env.example).
+4. Node is pinned to 24 (`.nvmrc`) to match Vercel. `fnm use` before working.
+
+## Preview
+
+Every branch gets a Vercel preview deployment. Sentry and PostHog are live and tagged `preview`, so preview traffic is visible but never mixed into production analysis.
+
+**Open: preview has no database yet.** It needs a separate Supabase staging project so preview deploys can never write to production. Until that exists, preview builds work for everything except data access. Do not resolve this by pointing preview at the production project.
+
+## Production
+
+Vercel production, deployed from `main`. Supabase `margin-school` in Paris (`eu-west-3`), Postgres 17.
+
+`DATABASE_URL` is **not yet set** in Vercel production — it needs the database password, which is not available to tooling. Set it yourself:
+
+```bash
+vercel env add DATABASE_URL production
+```
+
+## Observability
+
+One Sentry project and one PostHog project, split by environment tag rather than by separate projects. This keeps issue grouping and funnel history intact while remaining filterable.
+
+- **Sentry** — org `baziloo`, project `margin-school`, ingesting to `de.sentry.io` (EU). Every event carries `environment` and, on Vercel, `release` (the git SHA).
+- **PostHog** — project `Margin-school` on EU cloud (`eu.i.posthog.com`). Every event carries `environment` as a registered super property.
+
+Both are **off locally by default** so development noise never reaches the dashboards. To test the integration locally:
+
+```bash
+NEXT_PUBLIC_SENTRY_ENABLE_LOCAL=true NEXT_PUBLIC_POSTHOG_ENABLE_LOCAL=true npm run dev
+```
+
+### Smoke-test panel
+
+```
+/debug/observability?token=<OBSERVABILITY_DEBUG_TOKEN>
+```
+
+Buttons for a client error, a server error, and an analytics event, plus a readout of what this environment resolved to. It works in **every** environment including production — production monitoring cannot be verified from staging — and is protected by a server-only shared secret rather than an environment check. Without the token it returns 404. If the token is unset, the panel is closed: it fails shut.
+
+The token lives in `OBSERVABILITY_DEBUG_TOKEN`, set in Vercel for both Preview and Production, and in `.env.local` for local.
+
+### Using monitoring in new code
+
+This wiring only pays off if new code actually uses it. The conventions:
+
+- **Never call `posthog.capture` directly.** Use `capture()` from [`lib/analytics/posthog.ts`](../lib/analytics/posthog.ts). It no-ops safely when analytics is not running and never throws, so a failed analytics call cannot break a user flow.
+- **Event names are `snake_case` verb phrases** describing what the user did: `lesson_completed`, `course_started`, `quiz_answered`. Not `LessonComplete`, not `click_button`.
+- **Never put personal data in event properties.** No emails, no names, no free text a learner typed.
+- **Do not add `environment` or `release` to individual events** — they are registered globally and would only drift.
+- **Server errors are captured automatically** by `onRequestError` in [`instrumentation.ts`](../instrumentation.ts). Only call `Sentry.captureException` for errors you deliberately caught and handled but still want visibility on.
+- **Add context, not noise.** `Sentry.setContext` / `setTag` on a caught error beats a second capture call.
+- When adding a new user-facing flow, add its analytics events in the same change. Retrofitting instrumentation means a gap in the funnel exactly where you needed the data.
+
+## Analytics consent
+
+PostHog is **not loaded at all** until the visitor consents. It is deliberately not configured with `opt_out_capturing_by_default`, because opting out still loads the library and can still touch storage. Not loading it is unambiguous, which is what CNIL expects.
+
+Consent lives in `localStorage` under `ms-analytics-consent`; changes broadcast on the `ms-analytics-consent-change` event. Sentry is not gated on consent — it carries no PII (`sendDefaultPii: false`) and Session Replay is off.
+
+## Data residency
+
+Every processor is in the EU: Supabase Paris, Sentry Germany, PostHog EU cloud, Vercel. Keep it that way — check the region before adding any new service.
