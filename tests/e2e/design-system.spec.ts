@@ -125,15 +125,18 @@ test.describe("design system page", () => {
 /**
  * The same scan, extended to the app shell. `AppHeader` (task 8) was never
  * scanned before this task — only the public shell's design-system page was.
- * `/en/courses` covers the public shell's real content (not the design-system
- * showcase); `/en/learn` covers the signed-in app shell, which carries more
- * nav items in the same non-wrapping header. Same pattern as above: settle
- * animations before scanning, in both themes, fail only on serious/critical.
+ * `/en` covers the public shell's real chrome (`SiteHeader`, `SiteFooter`,
+ * nav, locale switcher, skip link) — `/en/courses` 404s until the catalog
+ * ships in Phase 8, and the 404 page renders a bare `<main>` with none of
+ * that chrome, so scanning it verified nothing about the public shell.
+ * `/en/learn` covers the signed-in app shell, which carries more nav items
+ * in the same non-wrapping header. Same pattern as above: settle animations
+ * before scanning, in both themes, fail only on serious/critical.
  */
 test.describe("shell pages", () => {
-  test.describe("courses (public shell)", () => {
+  test.describe("home (public shell)", () => {
     test.beforeEach(async ({ page }) => {
-      await page.goto("/en/courses");
+      await page.goto("/en");
     });
 
     for (const theme of ["light", "dark"] as const) {

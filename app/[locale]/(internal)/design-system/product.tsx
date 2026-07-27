@@ -293,19 +293,28 @@ function StatesShowcase() {
       title="States"
       hint="Designed together, shipped together. Locked especially — a subscription product shows it constantly, so it is a destination with a real argument, never a redirect and never a disabled button."
     >
+      {/*
+       * `headingLevel="h3"` on every demo here: this grid lives inside
+       * `<Section>`'s own `<h2>`, and the state components default to `h2`
+       * because most callers render them as a page's entire primary
+       * content. Here they are not — they are four subsections of one, so
+       * without this they would emit five sibling `<h2>`s.
+       */}
       <div className="grid gap-5 lg:grid-cols-2">
         <EmptyState
           icon={Compass}
           title="You have not started anything yet"
           description="Everything is included. Foundations is where most people begin."
+          headingLevel="h3"
           action={<Button size="sm">Browse the catalog</Button>}
         />
 
-        <ErrorStateDemo />
+        <ErrorStateDemo headingLevel="h3" />
 
         <UnavailableInLocaleState
           title="Not yet in English"
           description="This lesson is published in French. The English translation is being written."
+          headingLevel="h3"
           action={
             <Button variant="outline" size="sm">
               Read it in French
@@ -316,6 +325,7 @@ function StatesShowcase() {
         <LockedState
           title="This lesson is included with a subscription"
           description="One price, everything on the site. No per-course purchases."
+          headingLevel="h3"
           included={[
             "Every course, present and future",
             "Both languages",
