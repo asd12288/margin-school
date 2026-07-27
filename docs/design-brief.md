@@ -23,7 +23,7 @@ Those pull in opposite directions, and the tension is the interesting part of th
 ## How it should feel
 
 - **Calm.** The subject is already stressful. The interface should lower the heart rate, not raise it. Space, air, room to breathe.
-- **Literate.** Closer to a well-made book or a good magazine than to software. People will read here for long stretches — typography is the main instrument, not decoration.
+- **Clear and current.** It should look like a well-made modern product: one sans-serif family, cool neutrals, a vibrant brand colour used sparingly and with intent. People read here for long stretches, so the reading column and the type scale get real attention — but the reference is good software, not a printed book.
 - **Quietly confident.** It knows what it's talking about and doesn't need to shout. No urgency, no persuasion tactics.
 - **Encouraging, not congratulatory.** Progress should feel earned and visible. Never patronising, never confetti.
 - **Orderly.** A beginner's core fear is being lost. Always obvious where you are, what's next, and how much is left.
@@ -54,3 +54,7 @@ No instructor faces, testimonials, ratings or student counts. We don't use them,
 ## What would help most
 
 A direction, not a full system: typography, spacing, colour temperature, the shape of a lesson page, and how a chart sits inside one. If a lesson page feels right, the rest of the product follows from it.
+
+## Status
+
+**Superseded in part.** The direction was built in Phase 2 and is documented in [design-system.md](design-system.md), which is now the source of truth for typography, colour and motion. The intent above still holds — calm, orderly, no hype, no invented people — but the visual answer landed as a modern product interface rather than the editorial, serif-led direction this brief originally implied. The "How it should feel" section has been corrected to match.

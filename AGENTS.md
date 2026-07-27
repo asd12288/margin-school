@@ -37,6 +37,7 @@ npm run db:stop     # stop the stack
 | Sequencing, "what do we build next" | [docs/roadmap.md](docs/roadmap.md) |
 | Libraries, services, versions | [docs/stack.md](docs/stack.md) |
 | Courses, lessons, blocks, i18n, progress | [docs/content-model.md](docs/content-model.md) |
+| Tokens, components, typography, motion | [docs/design-system.md](docs/design-system.md) |
 | Any route, page, loading or empty state | [docs/ux-architecture.md](docs/ux-architecture.md) |
 | Env vars, local setup, how the tools are wired | [docs/environments.md](docs/environments.md) |
 | Adding analytics events or error handling | [docs/observability.md](docs/observability.md) |
