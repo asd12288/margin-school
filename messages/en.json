@@ -100,7 +100,8 @@
       "group": "Language",
       "fr": "Français",
       "en": "English"
-    }
+    },
+    "disclaimer": "Margin School is educational. Nothing here is investment advice, a recommendation, or a signal to buy or sell. Trading carries risk, including the loss of your capital."
   },
   "frames": {
     "signIn": { "title": "Sign in", "description": "Sign-in arrives in Phase 4." },

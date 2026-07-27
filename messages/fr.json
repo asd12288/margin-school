@@ -100,7 +100,8 @@
       "group": "Langue",
       "fr": "Français",
       "en": "English"
-    }
+    },
+    "disclaimer": "Margin School est un service éducatif. Rien ici ne constitue un conseil en investissement, une recommandation ou un signal d'achat ou de vente. Le trading comporte des risques, y compris la perte de votre capital."
   },
   "frames": {
     "signIn": { "title": "Connexion", "description": "La connexion arrive en phase 4." },
