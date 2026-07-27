@@ -15,7 +15,7 @@ Tokens live in [app/globals.css](../app/globals.css) in two layers:
 
 Keeping the ramps out of `@theme` is the enforcement mechanism, not a style preference: Tailwind never generates `bg-indigo-600`, so a component *cannot* reach past the role layer even by accident. If you need a colour that has no role, **add a role** — do not reach for a hex.
 
-The ramps are `neutral` · `indigo` (brand) · `cyan` (accent) · `emerald` (success, gain) · `rose` (loss) · `amber` (warning, risk) · `red` (destructive).
+The ramps are `neutral` · `indigo` (primary) · `violet` (brand accent) · `cyan` (charts) · `emerald` (success, gain) · `rose` (loss) · `amber` (warning, risk) · `red` (destructive).
 
 ### Roles beyond shadcn's vocabulary
 
