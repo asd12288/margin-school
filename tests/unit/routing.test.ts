@@ -19,6 +19,19 @@ function urlFor(route: string, locale: string): string {
   return typeof value === "string" ? value : value[locale as "fr" | "en"];
 }
 
+/**
+ * Placeholder *names* are not what makes two routes collide — shapes are.
+ * `/cours/[course]` and `/cours/[...category]` are different strings occupying
+ * one URL space: `/fr/cours/economics` could be either. Normalising every
+ * dynamic segment to a single token is what lets the check see that.
+ */
+function shape(url: string): string {
+  return url
+    .split("/")
+    .map((part) => (part.startsWith("[") ? "*" : part))
+    .join("/");
+}
+
 describe("pathnames", () => {
   it("defines every route in every locale", () => {
     for (const route of Object.keys(pathnames)) {
@@ -28,12 +41,12 @@ describe("pathnames", () => {
     }
   });
 
-  it("never maps two routes to the same URL within a locale", () => {
+  it("never maps two routes to the same URL shape within a locale", () => {
     for (const locale of locales) {
       const seen = new Map<string, string>();
 
       for (const route of Object.keys(pathnames)) {
-        const url = urlFor(route, locale);
+        const url = shape(urlFor(route, locale));
         const collision = seen.get(url);
         expect(
           collision,
@@ -42,6 +55,13 @@ describe("pathnames", () => {
         seen.set(url, route);
       }
     }
+  });
+
+  it("would catch the collision a literal French translation creates", () => {
+    // Guards the guard. `cours` is invariable, so translating both
+    // /courses/[...category] and /course/[course] literally puts them in one
+    // URL space — the regression the map's naming exists to prevent.
+    expect(shape("/cours/[...category]")).toBe(shape("/cours/[course]"));
   });
 
   it("keeps dynamic segments identical across locales", () => {
