@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 
 import { APP_ENV, RELEASE } from "@/lib/env";
@@ -14,8 +15,24 @@ export const metadata = { robots: { index: false, follow: false } };
  *   /debug/observability?token=…
  *
  * See docs/observability.md.
+ *
+ * The token read is split into its own component so the page shell prerenders
+ * and only the gated part streams. Under Cache Components, awaiting
+ * `searchParams` in the page body blocks the whole route and fails the build.
  */
-export default async function ObservabilityDebugPage({
+export default function ObservabilityDebugPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ token?: string }>;
+}) {
+  return (
+    <Suspense fallback={null}>
+      <ObservabilityGate searchParams={searchParams} />
+    </Suspense>
+  );
+}
+
+async function ObservabilityGate({
   searchParams,
 }: {
   searchParams: Promise<{ token?: string }>;

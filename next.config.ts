@@ -7,7 +7,13 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /**
+   * PPR by default, `use cache` opt-in, React <Activity> preserving state
+   * across navigation — and the prerequisite for `unstable_instant`, which is
+   * what turns "never read personal data above the Suspense boundary" from a
+   * convention into a build failure. See docs/ux-architecture.md.
+   */
+  cacheComponents: true,
 };
 
 export default withSentryConfig(withNextIntl(nextConfig), {
