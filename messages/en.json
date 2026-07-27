@@ -77,5 +77,49 @@
       "description": "This lesson is published in French. The English translation is being written.",
       "action": "Read it in French"
     }
+  },
+  "shell": {
+    "brand": "Margin School",
+    "skipToContent": "Skip to content",
+    "nav": {
+      "courses": "Courses",
+      "pricing": "Pricing",
+      "learn": "Learn",
+      "myCourses": "My courses",
+      "account": "Account",
+      "admin": "Admin"
+    },
+    "navLabel": "Main",
+    "account": {
+      "signIn": "Sign in",
+      "startTrial": "Start free trial",
+      "menu": "Your account",
+      "signOut": "Sign out"
+    },
+    "locale": {
+      "group": "Language",
+      "fr": "Français",
+      "en": "English"
+    }
+  },
+  "frames": {
+    "signIn": { "title": "Sign in", "description": "Sign-in arrives in Phase 4." },
+    "signUp": { "title": "Create an account", "description": "Sign-up arrives in Phase 4." },
+    "learn": { "title": "Your next step", "description": "The next action arrives in Phase 9." },
+    "myCourses": { "title": "My courses", "description": "Enrolment arrives in Phase 9." },
+    "account": { "title": "Account", "description": "Account settings arrive in Phase 4." },
+    "admin": { "title": "Admin", "description": "The content studio arrives in Phase 7." }
+  },
+  "errors": {
+    "notFound": {
+      "title": "This page does not exist",
+      "description": "The link may be old, or the address slightly wrong.",
+      "action": "Back to the catalog"
+    },
+    "unexpected": {
+      "title": "Something went wrong",
+      "description": "This is on us. Try again — and if it keeps happening, it is already reported.",
+      "retry": "Try again"
+    }
   }
 }

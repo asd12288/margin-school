@@ -77,5 +77,49 @@
       "description": "Cette leçon est publiée en anglais. La traduction française est en cours de rédaction.",
       "action": "La lire en anglais"
     }
+  },
+  "shell": {
+    "brand": "Margin School",
+    "skipToContent": "Aller au contenu",
+    "nav": {
+      "courses": "Cours",
+      "pricing": "Abonnement",
+      "learn": "Apprendre",
+      "myCourses": "Mes cours",
+      "account": "Compte",
+      "admin": "Admin"
+    },
+    "navLabel": "Principal",
+    "account": {
+      "signIn": "Se connecter",
+      "startTrial": "Essai gratuit",
+      "menu": "Votre compte",
+      "signOut": "Se déconnecter"
+    },
+    "locale": {
+      "group": "Langue",
+      "fr": "Français",
+      "en": "English"
+    }
+  },
+  "frames": {
+    "signIn": { "title": "Connexion", "description": "La connexion arrive en phase 4." },
+    "signUp": { "title": "Créer un compte", "description": "L'inscription arrive en phase 4." },
+    "learn": { "title": "Votre prochaine étape", "description": "La prochaine action arrive en phase 9." },
+    "myCourses": { "title": "Mes cours", "description": "L'inscription aux cours arrive en phase 9." },
+    "account": { "title": "Compte", "description": "Les réglages du compte arrivent en phase 4." },
+    "admin": { "title": "Admin", "description": "Le studio de contenu arrive en phase 7." }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Cette page n'existe pas",
+      "description": "Le lien est peut-être ancien, ou l'adresse légèrement erronée.",
+      "action": "Retour au catalogue"
+    },
+    "unexpected": {
+      "title": "Une erreur est survenue",
+      "description": "C'est de notre côté. Réessayez — et si cela persiste, nous en sommes déjà informés.",
+      "retry": "Réessayer"
+    }
   }
 }
