@@ -4,7 +4,7 @@ import * as React from "react"
 import { Accordion as AccordionPrimitive } from "radix-ui"
 
 import { cn } from "@/lib/utils"
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react"
+import { ChevronDownIcon } from "lucide-react"
 
 function Accordion({
   className,
@@ -48,8 +48,19 @@ function AccordionTrigger({
         {...props}
       >
         {children}
-        <ChevronDownIcon data-slot="accordion-trigger-icon" className="pointer-events-none shrink-0 group-aria-expanded/accordion-trigger:hidden" />
-        <ChevronUpIcon data-slot="accordion-trigger-icon" className="pointer-events-none hidden shrink-0 group-aria-expanded/accordion-trigger:inline" />
+        {/*
+          Upstream swaps two icons on open. Replaced with a vertical flip of a
+          single chevron, per the transitions.dev accordion recipe: it passes
+          through a flat line at the midpoint exactly like a path morph, but
+          `d:` interpolation is Chromium-only and would simply not animate on
+          Safari or Firefox. `vector-effect` keeps the stroke weight constant
+          through the flip.
+        */}
+        <ChevronDownIcon
+          data-slot="accordion-trigger-icon"
+          vectorEffect="non-scaling-stroke"
+          className="pointer-events-none shrink-0 transition-transform duration-base ease-quiet group-aria-expanded/accordion-trigger:-scale-y-100"
+        />
       </AccordionPrimitive.Trigger>
     </AccordionPrimitive.Header>
   )
@@ -68,7 +79,9 @@ function AccordionContent({
     >
       <div
         className={cn(
-          "h-(--radix-accordion-content-height) pt-0 pb-2.5 [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
+          // Radix animates the height; the blur reveal is the half of the
+          // transitions.dev accordion recipe it does not do.
+          "h-(--radix-accordion-content-height) pt-0 pb-2.5 in-data-open:animate-panel-reveal [&_a]:underline [&_a]:underline-offset-3 [&_a]:hover:text-foreground [&_p:not(:last-child)]:mb-4",
           className
         )}
       >

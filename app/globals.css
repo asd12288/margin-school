@@ -686,6 +686,198 @@
   animation: panel-reveal var(--duration-base) var(--ease-quiet) forwards;
 }
 
+/* --------------------------------------------------------------------------
+   Overlays
+
+   The characteristic worth taking from these recipes is that open and close
+   are NOT symmetric. Opening is an intention and gets the slower curve;
+   closing is getting out of the way and should be quicker than you notice.
+   shadcn ships one duration for both, which is what makes stock dialogs feel
+   slightly sticky on dismiss.
+
+   Mapped by usage, not by number: the recipes' 250ms open is our
+   `--duration-base`, their 150ms close is our `--duration-fast`.
+
+   Radix sets `--radix-popper-transform-origin` on positioned content, so the
+   origin-aware growth the dropdown recipe orchestrates in JS comes free.
+   -------------------------------------------------------------------------- */
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes modal-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@utility animate-modal-in {
+  animation: modal-in var(--duration-base) var(--ease-quiet);
+}
+
+@utility animate-modal-out {
+  animation: modal-out var(--duration-fast) var(--ease-quiet);
+}
+
+/* Menus barely shrink on close (0.99, not 0.97). A menu that collapses as far
+   as it grew reads as being sucked backwards. */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes menu-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+
+@utility animate-menu-in {
+  animation: menu-in var(--duration-base) var(--ease-quiet);
+}
+
+@utility animate-menu-out {
+  animation: menu-out var(--duration-fast) var(--ease-quiet);
+}
+
+/* Tooltip — appear-only delay, instant exit. The delay is what stops a row of
+   icon buttons flashing tooltips as the pointer crosses them; dropping it on
+   exit is what stops the last one lingering after you have moved on. */
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tooltip-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@utility animate-tooltip-in {
+  animation: tooltip-in var(--duration-fast) ease-out var(--duration-instant)
+    both;
+}
+
+@utility animate-tooltip-out {
+  animation: tooltip-out var(--duration-instant) ease-out;
+}
+
+/* --------------------------------------------------------------------------
+   Content
+   -------------------------------------------------------------------------- */
+
+/* Texts reveal — stacked lines rise and unblur with a stagger, so the eye
+   lands on the heading before the supporting line. Two children deep only;
+   a stagger that runs down a whole page becomes a page-load animation, which
+   is a different and much worse thing. */
+@keyframes texts-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@utility animate-texts-reveal {
+  & > * {
+    animation: texts-reveal var(--duration-deliberate) var(--ease-quiet) both;
+  }
+
+  & > *:nth-child(2) {
+    animation-delay: 40ms;
+  }
+
+  & > *:nth-child(3) {
+    animation-delay: 80ms;
+  }
+
+  & > *:nth-child(n + 4) {
+    animation-delay: 120ms;
+  }
+}
+
+/* Skeleton → content. The placeholder pulses, then the real content
+   cross-fades and unblurs in its place rather than snapping. */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@utility animate-skeleton-pulse {
+  animation: skeleton-pulse 1.6s var(--ease-quiet-in-out) infinite;
+}
+
+/* Icon swap — two icons share one grid cell and cross-fade through a blur and
+   a scale, instead of one popping out as the other pops in. */
+@utility icon-swap-slot {
+  display: inline-grid;
+  place-items: center;
+
+  & > * {
+    grid-area: 1 / 1;
+    transition:
+      opacity var(--duration-base) var(--ease-quiet-in-out),
+      filter var(--duration-base) var(--ease-quiet-in-out),
+      transform var(--duration-base) var(--ease-quiet-in-out);
+  }
+}
+
+@utility icon-swap-hidden {
+  opacity: 0;
+  filter: blur(2px);
+  transform: scale(0.25);
+}
+
+@utility icon-swap-shown {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
 /* The brand gradient. One definition, used for hero type and nothing else —
    a gradient that appears in three places stops being a signature. */
 @utility text-brand-gradient {

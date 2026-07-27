@@ -257,7 +257,11 @@ function LessonShowcase() {
       hint="All ten v1 block types from docs/content-model.md, in the order of the worked example. The chart is data rendered as SVG on the server, not an image — its annotations are translatable and its numbers are fixable without re-exporting an asset."
     >
       <article className="rounded-xl border border-border bg-card px-6 py-8 md:px-10">
-        <header className="measure-prose">
+        {/* Texts reveal: the eyebrow, title and meta rise and unblur with a
+            40ms stagger, so the eye lands on the title first. Scoped to the
+            header only — a stagger that runs down the whole page stops being a
+            reveal and becomes a page-load animation. */}
+        <header className="measure-prose animate-texts-reveal">
           <p className="font-mono text-xs tracking-wide text-accent uppercase">
             Reading a price chart · Chapter 2
           </p>

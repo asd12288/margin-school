@@ -73,11 +73,20 @@ function LessonRow({
         current && "bg-primary-muted"
       )}
     >
-      {/* One glyph, three meanings: done, here, or ahead. */}
+      {/*
+        One slot, three meanings: done, here, or ahead.
+
+        Both glyphs are always mounted and share a single grid cell, so the
+        change between them cross-fades through a blur and a scale instead of
+        one unmounting as the other appears — the transitions.dev icon-swap
+        recipe. That matters here because marking a lesson complete is
+        optimistic: the glyph changes the instant you click, and a hard swap at
+        that moment reads as a glitch rather than a confirmation.
+      */}
       <span
         aria-hidden
         className={cn(
-          "flex size-5 shrink-0 items-center justify-center rounded-4xl border",
+          "icon-swap-slot size-5 shrink-0 rounded-4xl border",
           "transition-colors duration-base ease-quiet",
           lesson.completed
             ? "border-transparent bg-progress-complete text-success-foreground"
@@ -86,11 +95,19 @@ function LessonRow({
               : "border-border-strong text-transparent"
         )}
       >
-        {lesson.completed ? (
-          <Check className="size-3" strokeWidth={3} />
-        ) : current ? (
-          <Play className="size-2.5 fill-current" />
-        ) : null}
+        <Check
+          className={cn(
+            "size-3",
+            lesson.completed ? "icon-swap-shown" : "icon-swap-hidden"
+          )}
+          strokeWidth={3}
+        />
+        <Play
+          className={cn(
+            "size-2.5 fill-current",
+            current && !lesson.completed ? "icon-swap-shown" : "icon-swap-hidden"
+          )}
+        />
       </span>
 
       <span

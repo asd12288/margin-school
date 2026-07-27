@@ -6,6 +6,12 @@ import { cn } from "@/lib/utils";
 /**
  * Loading states, per the skeleton rules in docs/ux-architecture.md.
  *
+ * The pulse comes from the transitions.dev skeleton recipe, retimed onto
+ * `--ease-quiet-in-out` and applied in `ui/skeleton.tsx` so every placeholder
+ * gets it. The recipe's other half — cross-fading the placeholder into the
+ * real content — is deliberately not built: nothing in the app streams real
+ * data yet, and an unused reveal would just be dead CSS.
+ *
  * The rules these obey, since they are easy to break by accident:
  *
  * 1. **Layout-identical.** Each skeleton matches the real component's

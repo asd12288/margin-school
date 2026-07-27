@@ -75,9 +75,22 @@ Those recipes ship their own variable scale (`--check-rotate-dur`, `--shake-dur-
 
 | Utility | Adapted from | Used by |
 | --- | --- | --- |
+| `animate-modal-in` / `-out` | Modal open/close | `dialog`, `alert-dialog` |
+| `animate-menu-in` / `-out` | Menu dropdown | `dropdown-menu`, `select`, `popover`, `context-menu`, `menubar`, `hover-card`, `combobox` |
+| `animate-tooltip-in` / `-out` | Tooltip open/close | `tooltip` |
+| `animate-panel-reveal` | Panel reveal | Empty / error / locked / unavailable states, accordion content |
+| `animate-texts-reveal` | Texts reveal | Lesson header — staggered rise and unblur |
+| `animate-skeleton-pulse` | Skeleton loader | `ui/skeleton`, so every placeholder inherits it |
 | `animate-success-check` | Success check | Quiz correct answer — fade, rotate, blur, settle-bob, plus the tick drawing itself |
 | `animate-error-shake` | Error state shake | Quiz wrong answer — deliberately small; a violent shake reads as punishment |
-| `animate-panel-reveal` | Panel reveal | Empty, error, locked and unavailable states |
+| `icon-swap-slot` / `-shown` / `-hidden` | Icon swap | Curriculum lesson glyph (check ↔ play in one cell) |
+| *(chevron flip)* | Accordion expand | `ui/accordion` — `scaleY(-1)`, not a `d:` path morph, which is Chromium-only |
+
+**The characteristic worth having is that open and close are not symmetric.** Opening is an intention and gets the slower curve; closing is getting out of the way. shadcn ships one duration for both, which is what makes stock dialogs feel slightly sticky on dismiss. Mapped by usage rather than by number: the recipes' 250ms open is our `--duration-base`, their 150ms close is our `--duration-fast`.
+
+Radix sets `--radix-popper-transform-origin` on positioned content, so the origin-aware growth the dropdown recipe orchestrates in JS comes free — the utilities deliberately do **not** set `transform-origin`, leaving each component's own `origin-(--radix-…)` class to win.
+
+Not applied, and why: **page side-by-side** and **like button** target surfaces that do not exist yet (the study-area player, favourites); **notification badge**, **plus-to-menu morph**, **spinning counter** and **card tilt** have no home in the current UI or read as flashier than the product should; **tabs sliding** needs a shared measured indicator that shadcn's tab markup does not have. The skeleton recipe's content cross-fade is also unbuilt — nothing streams real data yet, so it would be dead CSS.
 
 The skill is installed at [.agents/skills/transitions-dev](../.agents/skills/transitions-dev/) (plus `transitions-polish`), giving the `transitions reveal` / `review` / `apply` / `refine` commands and all 27 reference recipes offline.
 

@@ -4,7 +4,12 @@ function Skeleton({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="skeleton"
-      className={cn("animate-pulse rounded-md bg-muted", className)}
+      // `animate-skeleton-pulse` rather than Tailwind's `animate-pulse`: the
+      // stock one runs a 2s `cubic-bezier(0.4,0,0.6,1)` fade to 50% opacity,
+      // which reads as a slow throb. The transitions.dev pulse is shorter,
+      // shallower, and eased on our own curve, so a grid of placeholders
+      // shimmers rather than breathes.
+      className={cn("animate-skeleton-pulse rounded-md bg-muted", className)}
       {...props}
     />
   )
