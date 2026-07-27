@@ -51,9 +51,17 @@ If mastery is ever stored per-lesson, Phase 12 becomes a rewrite and the catalog
 | `question_attempt` | Per attempt, for grading history and difficulty stats |
 | `favorite` | User → course |
 | `note` | User → lesson |
-| `subscription` | Status, provider ids, period end. Read only via the entitlement boundary |
+| `subscription` | Status, provider ids, period end. Read only via the entitlement boundary. **Not built yet** — see below |
 
 Both domains live in the same Postgres. The separation is logical and strictly enforced: **never join content and user data inside a cached function.**
+
+### What is actually built today
+
+Only `profile` — id, role, locale, `subscription_status`, timestamps. Everything else in the tables above is design, not schema.
+
+`subscription_status` starts as a **column on `profile`** rather than the `subscription` table described above, because today there is no subscription *object*, only a status. The table arrives in Phase 10 with the Stripe fields that justify it. Same reasoning that keeps the content tables unbuilt: no table before it has a consumer.
+
+The content tables land once there is UI rendering a lesson, so the model gets shaped by something real rather than by imagination. Until then this document is the design; build components against fixtures in this shape.
 
 ## Blocks
 

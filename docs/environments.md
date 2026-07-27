@@ -58,6 +58,26 @@ The Supabase integration already provides these in Vercel — **do not add a dup
 
 Locally, `.env.local` sets `DATABASE_URL` to the Docker Postgres. When Drizzle lands, read `DATABASE_URL ?? POSTGRES_URL` so one code path covers both, and point migrations at the non-pooling URL.
 
+## Database migrations
+
+**Drizzle authors the schema; the Supabase CLI runs the migrations.** There is exactly one migration history, in `supabase/migrations/`.
+
+Two migration systems in one repo is the classic Supabase + Drizzle failure — Drizzle keeps its own folder and runner, `db:reset` replays only Supabase's, and half the schema silently goes missing. Avoided by pointing `drizzle.config.ts` at `supabase/migrations/` with `migrations: { prefix: "supabase" }`, which produces the timestamped filenames the Supabase runner requires.
+
+```bash
+npm run db:generate         # schema change → SQL migration
+npm run db:reset            # replay every migration from empty
+supabase db push            # deploy migrations to Paris (deliberate, separate step)
+```
+
+### Rules
+
+1. **Read every generated migration before applying it.** It gets committed and replayed forever.
+2. **`drizzle-kit push` is banned.** It syncs the schema with no migration file and would silently drop the triggers, policies and grants that Drizzle does not track.
+3. **Triggers, functions, RLS policies and grants are hand-written.** drizzle-kit generates tables, columns and constraints only, and does not record the rest in its snapshots. Keep them in their own migration files.
+4. **Grants are not optional.** Postgres checks `GRANT` before RLS, so a policy on a table with no grant is unreachable — the request fails with "permission denied for table" and the policy never runs. Tables made in the Supabase dashboard get grants implicitly; tables made by a Drizzle migration do not.
+5. Drizzle writes a `meta/` folder alongside the SQL. The Supabase runner ignores it.
+
 ## Observability
 
 One Sentry project and one PostHog project, split by environment tag rather than by separate projects. This keeps issue grouping and funnel history intact while remaining filterable.

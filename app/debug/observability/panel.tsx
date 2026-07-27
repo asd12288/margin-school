@@ -3,13 +3,9 @@
 import * as Sentry from "@sentry/nextjs";
 import { useEffect, useState } from "react";
 
-import {
-  CONSENT_CHANGE_EVENT,
-  grantAnalyticsConsent,
-  readConsent,
-  type ConsentState,
-} from "@/lib/analytics/consent";
+import { grantAnalyticsConsent } from "@/lib/analytics/consent";
 import { analyticsStatus, capture } from "@/lib/analytics/posthog";
+import { useConsent } from "@/lib/analytics/use-consent";
 import type { AppEnv } from "@/lib/env";
 
 type Result = { ok: boolean; text: string };
@@ -26,24 +22,14 @@ export function ObservabilityPanel({
   sentryDsnConfigured: boolean;
 }) {
   const [results, setResults] = useState<Record<string, Result>>({});
-  const [consent, setConsent] = useState<ConsentState>("unset");
+  const consent = useConsent();
   const [analytics, setAnalytics] = useState(() => analyticsStatus());
 
+  // PostHog reports readiness from a module-level flag rather than an event,
+  // so poll it. Cheap, and only on a debug page.
   useEffect(() => {
-    setConsent(readConsent());
-
-    // The consent banner lives elsewhere in the tree, so pick up its
-    // decision the same way the analytics provider does.
-    const onChange = (event: Event) =>
-      setConsent((event as CustomEvent<ConsentState>).detail);
-    window.addEventListener(CONSENT_CHANGE_EVENT, onChange);
-
     const id = setInterval(() => setAnalytics(analyticsStatus()), 500);
-
-    return () => {
-      window.removeEventListener(CONSENT_CHANGE_EVENT, onChange);
-      clearInterval(id);
-    };
+    return () => clearInterval(id);
   }, []);
 
   const record = (key: string, result: Result) =>
@@ -130,10 +116,7 @@ export function ObservabilityPanel({
         {consent !== "granted" ? (
           <Row
             label="Grant analytics consent"
-            onClick={() => {
-              grantAnalyticsConsent();
-              setConsent("granted");
-            }}
+            onClick={grantAnalyticsConsent}
             result={undefined}
           />
         ) : null}

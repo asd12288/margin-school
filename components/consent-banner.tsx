@@ -1,12 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import {
   denyAnalyticsConsent,
   grantAnalyticsConsent,
-  readConsent,
 } from "@/lib/analytics/consent";
+import { useConsent } from "@/lib/analytics/use-consent";
 
 /**
  * PROVISIONAL. Deliberately unstyled beyond the minimum — it exists so that
@@ -15,13 +13,9 @@ import {
  * final and should not change.
  */
 export function ConsentBanner() {
-  const [visible, setVisible] = useState(false);
+  const consent = useConsent();
 
-  useEffect(() => {
-    setVisible(readConsent() === "unset");
-  }, []);
-
-  if (!visible) return null;
+  if (consent !== "unset") return null;
 
   return (
     <div
@@ -36,20 +30,14 @@ export function ConsentBanner() {
       <div className="flex shrink-0 gap-2">
         <button
           type="button"
-          onClick={() => {
-            denyAnalyticsConsent();
-            setVisible(false);
-          }}
+          onClick={denyAnalyticsConsent}
           className="rounded border border-black/20 px-3 py-1.5 dark:border-white/25"
         >
           Refuse
         </button>
         <button
           type="button"
-          onClick={() => {
-            grantAnalyticsConsent();
-            setVisible(false);
-          }}
+          onClick={grantAnalyticsConsent}
           className="rounded bg-black px-3 py-1.5 text-white dark:bg-white dark:text-black"
         >
           Accept

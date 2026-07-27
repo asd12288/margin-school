@@ -21,6 +21,7 @@ npm run dev         # dev server on the host — http://localhost:3000
 npm run build       # production build
 npm run lint        # eslint
 
+npm run db:generate # schema change → SQL migration (review it by hand)
 npm run db:studio   # database UI    → http://127.0.0.1:54323
 npm run mail        # auth emails    → http://127.0.0.1:54324
 npm run db:reset    # wipe and re-run all migrations
