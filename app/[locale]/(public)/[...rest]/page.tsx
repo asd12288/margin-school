@@ -31,9 +31,17 @@ import { notFound } from "next/navigation";
  * this route render the same way a page with `generateStaticParams` always
  * has: fully server-rendered per request, no partial prerender, no streaming,
  * a real `404` before the first byte.
+ *
+ * The placeholder value itself is `__reserved__`, not `not-found` — a real
+ * content slug can legitimately be `not-found` (see docs/content-model.md;
+ * nothing reserves that word), which would collide with this build-time
+ * placeholder and silently make `/fr/not-found` and `/en/not-found` resolve
+ * here instead of to that content. Double underscores read as obviously
+ * synthetic and match the convention Next itself uses for reserved segments
+ * (`_next`), so no real slug is ever likely to collide with it.
  */
 export function generateStaticParams() {
-  return [{ rest: ["not-found"] }];
+  return [{ rest: ["__reserved__"] }];
 }
 
 export default function UnmatchedRoute() {
