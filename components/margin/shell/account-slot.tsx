@@ -60,4 +60,21 @@ function AccountSlotSkeleton() {
   return <Skeleton className="h-8 w-56 rounded-4xl" />;
 }
 
-export { AccountSlot, AccountSlotSkeleton };
+/**
+ * Suspense fallback for `AppHeader` only (app and admin shells).
+ *
+ * Those shells sit behind `requireProfile()`/`requireRole()` — by the time
+ * `AccountSlot` ever renders there, the visitor is always signed in, so the
+ * signed-out two-button branch above can never be what resolves. Falling
+ * back to the wide `AccountSlotSkeleton` (sized for that signed-out pair)
+ * reserved 224px that the real content — `AccountMenu`'s `size-8` trigger —
+ * never needed, and at a narrow viewport that reserved width, plus
+ * `AppHeader`'s extra nav item versus the public header, overflowed the
+ * non-wrapping header row horizontally. This mirrors the real element
+ * exactly instead of over-reserving "just in case".
+ */
+function AccountMenuSkeleton() {
+  return <Skeleton className="size-8 rounded-4xl" />;
+}
+
+export { AccountSlot, AccountSlotSkeleton, AccountMenuSkeleton };

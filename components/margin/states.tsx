@@ -77,9 +77,23 @@ function StateFrame({
           <Icon className="size-4.5" />
         </div>
       ) : null}
-      <p className="font-heading text-base font-semibold text-foreground">
+      {/*
+       * A real heading, not a styled paragraph. `Empty`/`Error`/`Locked`/
+       * `UnavailableInLocale` states are, by design, a surface's entire
+       * primary content (a whole page in the case of `/learn`, `/admin`,
+       * `not-found.tsx`, both `error.tsx` boundaries — see each one's own
+       * comment). Rendering the title as a `<p>` left every one of those
+       * pages without a single heading for assistive tech to land on. The
+       * genuinely inline case — a locked or unavailable row nested inside
+       * a curriculum accordion, next to other headings — has its own
+       * component (`LockedHint`, `UnavailableInLocaleHint`) that was built
+       * exactly so this component would not have to serve both jobs.
+       * `h2` picks up `app/globals.css`'s existing `h1, h2, h3` rule
+       * (heading font, negative tracking) for free.
+       */}
+      <h2 className="font-heading text-base font-semibold text-foreground">
         {title}
-      </p>
+      </h2>
       {description ? (
         <p className="measure-narrow mt-1.5 text-sm text-muted-foreground">
           {description}

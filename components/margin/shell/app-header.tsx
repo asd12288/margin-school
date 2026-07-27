@@ -4,7 +4,7 @@ import { Link } from "@/i18n/navigation";
 import { ThemeToggle } from "@/components/margin/theme-toggle";
 import type { ShellLabels } from "@/lib/shell-labels";
 
-import { AccountSlot, AccountSlotSkeleton } from "./account-slot";
+import { AccountMenuSkeleton, AccountSlot } from "./account-slot";
 import { LocaleSwitcher } from "./locale-switcher";
 import { NavLink } from "./nav-link";
 
@@ -32,7 +32,7 @@ function AppHeader({ labels }: { labels: ShellLabels }) {
         <div className="ms-auto flex items-center gap-2">
           <LocaleSwitcher labels={labels.locale} />
           <ThemeToggle labels={labels.theme} className="hidden sm:inline-flex" />
-          <Suspense fallback={<AccountSlotSkeleton />}>
+          <Suspense fallback={<AccountMenuSkeleton />}>
             <AccountSlot labels={labels.account} />
           </Suspense>
         </div>

@@ -1,5 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+
+import { expect, test } from "./fixtures/session";
 
 /**
  * The design system's own regression suite.
@@ -48,6 +50,17 @@ async function setTheme(page: Page, theme: "light" | "dark") {
       page.evaluate(() => document.documentElement.classList.contains("dark"))
     )
     .toBe(theme === "dark");
+}
+
+/** Serious/critical axe violations, as human-readable one-liners. Empty means clean. */
+async function seriousViolations(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+
+  return results.violations
+    .filter((v) => ["serious", "critical"].includes(v.impact ?? ""))
+    .map((v) => `${v.id}: ${v.nodes.length} node(s) — ${v.help}`);
 }
 
 test.describe("design system page", () => {
@@ -104,18 +117,48 @@ test.describe("design system page", () => {
     test(`has no serious accessibility violations in ${theme}`, async ({ page }) => {
       await setTheme(page, theme);
       await settleAnimations(page);
-      const results = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-        .analyze();
-
-      const serious = results.violations.filter((v) =>
-        ["serious", "critical"].includes(v.impact ?? "")
-      );
-      expect(
-        serious.map((v) => `${v.id}: ${v.nodes.length} node(s) — ${v.help}`)
-      ).toEqual([]);
+      expect(await seriousViolations(page)).toEqual([]);
     });
   }
+});
+
+/**
+ * The same scan, extended to the app shell. `AppHeader` (task 8) was never
+ * scanned before this task — only the public shell's design-system page was.
+ * `/en/courses` covers the public shell's real content (not the design-system
+ * showcase); `/en/learn` covers the signed-in app shell, which carries more
+ * nav items in the same non-wrapping header. Same pattern as above: settle
+ * animations before scanning, in both themes, fail only on serious/critical.
+ */
+test.describe("shell pages", () => {
+  test.describe("courses (public shell)", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto("/en/courses");
+    });
+
+    for (const theme of ["light", "dark"] as const) {
+      test(`has no serious accessibility violations in ${theme}`, async ({ page }) => {
+        await setTheme(page, theme);
+        await settleAnimations(page);
+        expect(await seriousViolations(page)).toEqual([]);
+      });
+    }
+  });
+
+  test.describe("learn (app shell, signed in)", () => {
+    test.beforeEach(async ({ page, signInAs }) => {
+      await signInAs("student");
+      await page.goto("/en/learn");
+    });
+
+    for (const theme of ["light", "dark"] as const) {
+      test(`has no serious accessibility violations in ${theme}`, async ({ page }) => {
+        await setTheme(page, theme);
+        await settleAnimations(page);
+        expect(await seriousViolations(page)).toEqual([]);
+      });
+    }
+  });
 });
 
 test.describe("tabs", () => {
