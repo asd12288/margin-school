@@ -75,7 +75,7 @@ function ColourFoundations() {
     <Section
       id="colour"
       title="Colour"
-      hint="Semantic roles only. The ramps behind them — neutral, indigo, cyan, emerald, rose, amber, red — are deliberately unreachable from a class name."
+      hint="Semantic roles only. The ramps behind them — neutral, indigo, violet, cyan, emerald, rose, amber, red — are deliberately unreachable from a class name."
     >
       <div className="flex flex-col gap-8">
         <div>
@@ -100,8 +100,8 @@ function ColourFoundations() {
             <Swatch name="primary" className="bg-primary" />
             <Swatch name="primary-muted" className="bg-primary-muted" />
             <Swatch name="secondary" className="bg-secondary" />
-            <Swatch name="accent" className="bg-accent" />
-            <Swatch name="accent-muted" className="bg-accent-muted" />
+            <Swatch name="accent" className="bg-brand" />
+            <Swatch name="accent-muted" className="bg-brand-muted" />
           </SwatchGrid>
         </div>
 
@@ -308,7 +308,7 @@ function MotionFoundations() {
               className="flex flex-col gap-1 rounded-lg border border-border bg-card p-3"
             >
               <code className="font-mono text-2xs text-foreground">{name}</code>
-              <span data-numeric className="font-mono text-xs text-accent">
+              <span data-numeric className="font-mono text-xs text-brand">
                 {value}
               </span>
               <span className="text-xs text-muted-foreground">{use}</span>

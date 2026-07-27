@@ -185,7 +185,7 @@ function ExampleBlockView({ block }: { block: ExampleBlock }) {
 
 function ExerciseBlockView({ block }: { block: ExerciseBlock }) {
   return (
-    <div className="measure-prose my-8 rounded-xl border border-accent/25 bg-accent-muted/40 p-5">
+    <div className="measure-prose my-8 rounded-xl border border-brand/25 bg-brand-muted/40 p-5">
       <p className="font-heading text-base font-semibold text-foreground">
         {block.title}
       </p>
@@ -200,7 +200,7 @@ function ExerciseBlockView({ block }: { block: ExerciseBlock }) {
               data-numeric
               className={cn(
                 "flex size-5 shrink-0 items-center justify-center rounded-4xl",
-                "bg-accent font-mono text-3xs font-semibold text-accent-foreground"
+                "bg-brand font-mono text-3xs font-semibold text-brand-foreground"
               )}
             >
               {i + 1}

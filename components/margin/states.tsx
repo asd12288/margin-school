@@ -210,7 +210,7 @@ function LockedState({
                 key={i}
                 className="flex items-center gap-1.5 text-xs text-locked-foreground"
               >
-                <span aria-hidden className="size-1 rounded-4xl bg-accent" />
+                <span aria-hidden className="size-1 rounded-4xl bg-brand" />
                 {item}
               </li>
             ))}

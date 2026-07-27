@@ -134,6 +134,19 @@
   --color-accent-foreground: var(--accent-foreground);
   --color-accent-muted: var(--accent-muted);
 
+  /* The vivid brand accent, distinct from `--accent`.
+   *
+   * shadcn's `--accent` is not a brand colour — it is the subtle interactive
+   * surface behind menu highlights, hovers and selected rows, used in 47
+   * places across the vendored components. Defining it as a saturated colour
+   * put a loud bar behind every dropdown item, and then chasing text contrast
+   * on it forced it dark and muddy. `--accent` is a neutral surface again;
+   * this is the colour that was actually wanted. */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-muted-foreground: var(--brand-muted-foreground);
+
   /* --- Lines and focus -------------------------------------------------- */
   --color-border: var(--border);
   --color-border-strong: var(--border-strong);
@@ -270,6 +283,16 @@
   --cyan-700: oklch(0.545 0.116 198);
   --cyan-800: oklch(0.420 0.084 200);
 
+  /* Violet — the brand accent. Far enough from the indigo primary to register
+     as a second colour, and clear of every status hue. */
+  --violet-100: oklch(0.947 0.034 305);
+  --violet-200: oklch(0.898 0.070 305);
+  --violet-300: oklch(0.828 0.118 304);
+  --violet-400: oklch(0.742 0.163 303);
+  --violet-500: oklch(0.658 0.208 302);
+  --violet-600: oklch(0.582 0.226 301);
+  --violet-800: oklch(0.418 0.166 301);
+
   /* Emerald — success, completion, gain. */
   --emerald-100: oklch(0.949 0.045 156);
   --emerald-200: oklch(0.899 0.083 156);
@@ -334,12 +357,17 @@
   --secondary: var(--neutral-100);
   --secondary-foreground: var(--neutral-800);
 
-  /* cyan-700, not 600. The brighter step measured 3.43:1 as text on white —
-     the accent is used for small labels as well as for surfaces, and a role
-     that only works as a background is a role with a trap in it. */
-  --accent: var(--cyan-800);
-  --accent-foreground: var(--neutral-0);
-  --accent-muted: var(--cyan-100);
+  /* shadcn's contract: the subtle surface behind hovers, menu highlights and
+     selected rows. Neutral on purpose — a saturated fill here paints a bar
+     behind every dropdown item. */
+  --accent: var(--neutral-100);
+  --accent-foreground: var(--neutral-900);
+  --accent-muted: var(--neutral-50);
+
+  --brand: var(--violet-600);
+  --brand-foreground: var(--neutral-0);
+  --brand-muted: var(--violet-100);
+  --brand-muted-foreground: var(--violet-800);
 
   --border: var(--neutral-200);
   --border-strong: var(--neutral-300);
@@ -381,7 +409,7 @@
   --chart-axis: var(--neutral-400);
   --chart-annotation: var(--indigo-600);
   --chart-1: var(--indigo-500);
-  --chart-2: var(--cyan-500);
+  --chart-2: var(--cyan-600);
   --chart-3: var(--emerald-500);
   --chart-4: var(--amber-500);
   --chart-5: var(--rose-500);
@@ -450,9 +478,14 @@
   --secondary: oklch(0.929 0.008 265 / 0.1);
   --secondary-foreground: var(--neutral-100);
 
-  --accent: var(--cyan-400);
-  --accent-foreground: var(--neutral-1000);
-  --accent-muted: oklch(0.420 0.084 200 / 0.35);
+  --accent: oklch(0.929 0.008 265 / 0.1);
+  --accent-foreground: var(--neutral-100);
+  --accent-muted: oklch(0.929 0.008 265 / 0.06);
+
+  --brand: var(--violet-400);
+  --brand-foreground: var(--neutral-1000);
+  --brand-muted: oklch(0.418 0.166 301 / 0.35);
+  --brand-muted-foreground: var(--violet-200);
 
   --border: oklch(0.929 0.008 265 / 0.12);
   --border-strong: oklch(0.929 0.008 265 / 0.22);
@@ -964,7 +997,7 @@
     100deg,
     var(--indigo-600) 0%,
     var(--indigo-400) 45%,
-    var(--cyan-500) 100%
+    var(--violet-500) 100%
   );
   background-clip: text;
   color: transparent;

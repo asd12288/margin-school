@@ -22,6 +22,7 @@ The ramps are `neutral` · `indigo` (brand) · `cyan` (accent) · `emerald` (suc
 shadcn ships `primary / muted / accent / destructive`. This product needs more, and these are the additions:
 
 - `subtle`, `border-strong`, `highlight` — surfaces and lines
+- `brand`, `brand-foreground`, `brand-muted`, `brand-muted-foreground` — the vivid accent, **distinct from `--accent`**. shadcn's `--accent` is not a brand colour: it is the subtle interactive surface behind menu highlights, hovers and selected rows, used in 47 places across the vendored components. Defining it as a saturated colour painted a loud bar behind every dropdown item, and chasing text contrast on it then forced it dark and muddy. `--accent` is neutral again; `--brand` is the colour that was actually wanted
 - `warning`, `success`, `info` (+ `-muted` for each) — shadcn only has `destructive`
 - `gain`, `loss`, `flat` — market direction
 - `chart-surface`, `chart-grid`, `chart-axis`, `chart-annotation`, `chart-1…5`
@@ -213,6 +214,8 @@ npm run test:e2e   # playwright — a11y, contrast, theme, tabs; runs a prod bui
 | `#adc8bc` | `#f2fdf5` | 1.71 |
 | `#bfc0c4` | `#ffffff` | 1.81 |
 | `#9a9da4` | `#ffffff` | 2.71 |
+
+Run `npx playwright test tests/e2e/design-system.spec.ts` and read the axe output for the exact selectors.
 
 Left failing on purpose rather than weakened to green — a suite that passes by lowering its own bar is worse than one that names the defect. These are small decorative labels; they need the same solid-role → `*-muted-foreground` treatment already applied to badges, chips and locale hints.
 

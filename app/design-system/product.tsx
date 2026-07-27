@@ -262,7 +262,7 @@ function LessonShowcase() {
             header only — a stagger that runs down the whole page stops being a
             reveal and becomes a page-load animation. */}
         <header className="measure-prose animate-texts-reveal">
-          <p className="font-mono text-xs tracking-wide text-accent uppercase">
+          <p className="font-mono text-xs tracking-wide text-brand uppercase">
             Reading a price chart · Chapter 2
           </p>
           <h2 className="mt-2 font-heading text-display font-semibold text-foreground">
