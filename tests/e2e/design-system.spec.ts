@@ -11,6 +11,32 @@ import { expect, test, type Page } from "@playwright/test";
 
 const ROUTE = "/design-system";
 
+/**
+ * Wait for every running animation to settle.
+ *
+ * Without this the accessibility scan races the entrance animations and
+ * measures half-faded elements: `animate-texts-reveal` staggers the lesson
+ * header in from `opacity: 0`, so axe reported the brand eyebrow at #9e5cea
+ * against a token that is considerably darker, and flagged five contrast
+ * violations that do not exist once the page is at rest.
+ *
+ * Worth being precise about, because the tempting fix is to darken the
+ * palette until the scan goes quiet — which would make the design worse to
+ * satisfy a measurement error.
+ */
+async function settleAnimations(page: Page) {
+  await page.evaluate(async () => {
+    // Only finite ones. `animate-skeleton-pulse` loops forever by design, and
+    // its `finished` promise never resolves — awaiting the unfiltered list
+    // hangs until the test times out.
+    const finite = document.getAnimations().filter((a) => {
+      const timing = a.effect?.getTiming();
+      return timing ? timing.iterations !== Infinity : true;
+    });
+    await Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
+  });
+}
+
 async function setTheme(page: Page, theme: "light" | "dark") {
   await page.evaluate((t) => {
     localStorage.setItem("theme", t);
@@ -76,6 +102,7 @@ test.describe("design system page", () => {
   for (const theme of ["light", "dark"] as const) {
     test(`has no serious accessibility violations in ${theme}`, async ({ page }) => {
       await setTheme(page, theme);
+      await settleAnimations(page);
       const results = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
         .analyze();

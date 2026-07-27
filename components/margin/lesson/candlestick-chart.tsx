@@ -107,7 +107,13 @@ function CandlestickChart({
         the type into illegibility. A price chart has an irreducible amount of
         detail; swiping it is honest, squinting at it is not.
       */}
-      <div className="chart-scroll">
+      {/*
+        `tabIndex` is load-bearing, not decoration. A region that scrolls with
+        a mouse or a finger and cannot be reached by keyboard is a WCAG 2.1.1
+        failure, and this one only overflows on narrow screens — so it passes
+        every desktop check and strands phone and keyboard users.
+      */}
+      <div className="chart-scroll" tabIndex={0}>
         <svg
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
           className="h-auto w-full overflow-visible"

@@ -15,7 +15,10 @@ export default defineConfig({
   },
   projects: [
     { name: "desktop", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["iPhone 13"] } },
+    // Chromium at a phone viewport, not WebKit. The point here is the responsive
+    // layout, not engine differences, and pinning to Chromium keeps CI to one
+    // browser download.
+    { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   // Tests run against a production build. The design system is about what
   // ships: `next dev` renders with different CSS ordering and keeps the dev

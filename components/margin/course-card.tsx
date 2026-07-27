@@ -143,7 +143,7 @@ function CourseCard({
       </div>
 
       <div className="flex grow flex-col p-4">
-        <span className="text-xs font-semibold tracking-wide text-primary uppercase">
+        <span className="text-xs font-semibold tracking-wide text-primary-text uppercase">
           {course.categoryName}
         </span>
 
@@ -180,7 +180,7 @@ function CourseCard({
                 data-numeric
                 className={cn(
                   "text-xs font-medium",
-                  complete ? "text-gain" : "text-primary"
+                  complete ? "text-gain" : "text-primary-text"
                 )}
               >
                 {labels.progressShort}

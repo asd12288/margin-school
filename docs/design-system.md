@@ -205,19 +205,28 @@ npm run test:e2e   # playwright — a11y, contrast, theme, tabs; runs a prod bui
 
 `tests/e2e/contrast.spec.ts` measures contrast on the rendered page in both themes. It converts `lab()` (what the browser actually returns) to linear sRGB and composites alpha over the page background — a translucent `--secondary` reads as ~1:1 otherwise, which would either fail the build for nothing or pass something unreadable. It self-checks by asserting white-on-black is exactly 21.
 
-### Known gap
+### What the suite caught
 
-`design-system.spec.ts` currently **fails** its axe check on three remaining `color-contrast` nodes in light mode:
+Every accessibility failure it found was real except one class, and that
+exception is worth knowing about: axe was scanning *during* the entrance
+animations and measuring half-faded elements, reporting five contrast
+violations that do not exist once the page is at rest. The tempting fix — darken
+the palette until the scan goes quiet — would have made the design worse to
+satisfy a measurement error. The suite now waits for animations to settle,
+filtering out the infinite skeleton pulse whose `finished` promise never
+resolves.
 
-| Foreground | Background | Ratio |
-| --- | --- | --- |
-| `#adc8bc` | `#f2fdf5` | 1.71 |
-| `#bfc0c4` | `#ffffff` | 1.81 |
-| `#9a9da4` | `#ffffff` | 2.71 |
+The genuine finds, all now fixed:
 
-Run `npx playwright test tests/e2e/design-system.spec.ts` and read the axe output for the exact selectors.
-
-Left failing on purpose rather than weakened to green — a suite that passes by lowering its own bar is worse than one that names the defect. These are small decorative labels; they need the same solid-role → `*-muted-foreground` treatment already applied to badges, chips and locale hints.
+- **A colour used as a fill and as text needs two values in a dark theme.** The
+  saturated primary works as a button but measured 3.99:1 as a label on
+  near-black. Hence `--primary-text` and `--destructive-text`, one surface
+  further out than `*-muted-foreground`.
+- **Callout titles used solid roles as text on their own tint** — the risk
+  callout, which is the one that is legally required to be readable.
+- **The chart's scroll region was keyboard-unreachable.** It only overflows on
+  narrow screens, so it passed every desktop check while stranding phone and
+  keyboard users.
 
 ## Open
 

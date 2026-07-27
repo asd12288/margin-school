@@ -110,24 +110,24 @@ const calloutTones: Record<
   note: {
     icon: Info,
     frame: "border-l-info bg-info-muted/50",
-    accent: "text-info",
+    accent: "text-info-muted-foreground",
   },
   tip: {
     icon: Lightbulb,
     frame: "border-l-success bg-success-muted/50",
-    accent: "text-success",
+    accent: "text-success-muted-foreground",
   },
   warning: {
     icon: AlertTriangle,
     frame: "border-l-warning bg-warning-muted/50",
-    accent: "text-warning",
+    accent: "text-warning-muted-foreground",
   },
   // Not decoration: educational content carries mandatory risk disclaimers,
   // and this is the one callout that must never be visually skippable.
   risk: {
     icon: ShieldAlert,
     frame: "border-l-destructive bg-destructive-muted/50",
-    accent: "text-destructive",
+    accent: "text-destructive-muted-foreground",
   },
 };
 

@@ -128,6 +128,12 @@
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-primary-muted: var(--primary-muted);
+  /* The primary colour *as text on the page*, which is not the same value as
+   * the primary fill. A fill is tuned for its own foreground; text is tuned
+   * against the page. In dark mode the saturated fill measures 3.99:1 as a
+   * label on near-black, so links, eyebrows and progress figures use this
+   * instead. Same idea as `*-muted-foreground`, one surface further out. */
+  --color-primary-text: var(--primary-text);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-accent: var(--accent);
@@ -161,6 +167,7 @@
   --color-destructive-foreground: var(--destructive-foreground);
   --color-destructive-muted: var(--destructive-muted);
   --color-destructive-muted-foreground: var(--destructive-muted-foreground);
+  --color-destructive-text: var(--destructive-text);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
   --color-warning-muted: var(--warning-muted);
@@ -322,8 +329,10 @@
      appears only where an action cannot be undone. */
   --red-100: oklch(0.947 0.032 25);
   --red-200: oklch(0.897 0.062 25);
+  --red-300: oklch(0.808 0.116 25);
   --red-500: oklch(0.632 0.232 26);
   --red-600: oklch(0.562 0.226 26);
+  --red-700: oklch(0.487 0.208 26);
   --red-800: oklch(0.398 0.160 26);
 
   --radius: 0.75rem;
@@ -353,6 +362,7 @@
   --primary: var(--indigo-600);
   --primary-foreground: var(--neutral-0);
   --primary-muted: var(--indigo-50);
+  --primary-text: var(--indigo-700);
 
   --secondary: var(--neutral-100);
   --secondary-foreground: var(--neutral-800);
@@ -382,6 +392,7 @@
      under AA. Tinted badges and callouts get their own foreground, the same
      pairing `free-preview` already uses. */
   --destructive-muted-foreground: var(--red-800);
+  --destructive-text: var(--red-700);
   --warning: var(--amber-600);
   --warning-foreground: var(--neutral-0);
   --warning-muted: var(--amber-100);
@@ -474,6 +485,7 @@
   --primary: var(--indigo-600);
   --primary-foreground: var(--neutral-50);
   --primary-muted: oklch(0.325 0.128 262 / 0.45);
+  --primary-text: var(--indigo-300);
 
   --secondary: oklch(0.929 0.008 265 / 0.1);
   --secondary-foreground: var(--neutral-100);
@@ -499,6 +511,7 @@
   --destructive-foreground: var(--neutral-50);
   --destructive-muted: oklch(0.398 0.160 26 / 0.35);
   --destructive-muted-foreground: var(--red-200);
+  --destructive-text: var(--red-300);
   --warning: var(--amber-400);
   --warning-foreground: var(--neutral-1000);
   --warning-muted: oklch(0.462 0.104 62 / 0.35);
@@ -1048,7 +1061,7 @@
   }
 
   .prose-lesson a {
-    color: var(--primary);
+    color: var(--primary-text);
     font-weight: 500;
     text-decoration: underline;
     text-underline-offset: 0.2em;

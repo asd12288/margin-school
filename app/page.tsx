@@ -17,7 +17,7 @@ export default function Home() {
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-24">
       <div className="measure-narrow flex flex-col items-start gap-6">
-        <span className="rounded-4xl bg-primary-muted px-2.5 py-1 text-xs font-medium text-primary">
+        <span className="rounded-4xl bg-primary-muted px-2.5 py-1 text-xs font-medium text-primary-text">
           Placeholder
         </span>
 
