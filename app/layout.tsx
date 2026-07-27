@@ -2,6 +2,9 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages } from "next-intl/server";
+
 import { ConsentBanner } from "@/components/consent-banner";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AnalyticsProvider } from "@/lib/analytics/posthog-provider";
@@ -38,24 +41,32 @@ export const metadata: Metadata = {
   description: "Learn the financial markets, from the beginning.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Resolved server-side by i18n/request.ts. `lang` is set from it rather than
+  // hardcoded — a French page announcing `lang="en"` makes a screen reader read
+  // French with English pronunciation rules, which is worse than no attribute.
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
     <html
-      lang="en"
+      lang={locale}
       // next-themes writes the theme class on <html> before paint; without
       // this React warns that the server and client markup disagree.
       suppressHydrationWarning
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <ThemeProvider>
-          <AnalyticsProvider>{children}</AnalyticsProvider>
-          <ConsentBanner />
-        </ThemeProvider>
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          <ThemeProvider>
+            <AnalyticsProvider>{children}</AnalyticsProvider>
+            <ConsentBanner />
+          </ThemeProvider>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

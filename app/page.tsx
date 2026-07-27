@@ -1,19 +1,25 @@
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/margin/states";
+import { Compass } from "lucide-react";
 
 /**
- * Placeholder home page.
+ * Placeholder home page, and the first real proof that the i18n layer works
+ * end to end.
  *
- * Replaces the create-next-app boilerplate, which shipped hardcoded hexes
- * (`#383838`, `#ccc`, `#1a1a1a`) and a one-off `w-[158px]` — every one of them
- * a violation of the token rule the lint config now enforces.
+ * `EmptyState` is rendered here with translated copy rather than the English
+ * literals the design-system page passes. Nothing about the component changed
+ * to make that work — it never held a string in the first place, which is the
+ * whole point of AGENTS.md rule 7 and the reason every component takes its
+ * words as props.
  *
- * The real marketing page is Phase 8. This exists so the root route is not
- * Next.js branding, and it is obviously placeholder rather than pretending to
- * be finished copy (AGENTS.md rule 1).
+ * The real marketing page is Phase 8.
  */
-export default function Home() {
+export default async function Home() {
+  const t = await getTranslations();
+
   return (
     <main className="flex flex-1 items-center justify-center px-6 py-24">
       <div className="measure-narrow flex flex-col items-start gap-6">
@@ -31,9 +37,17 @@ export default function Home() {
           </p>
         </div>
 
-        <Button asChild>
-          <Link href="/design-system">View the design system</Link>
-        </Button>
+        <EmptyState
+          className="w-full"
+          icon={Compass}
+          title={t("states.empty.title")}
+          description={t("states.empty.description")}
+          action={
+            <Button asChild>
+              <Link href="/design-system">{t("states.empty.action")}</Link>
+            </Button>
+          }
+        />
       </div>
     </main>
   );

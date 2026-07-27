@@ -1,0 +1,81 @@
+{
+  "common": {
+    "loading": "Chargement",
+    "retry": "Réessayer",
+    "close": "Fermer",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent"
+  },
+  "theme": {
+    "group": "Thème de couleur",
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Suivre le système"
+  },
+  "course": {
+    "duration": "{hours, plural, =0 {# min} one {# h} other {# h}}",
+    "lessons": "{count, plural, one {# leçon} other {# leçons}}",
+    "chapters": "{count, plural, one {# chapitre} other {# chapitres}}",
+    "freePreview": "Aperçu gratuit",
+    "included": "Inclus",
+    "laterInPath": "Plus loin dans le parcours",
+    "notInThisLanguage": "En anglais uniquement",
+    "progress": "{completed} leçons terminées sur {total}",
+    "progressShort": "{percent} % terminé",
+    "coverAlt": "Illustration du cours {title}"
+  },
+  "curriculum": {
+    "chapterProgress": "{completed} leçons terminées sur {total}",
+    "chapterCount": "{completed} / {total}",
+    "lessonDuration": "{minutes} min",
+    "completed": "Terminée",
+    "free": "Gratuit",
+    "locked": "Inclus",
+    "notInThisLanguage": "EN uniquement"
+  },
+  "lesson": {
+    "position": "Leçon {index} sur {total}",
+    "duration": "{minutes} min",
+    "chartDescription": "Chandeliers {symbol} {timeframe}, avec {count, plural, =0 {aucune annotation} one {# annotation} other {# annotations}}",
+    "quiz": {
+      "position": "Question {index} sur {total}",
+      "correct": "C'est exact",
+      "incorrect": "Pas tout à fait",
+      "next": "Question suivante",
+      "explanation": "Explication"
+    },
+    "flashcards": {
+      "position": "{index} sur {total}",
+      "flip": "Retourner la carte",
+      "previous": "Carte précédente",
+      "next": "Carte suivante"
+    },
+    "fileSize": "{kilobytes} Ko"
+  },
+  "states": {
+    "empty": {
+      "title": "Vous n'avez encore rien commencé",
+      "description": "Tout est inclus. La plupart des gens commencent par les Fondamentaux.",
+      "action": "Parcourir le catalogue"
+    },
+    "error": {
+      "title": "Impossible de charger vos cours",
+      "description": "Votre progression est sauvegardée. C'est généralement passager."
+    },
+    "locked": {
+      "title": "Cette leçon est incluse dans l'abonnement",
+      "description": "Un seul prix, tout le site. Aucun achat à la leçon.",
+      "includesAll": "Tous les cours, actuels et à venir",
+      "includesLanguages": "Les deux langues",
+      "includesCancel": "Résiliable à tout moment",
+      "action": "Voir ce qui est inclus",
+      "secondaryAction": "Lire d'abord une leçon gratuite"
+    },
+    "unavailableInLocale": {
+      "title": "Pas encore en français",
+      "description": "Cette leçon est publiée en anglais. La traduction française est en cours de rédaction.",
+      "action": "La lire en anglais"
+    }
+  }
+}
