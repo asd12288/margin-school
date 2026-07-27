@@ -46,9 +46,18 @@ async function AccountSlot({ labels }: { labels: AccountSlotLabels }) {
 /**
  * Suspense fallback. Fixed size, matching the widest real state, so the header
  * never shifts when the session resolves — skeleton rule 1.
+ *
+ * Sized to the signed-out state — the two `size="sm"` buttons ("Sign in" +
+ * "Start free trial" / "Se connecter" + "Essai gratuit") with their `gap-2` —
+ * which is what an anonymous visitor actually sees while the session
+ * resolves, and is wider than the signed-in `AccountMenu`. Measured via
+ * `getBoundingClientRect()` on a production build: 187px in English, 219px
+ * in French (French runs longer). `w-56` (224px) is the smallest Tailwind
+ * token at or above the wider (French) measurement. If the button copy
+ * changes, re-measure both locales and re-pick the token.
  */
 function AccountSlotSkeleton() {
-  return <Skeleton className="h-8 w-32 rounded-4xl" />;
+  return <Skeleton className="h-8 w-56 rounded-4xl" />;
 }
 
 export { AccountSlot, AccountSlotSkeleton };
