@@ -1,0 +1,81 @@
+{
+  "common": {
+    "loading": "Loading",
+    "retry": "Try again",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous"
+  },
+  "theme": {
+    "group": "Colour theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "Follow the system"
+  },
+  "course": {
+    "duration": "{hours, plural, =0 {# min} one {# h} other {# h}}",
+    "lessons": "{count, plural, one {# lesson} other {# lessons}}",
+    "chapters": "{count, plural, one {# chapter} other {# chapters}}",
+    "freePreview": "Free preview",
+    "included": "Included",
+    "laterInPath": "Later in the path",
+    "notInThisLanguage": "French only",
+    "progress": "{completed} of {total} lessons complete",
+    "progressShort": "{percent}% complete",
+    "coverAlt": "Cover art for {title}"
+  },
+  "curriculum": {
+    "chapterProgress": "{completed} of {total} lessons complete",
+    "chapterCount": "{completed} / {total}",
+    "lessonDuration": "{minutes} min",
+    "completed": "Completed",
+    "free": "Free",
+    "locked": "Included",
+    "notInThisLanguage": "FR only"
+  },
+  "lesson": {
+    "position": "Lesson {index} of {total}",
+    "duration": "{minutes} min",
+    "chartDescription": "{symbol} {timeframe} candles, with {count, plural, =0 {no annotations} one {# annotation} other {# annotations}}",
+    "quiz": {
+      "position": "Question {index} of {total}",
+      "correct": "That's right",
+      "incorrect": "Not quite",
+      "next": "Next question",
+      "explanation": "Explanation"
+    },
+    "flashcards": {
+      "position": "{index} of {total}",
+      "flip": "Turn the card over",
+      "previous": "Previous card",
+      "next": "Next card"
+    },
+    "fileSize": "{kilobytes} KB"
+  },
+  "states": {
+    "empty": {
+      "title": "You have not started anything yet",
+      "description": "Everything is included. Foundations is where most people begin.",
+      "action": "Browse the catalog"
+    },
+    "error": {
+      "title": "We could not load your courses",
+      "description": "Your progress is safe. This is usually momentary."
+    },
+    "locked": {
+      "title": "This lesson is included with a subscription",
+      "description": "One price, everything on the site. No per-course purchases.",
+      "includesAll": "Every course, present and future",
+      "includesLanguages": "Both languages",
+      "includesCancel": "Cancel any time",
+      "action": "See what is included",
+      "secondaryAction": "Read a free lesson first"
+    },
+    "unavailableInLocale": {
+      "title": "Not yet in English",
+      "description": "This lesson is published in French. The English translation is being written.",
+      "action": "Read it in French"
+    }
+  }
+}

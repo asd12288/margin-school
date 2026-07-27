@@ -1,26 +1,1111 @@
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:is(.dark *));
+
+/* ==========================================================================
+   Margin School — design tokens
+
+   Two layers, and the separation is enforced by construction:
+
+   1. PRIMITIVES  (`--neutral-*`, `--indigo-*`, `--cyan-*`, …)
+      Raw colour ramps. Declared as plain custom properties in `:root`, and
+      deliberately NOT registered in `@theme`. That means Tailwind never
+      generates `bg-indigo-600` or `text-neutral-200` — the ramp is
+      unreachable from a class name. It exists only to be assigned to a role
+      below.
+
+   2. SEMANTIC ROLES  (`--primary`, `--gain`, `--locked`, …)
+      What a thing *means*. These are registered in `@theme inline`, so these
+      — and only these — become utilities.
+
+   The rule that follows: components use roles, never primitives, never raw
+   values. If you need a colour that has no role, add a role here — do not
+   reach for a hex in a component.
+
+   See docs/design-system.md.
+   ========================================================================== */
 
 @theme inline {
+  /* Clear Tailwind's built-in palette.
+   *
+   * Without this the enforcement below is an illusion. Tailwind ships `red`,
+   * `indigo`, `neutral`, `slate` and eighteen more by default, so `bg-indigo-600`
+   * resolves happily — to *Tailwind's* indigo, which is not the brand colour and
+   * never was. That is worse than a missing class: nothing errors, the result
+   * looks plausible, and the design drifts one plausible-looking utility at a
+   * time. Clearing the namespace means an unrecognised colour class simply does
+   * not exist, and the only reachable colours are the semantic roles below.
+   *
+   * `white`, `black` and the CSS-wide keywords are put back because scrims,
+   * overlays and inset highlights genuinely need a fixed reference that does
+   * not flip with the theme. */
+  --color-*: initial;
+  --color-white: #fff;
+  --color-black: #000;
+  --color-transparent: transparent;
+  --color-current: currentcolor;
+  --color-inherit: inherit;
+
+  /* --- Typography ------------------------------------------------------- */
+  /* One family for everything, plus a mono for figures. Headings are
+     separated from body text by weight and tight tracking rather than by a
+     second face — which is what gives the tight, current product look and
+     keeps the font payload to two files. */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+  --font-heading: var(--font-inter);
+
+  /* Below Tailwind's `text-xs`. Labels, swatch captions and figure numbers
+     genuinely need to sit under 12px; without these the only way to reach that
+     size is an arbitrary value, which the lint rule forbids. */
+  --text-3xs: 0.625rem;
+  --text-3xs--line-height: 1.4;
+  --text-2xs: 0.6875rem;
+  --text-2xs--line-height: 1.45;
+
+  /* Reading scale. Separate from the UI scale on purpose: lesson body text is
+     set larger and looser than interface text, because people read here for
+     long stretches. */
+  --text-prose-sm: 0.9375rem;
+  --text-prose-sm--line-height: 1.65;
+  --text-prose: 1.03125rem;
+  --text-prose--line-height: 1.7;
+  --text-prose-lg: 1.125rem;
+  --text-prose-lg--line-height: 1.65;
+
+  /* Display sizes carry negative tracking that tightens as they grow. */
+  --text-display-sm: 1.5rem;
+  --text-display-sm--line-height: 1.25;
+  --text-display-sm--letter-spacing: -0.019em;
+  --text-display: 2rem;
+  --text-display--line-height: 1.15;
+  --text-display--letter-spacing: -0.026em;
+  --text-display-lg: 2.75rem;
+  --text-display-lg--line-height: 1.08;
+  --text-display-lg--letter-spacing: -0.032em;
+  --text-display-xl: 3.75rem;
+  --text-display-xl--line-height: 1.02;
+  --text-display-xl--letter-spacing: -0.038em;
+
+  /* --- Measure ---------------------------------------------------------- */
+  /* In `ch`, not `px`. French runs 15–20% longer than English; a measure in
+     characters holds its reading comfort across both, a measure in pixels
+     does not. */
+  --measure-narrow: 46ch;
+  --measure-prose: 70ch;
+  --measure-wide: 90ch;
+
+  /* Page gutter width. `--container-*` is a Tailwind namespace, so this makes
+     `max-w-page` a real utility instead of a repeated arbitrary value. */
+  --container-page: 76rem;
+
+  /* --- Motion ----------------------------------------------------------- */
+  --duration-instant: 80ms;
+  --duration-fast: 140ms;
+  --duration-base: 200ms;
+  --duration-slow: 320ms;
+  --duration-deliberate: 480ms;
+
+  --ease-quiet: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-quiet-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-settle: cubic-bezier(0.34, 1.32, 0.64, 1);
+
+  /* --- Surfaces --------------------------------------------------------- */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-subtle: var(--subtle);
+  --color-subtle-foreground: var(--subtle-foreground);
+
+  /* --- Brand ------------------------------------------------------------ */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary-muted: var(--primary-muted);
+  /* The primary colour *as text on the page*, which is not the same value as
+   * the primary fill. A fill is tuned for its own foreground; text is tuned
+   * against the page. In dark mode the saturated fill measures 3.99:1 as a
+   * label on near-black, so links, eyebrows and progress figures use this
+   * instead. Same idea as `*-muted-foreground`, one surface further out. */
+  --color-primary-text: var(--primary-text);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  /* The vivid brand accent, distinct from `--accent`.
+   *
+   * shadcn's `--accent` is not a brand colour — it is the subtle interactive
+   * surface behind menu highlights, hovers and selected rows, used in 47
+   * places across the vendored components. Defining it as a saturated colour
+   * put a loud bar behind every dropdown item, and then chasing text contrast
+   * on it forced it dark and muddy. `--accent` is a neutral surface again;
+   * this is the colour that was actually wanted. */
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-muted: var(--brand-muted);
+  --color-brand-muted-foreground: var(--brand-muted-foreground);
+
+  /* --- Lines and focus -------------------------------------------------- */
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  /* The inset top highlight on raised surfaces. A role rather than a literal
+     `white/10` so it can be tuned per theme in one place. */
+  --color-highlight: var(--highlight);
+
+  /* --- Status ----------------------------------------------------------- */
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-destructive-muted: var(--destructive-muted);
+  --color-destructive-muted-foreground: var(--destructive-muted-foreground);
+  --color-destructive-text: var(--destructive-text);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-muted: var(--warning-muted);
+  --color-warning-muted-foreground: var(--warning-muted-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-muted: var(--success-muted);
+  --color-success-muted-foreground: var(--success-muted-foreground);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-muted: var(--info-muted);
+  --color-info-muted-foreground: var(--info-muted-foreground);
+
+  /* --- Market direction ------------------------------------------------- */
+  --color-gain: var(--gain);
+  --color-gain-muted: var(--gain-muted);
+  --color-loss: var(--loss);
+  --color-loss-muted: var(--loss-muted);
+  --color-flat: var(--flat);
+
+  /* --- Chart ------------------------------------------------------------ */
+  /* Charts sit inside lesson content and read as part of the page: the
+     surface is the page, the grid is barely there, the ink is the palette. */
+  --color-chart-surface: var(--chart-surface);
+  --color-chart-grid: var(--chart-grid);
+  --color-chart-axis: var(--chart-axis);
+  --color-chart-annotation: var(--chart-annotation);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* --- Learning states -------------------------------------------------- */
+  /* A subscription product shows "locked" constantly. It is a designed state
+     with its own role, never a redirect and never a disabled button. */
+  --color-locked: var(--locked);
+  --color-locked-foreground: var(--locked-foreground);
+  --color-locked-border: var(--locked-border);
+
+  --color-progress-track: var(--progress-track);
+  --color-progress-indicator: var(--progress-indicator);
+  --color-progress-complete: var(--progress-complete);
+
+  --color-free-preview: var(--free-preview);
+  --color-free-preview-foreground: var(--free-preview-foreground);
+
+  /* --- Sidebar (shadcn contract) ---------------------------------------- */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* --- Radius ----------------------------------------------------------- */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.35);
+  --radius-2xl: calc(var(--radius) * 1.7);
+  --radius-3xl: calc(var(--radius) * 2.1);
+  --radius-4xl: calc(var(--radius) * 2.5);
+
+  /* --- Elevation -------------------------------------------------------- */
+  --shadow-card: 0 1px 2px 0 var(--shadow-tint);
+  --shadow-raised: 0 1px 2px -1px var(--shadow-tint),
+    0 6px 16px -4px var(--shadow-tint);
+  --shadow-overlay: 0 8px 16px -6px var(--shadow-tint),
+    0 24px 48px -12px var(--shadow-tint-strong);
+  /* A coloured lift, for the primary action only. */
+  --shadow-brand: 0 1px 2px 0 var(--brand-tint), 0 8px 24px -8px var(--brand-tint);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ==========================================================================
+   Layer 1 — primitives. Not exposed as utilities. See the note above.
+   ========================================================================== */
+
+:root {
+  /* Neutral — cool, very slightly blue. Warm greys read as print; cool greys
+     read as software, which is what this is. */
+  --neutral-0: oklch(1 0 0);
+  --neutral-50: oklch(0.986 0.002 265);
+  --neutral-100: oklch(0.969 0.004 265);
+  --neutral-200: oklch(0.929 0.008 265);
+  --neutral-300: oklch(0.873 0.012 265);
+  --neutral-400: oklch(0.716 0.018 265);
+  --neutral-500: oklch(0.573 0.020 265);
+  --neutral-600: oklch(0.462 0.020 265);
+  --neutral-700: oklch(0.375 0.020 265);
+  --neutral-800: oklch(0.278 0.019 265);
+  --neutral-900: oklch(0.208 0.018 265);
+  --neutral-950: oklch(0.157 0.016 265);
+  --neutral-1000: oklch(0.121 0.014 265);
+
+  /* Indigo — the brand. Saturated and bright: this is the colour doing the
+     "vibrant" work, and everything else stays out of its way. */
+  --indigo-50: oklch(0.973 0.016 268);
+  --indigo-100: oklch(0.943 0.036 267);
+  --indigo-200: oklch(0.892 0.070 266);
+  --indigo-300: oklch(0.816 0.120 265);
+  --indigo-400: oklch(0.722 0.170 264);
+  --indigo-500: oklch(0.638 0.212 263);
+  --indigo-600: oklch(0.562 0.224 262);
+  --indigo-700: oklch(0.487 0.206 262);
+  --indigo-800: oklch(0.406 0.168 262);
+  --indigo-900: oklch(0.325 0.128 262);
+  --indigo-950: oklch(0.245 0.094 263);
+
+  /* Cyan — the accent. Sits far enough from indigo to register as a second
+     colour and close enough to belong to the same family. */
+  --cyan-100: oklch(0.951 0.038 205);
+  --cyan-200: oklch(0.902 0.072 203);
+  --cyan-300: oklch(0.849 0.108 201);
+  --cyan-400: oklch(0.779 0.134 198);
+  --cyan-500: oklch(0.707 0.140 196);
+  --cyan-600: oklch(0.611 0.128 197);
+  --cyan-700: oklch(0.545 0.116 198);
+  --cyan-800: oklch(0.420 0.084 200);
+
+  /* Violet — the brand accent. Far enough from the indigo primary to register
+     as a second colour, and clear of every status hue. */
+  --violet-100: oklch(0.947 0.034 305);
+  --violet-200: oklch(0.898 0.070 305);
+  --violet-300: oklch(0.828 0.118 304);
+  --violet-400: oklch(0.742 0.163 303);
+  --violet-500: oklch(0.658 0.208 302);
+  --violet-600: oklch(0.582 0.226 301);
+  --violet-800: oklch(0.418 0.166 301);
+
+  /* Emerald — success, completion, gain. */
+  --emerald-100: oklch(0.949 0.045 156);
+  --emerald-200: oklch(0.899 0.083 156);
+  --emerald-400: oklch(0.764 0.146 156);
+  --emerald-500: oklch(0.700 0.156 156);
+  --emerald-600: oklch(0.601 0.137 157);
+  --emerald-800: oklch(0.404 0.092 158);
+
+  /* Rose — loss. */
+  --rose-100: oklch(0.947 0.030 15);
+  --rose-200: oklch(0.898 0.058 14);
+  --rose-400: oklch(0.739 0.157 15);
+  --rose-500: oklch(0.652 0.196 16);
+  --rose-600: oklch(0.581 0.206 17);
+  --rose-800: oklch(0.398 0.146 17);
+
+  /* Amber — warning, and the risk disclaimers educational content is legally
+     required to carry. */
+  --amber-100: oklch(0.962 0.055 92);
+  --amber-200: oklch(0.921 0.098 88);
+  --amber-400: oklch(0.824 0.147 80);
+  --amber-500: oklch(0.762 0.152 72);
+  --amber-600: oklch(0.690 0.150 65);
+  --amber-800: oklch(0.462 0.104 62);
+
+  /* Red — destructive. The only genuinely loud colour in the system, and it
+     appears only where an action cannot be undone. */
+  --red-100: oklch(0.947 0.032 25);
+  --red-200: oklch(0.897 0.062 25);
+  --red-300: oklch(0.808 0.116 25);
+  --red-500: oklch(0.632 0.232 26);
+  --red-600: oklch(0.562 0.226 26);
+  --red-700: oklch(0.487 0.208 26);
+  --red-800: oklch(0.398 0.160 26);
+
+  --radius: 0.75rem;
+}
+
+/* ==========================================================================
+   Layer 2 — semantic roles, light.
+   ========================================================================== */
+
+:root {
+  --background: var(--neutral-0);
+  --foreground: var(--neutral-900);
+
+  --card: var(--neutral-0);
+  --card-foreground: var(--neutral-900);
+  --popover: var(--neutral-0);
+  --popover-foreground: var(--neutral-900);
+
+  --muted: var(--neutral-50);
+  /* neutral-600, not neutral-500: the lighter step measured 4.41:1 on white,
+     just under the 4.5 AA threshold. Secondary text is most of the words on a
+     catalog page, so "just under" is not a rounding error. */
+  --muted-foreground: var(--neutral-600);
+  --subtle: var(--neutral-100);
+  --subtle-foreground: var(--neutral-700);
+
+  --primary: var(--indigo-600);
+  --primary-foreground: var(--neutral-0);
+  --primary-muted: var(--indigo-50);
+  --primary-text: var(--indigo-700);
+
+  --secondary: var(--neutral-100);
+  --secondary-foreground: var(--neutral-800);
+
+  /* shadcn's contract: the subtle surface behind hovers, menu highlights and
+     selected rows. Neutral on purpose — a saturated fill here paints a bar
+     behind every dropdown item. */
+  --accent: var(--neutral-100);
+  --accent-foreground: var(--neutral-900);
+
+  --brand: var(--violet-600);
+  --brand-foreground: var(--neutral-0);
+  --brand-muted: var(--violet-100);
+  --brand-muted-foreground: var(--violet-800);
+
+  --border: var(--neutral-200);
+  --border-strong: var(--neutral-300);
+  --input: var(--neutral-300);
+  --ring: var(--indigo-500);
+
+  --destructive: var(--red-600);
+  --destructive-foreground: var(--neutral-0);
+  --destructive-muted: var(--red-100);
+  /* Text on the tinted surface, not on the page. The solid role is tuned for
+     white text on a saturated fill and measures 4.33:1 on its own tint —
+     under AA. Tinted badges and callouts get their own foreground, the same
+     pairing `free-preview` already uses. */
+  --destructive-muted-foreground: var(--red-800);
+  --destructive-text: var(--red-700);
+  --warning: var(--amber-600);
+  --warning-foreground: var(--neutral-0);
+  --warning-muted: var(--amber-100);
+  --warning-muted-foreground: var(--amber-800);
+  --success: var(--emerald-600);
+  --success-foreground: var(--neutral-0);
+  --success-muted: var(--emerald-100);
+  --success-muted-foreground: var(--emerald-800);
+  --info: var(--indigo-600);
+  --info-foreground: var(--neutral-0);
+  --info-muted: var(--indigo-50);
+  --info-muted-foreground: var(--indigo-800);
+
+  /* One step darker than the surface role: these are almost always small
+     text, and emerald-600 measured under AA on white. */
+  --gain: var(--emerald-800);
+  --gain-muted: var(--emerald-100);
+  --loss: var(--rose-800);
+  --loss-muted: var(--rose-100);
+  /* Read as small text ("0.00%"), not painted as a fill, so it needs text
+     contrast rather than a mid-grey. */
+  --flat: var(--neutral-600);
+
+  --chart-surface: transparent;
+  --chart-grid: var(--neutral-200);
+  --chart-axis: var(--neutral-400);
+  --chart-annotation: var(--indigo-600);
+  --chart-1: var(--indigo-500);
+  --chart-2: var(--cyan-600);
+  --chart-3: var(--emerald-500);
+  --chart-4: var(--amber-500);
+  --chart-5: var(--rose-500);
+
+  --locked: var(--neutral-50);
+  --locked-foreground: var(--neutral-600);
+  --locked-border: var(--neutral-200);
+
+  --progress-track: var(--neutral-200);
+  --progress-indicator: var(--indigo-600);
+  --progress-complete: var(--emerald-500);
+
+  --free-preview: var(--cyan-100);
+  --free-preview-foreground: var(--cyan-800);
+
+  --sidebar: var(--neutral-50);
+  --sidebar-foreground: var(--neutral-800);
+  --sidebar-primary: var(--indigo-600);
+  --sidebar-primary-foreground: var(--neutral-0);
+  --sidebar-accent: var(--neutral-100);
+  --sidebar-accent-foreground: var(--neutral-900);
+  --sidebar-border: var(--neutral-200);
+  --sidebar-ring: var(--indigo-500);
+
+  --highlight: oklch(1 0 0 / 0.22);
+
+  --shadow-tint: oklch(0.208 0.018 265 / 0.08);
+  --shadow-tint-strong: oklch(0.208 0.018 265 / 0.12);
+  --brand-tint: oklch(0.562 0.224 262 / 0.28);
+}
+
+/* ==========================================================================
+   Layer 2 — semantic roles, dark.
+
+   Dark is a first-class theme, not an inversion. People study in the evening,
+   so this is the mode a lot of reading happens in: the ground is a deep cool
+   neutral rather than pure black, the foreground stops short of pure white to
+   keep long reading comfortable, and brand hues are stepped lighter because
+   saturation reads weaker on dark ground.
+   ========================================================================== */
+
+.dark {
+  --background: var(--neutral-1000);
+  --foreground: var(--neutral-100);
+
+  --card: var(--neutral-950);
+  --card-foreground: var(--neutral-100);
+  --popover: var(--neutral-950);
+  --popover-foreground: var(--neutral-100);
+
+  --muted: oklch(0.929 0.008 265 / 0.05);
+  --muted-foreground: var(--neutral-400);
+  --subtle: oklch(0.929 0.008 265 / 0.09);
+  --subtle-foreground: var(--neutral-300);
+
+  /* Saturated, with light text — not inverted to a pale tint.
+     Flipping the brand to a pastel with dark text is the shadcn default, and
+     it reads as a light-mode button pasted onto a dark page: washed out, and
+     no longer recognisably the same colour as in daylight. Holding the hue and
+     dropping one step keeps the brand intact and still clears AA against
+     white. */
+  --primary: var(--indigo-600);
+  --primary-foreground: var(--neutral-50);
+  --primary-muted: oklch(0.325 0.128 262 / 0.45);
+  --primary-text: var(--indigo-300);
+
+  --secondary: oklch(0.929 0.008 265 / 0.1);
+  --secondary-foreground: var(--neutral-100);
+
+  --accent: oklch(0.929 0.008 265 / 0.1);
+  --accent-foreground: var(--neutral-100);
+
+  --brand: var(--violet-400);
+  --brand-foreground: var(--neutral-1000);
+  --brand-muted: oklch(0.418 0.166 301 / 0.35);
+  --brand-muted-foreground: var(--violet-200);
+
+  --border: oklch(0.929 0.008 265 / 0.12);
+  --border-strong: oklch(0.929 0.008 265 / 0.22);
+  --input: oklch(0.929 0.008 265 / 0.18);
+  --ring: var(--indigo-400);
+
+  /* red-600, not red-500: the brighter step measured 3.73:1 against white
+     text, under the 4.5 AA threshold. Destructive labels are the last thing
+     that should be hard to read. */
+  --destructive: var(--red-600);
+  --destructive-foreground: var(--neutral-50);
+  --destructive-muted: oklch(0.398 0.160 26 / 0.35);
+  --destructive-muted-foreground: var(--red-200);
+  --destructive-text: var(--red-300);
+  --warning: var(--amber-400);
+  --warning-foreground: var(--neutral-1000);
+  --warning-muted: oklch(0.462 0.104 62 / 0.35);
+  --warning-muted-foreground: var(--amber-200);
+  --success: var(--emerald-400);
+  --success-foreground: var(--neutral-1000);
+  --success-muted: oklch(0.404 0.092 158 / 0.35);
+  --success-muted-foreground: var(--emerald-200);
+  --info: var(--indigo-400);
+  --info-foreground: var(--neutral-1000);
+  --info-muted: oklch(0.325 0.128 262 / 0.45);
+  --info-muted-foreground: var(--indigo-200);
+
+  --gain: var(--emerald-400);
+  --gain-muted: oklch(0.404 0.092 158 / 0.35);
+  --loss: var(--rose-400);
+  --loss-muted: oklch(0.398 0.146 17 / 0.35);
+  --flat: var(--neutral-500);
+
+  --chart-surface: transparent;
+  --chart-grid: oklch(0.929 0.008 265 / 0.1);
+  --chart-axis: var(--neutral-500);
+  --chart-annotation: var(--indigo-300);
+  --chart-1: var(--indigo-400);
+  --chart-2: var(--cyan-400);
+  --chart-3: var(--emerald-400);
+  --chart-4: var(--amber-400);
+  --chart-5: var(--rose-400);
+
+  --locked: oklch(0.929 0.008 265 / 0.04);
+  --locked-foreground: var(--neutral-400);
+  --locked-border: oklch(0.929 0.008 265 / 0.14);
+
+  --progress-track: oklch(0.929 0.008 265 / 0.12);
+  --progress-indicator: var(--indigo-400);
+  --progress-complete: var(--emerald-400);
+
+  --free-preview: oklch(0.420 0.084 200 / 0.4);
+  --free-preview-foreground: var(--cyan-200);
+
+  --sidebar: var(--neutral-950);
+  --sidebar-foreground: var(--neutral-300);
+  --sidebar-primary: var(--indigo-400);
+  --sidebar-primary-foreground: var(--neutral-1000);
+  --sidebar-accent: oklch(0.929 0.008 265 / 0.09);
+  --sidebar-accent-foreground: var(--neutral-100);
+  --sidebar-border: oklch(0.929 0.008 265 / 0.12);
+  --sidebar-ring: var(--indigo-400);
+
+  /* Lower than light mode: on a dark ground a white inset line reads much
+     hotter at the same alpha. */
+  --highlight: oklch(1 0 0 / 0.12);
+
+  --shadow-tint: oklch(0 0 0 / 0.5);
+  --shadow-tint-strong: oklch(0 0 0 / 0.65);
+  --brand-tint: oklch(0.638 0.212 263 / 0.35);
+}
+
+/* ==========================================================================
+   Base
+   ========================================================================== */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    @apply font-sans;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-synthesis-weight: none;
+  }
+
+  /* Headings are separated from body text by weight and tracking, not by a
+     second typeface. */
+  h1,
+  h2,
+  h3 {
+    @apply font-heading;
+    letter-spacing: -0.02em;
+  }
+
+  /* Figures read as data: they align in columns and never jitter as they
+     tick. Free with both Inter and JetBrains Mono. */
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+
+  /* Anything that acts like a control gets the hand cursor.
+     Done once here rather than as a `cursor-pointer` sprinkled through every
+     shadcn component — those files get overwritten by `shadcn add`, this does
+     not. Disabled controls are excluded so they read as unavailable. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [role="tab"],
+  [role="radio"],
+  [role="checkbox"],
+  [role="switch"],
+  [role="menuitem"],
+  [role="menuitemcheckbox"],
+  [role="menuitemradio"],
+  [role="option"],
+  label[for],
+  summary {
+    cursor: pointer;
+  }
+
+  ::selection {
+    background-color: var(--primary-muted);
+    color: var(--foreground);
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* ==========================================================================
+   Motion
+
+   One global switch. Every animation in the product inherits it, so honouring
+   the preference is not something a component author has to remember.
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   Utilities
+   ========================================================================== */
+
+@utility measure-narrow {
+  max-width: var(--measure-narrow);
+}
+
+@utility measure-prose {
+  max-width: var(--measure-prose);
+}
+
+@utility measure-wide {
+  max-width: var(--measure-wide);
+}
+
+@utility numeric {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}
+
+/* A price chart has an irreducible amount of detail. Below this width the axis
+   labels stop being readable — measured at 6px on a 375px viewport before this
+   existed — so the figure scrolls horizontally instead of shrinking the type
+   into illegibility. */
+@utility chart-scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+
+  & > svg {
+    min-width: 34rem;
+  }
+}
+
+/* Named durations.
+   `--ease-*` is a Tailwind theme namespace, so `ease-quiet` is generated for
+   us. `--duration-*` is not, so without these the only way to reach a motion
+   token from a class would be an arbitrary value — which is exactly what the
+   no-arbitrary-values lint rule forbids. Declaring them as real utilities
+   keeps the tokens usable and the rule enforceable. */
+@utility duration-instant {
+  transition-duration: var(--duration-instant);
+}
+
+@utility duration-fast {
+  transition-duration: var(--duration-fast);
+}
+
+@utility duration-base {
+  transition-duration: var(--duration-base);
+}
+
+@utility duration-slow {
+  transition-duration: var(--duration-slow);
+}
+
+@utility duration-deliberate {
+  transition-duration: var(--duration-deliberate);
+}
+
+/* ==========================================================================
+   Motion recipes
+
+   Adapted from transitions.dev (Jakub Antalik). Those recipes ship their own
+   variable scale — `--check-rotate-dur`, `--shake-dur-a` and so on. Pasting it
+   in would give the project two competing motion vocabularies, so each recipe
+   is rewritten against our tokens instead. The characteristics that make them
+   good are kept; only the numbers are ours.
+
+   The scales already agreed on the important part: their default ease is
+   cubic-bezier(0.22, 1, 0.36, 1), which is exactly `--ease-quiet`, and their
+   bob ease is within 0.03 of `--ease-settle`.
+
+   Everything here is CSS. No animation runtime, nothing pulled into a client
+   bundle, and the global `prefers-reduced-motion` rule above already stops all
+   of it without any per-component handling.
+   ========================================================================== */
+
+/* Success check — fade, rotate, blur and a settle-bob, with the tick drawing
+   itself on a short delay. Used where something is confirmed correct or
+   complete. It is the one genuinely expressive animation in the product, and
+   it earns that by appearing at most once per interaction. */
+@keyframes success-check-in {
+  from {
+    opacity: 0;
+    transform: rotate(-70deg) translateY(35%);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes success-check-draw {
+  from {
+    stroke-dashoffset: 23;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@utility animate-success-check {
+  animation: success-check-in var(--duration-slow) var(--ease-settle) forwards;
+
+  & svg path {
+    /* Measured, not guessed: Lucide's check path (`M20 6 9 17l-5-5`) is
+       22.63 user units via `path.getTotalLength()`, so 23 is the tightest
+       value that still hides the stroke completely at full offset. A larger
+       number is not harmless — it finishes the draw early and leaves the tail
+       of the animation idle. Re-measure if the icon ever changes. */
+    stroke-dasharray: 23;
+    stroke-dashoffset: 23;
+    animation: success-check-draw var(--duration-slow) var(--ease-quiet)
+      var(--duration-instant) forwards;
+  }
+}
+
+/* Error shake — a decaying horizontal wobble. Deliberately small: this marks
+   a wrong quiz answer, and a violent shake reads as punishment to exactly the
+   nervous beginner this product is for. */
+@keyframes error-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@utility animate-error-shake {
+  animation: error-shake var(--duration-slow) var(--ease-quiet);
+}
+
+/* Accordion panel — the content fades and unblurs as the panel opens. Radix
+   already handles the height, so this adds only the part of the
+   transitions.dev recipe that Radix does not do. */
+@keyframes panel-reveal {
+  from {
+    opacity: 0;
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@utility animate-panel-reveal {
+  animation: panel-reveal var(--duration-base) var(--ease-quiet) forwards;
+}
+
+/* --------------------------------------------------------------------------
+   Overlays
+
+   The characteristic worth taking from these recipes is that open and close
+   are NOT symmetric. Opening is an intention and gets the slower curve;
+   closing is getting out of the way and should be quicker than you notice.
+   shadcn ships one duration for both, which is what makes stock dialogs feel
+   slightly sticky on dismiss.
+
+   Mapped by usage, not by number: the recipes' 250ms open is our
+   `--duration-base`, their 150ms close is our `--duration-fast`.
+
+   Radix sets `--radix-popper-transform-origin` on positioned content, so the
+   origin-aware growth the dropdown recipe orchestrates in JS comes free.
+   -------------------------------------------------------------------------- */
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes modal-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@utility animate-modal-in {
+  animation: modal-in var(--duration-base) var(--ease-quiet);
+}
+
+@utility animate-modal-out {
+  animation: modal-out var(--duration-fast) var(--ease-quiet);
+}
+
+/* Menus barely shrink on close (0.99, not 0.97). A menu that collapses as far
+   as it grew reads as being sucked backwards. */
+@keyframes menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes menu-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+
+@utility animate-menu-in {
+  animation: menu-in var(--duration-base) var(--ease-quiet);
+}
+
+@utility animate-menu-out {
+  animation: menu-out var(--duration-fast) var(--ease-quiet);
+}
+
+/* Tooltip — appear-only delay, instant exit. The delay is what stops a row of
+   icon buttons flashing tooltips as the pointer crosses them; dropping it on
+   exit is what stops the last one lingering after you have moved on. */
+@keyframes tooltip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes tooltip-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@utility animate-tooltip-in {
+  animation: tooltip-in var(--duration-fast) ease-out var(--duration-instant)
+    both;
+}
+
+@utility animate-tooltip-out {
+  animation: tooltip-out var(--duration-instant) ease-out;
+}
+
+/* --------------------------------------------------------------------------
+   Content
+   -------------------------------------------------------------------------- */
+
+/* Texts reveal — stacked lines rise and unblur with a stagger, so the eye
+   lands on the heading before the supporting line. Two children deep only;
+   a stagger that runs down a whole page becomes a page-load animation, which
+   is a different and much worse thing. */
+@keyframes texts-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+    filter: blur(3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+
+@utility animate-texts-reveal {
+  & > * {
+    animation: texts-reveal var(--duration-deliberate) var(--ease-quiet) both;
+  }
+
+  & > *:nth-child(2) {
+    animation-delay: 40ms;
+  }
+
+  & > *:nth-child(3) {
+    animation-delay: 80ms;
+  }
+
+  & > *:nth-child(n + 4) {
+    animation-delay: 120ms;
+  }
+}
+
+/* Skeleton → content. The placeholder pulses, then the real content
+   cross-fades and unblurs in its place rather than snapping. */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+@utility animate-skeleton-pulse {
+  animation: skeleton-pulse 1.6s var(--ease-quiet-in-out) infinite;
+}
+
+/* Icon swap — two icons share one grid cell and cross-fade through a blur and
+   a scale, instead of one popping out as the other pops in. */
+@utility icon-swap-slot {
+  display: inline-grid;
+  place-items: center;
+
+  & > * {
+    grid-area: 1 / 1;
+    transition:
+      opacity var(--duration-base) var(--ease-quiet-in-out),
+      filter var(--duration-base) var(--ease-quiet-in-out),
+      transform var(--duration-base) var(--ease-quiet-in-out);
+  }
+}
+
+@utility icon-swap-hidden {
+  opacity: 0;
+  filter: blur(2px);
+  transform: scale(0.25);
+}
+
+@utility icon-swap-shown {
+  opacity: 1;
+  filter: blur(0);
+  transform: scale(1);
+}
+
+/* The brand gradient. One definition, used for hero type and nothing else —
+   a gradient that appears in three places stops being a signature. */
+@utility text-brand-gradient {
+  background-image: linear-gradient(
+    100deg,
+    var(--indigo-600) 0%,
+    var(--indigo-400) 45%,
+    var(--violet-500) 100%
+  );
+  background-clip: text;
+  color: transparent;
+}
+
+/* ==========================================================================
+   Lesson prose
+
+   Deliberately not @tailwindcss/typography: that plugin ships its own colour
+   and spacing opinions, which is exactly what a token system exists to own.
+   This is small enough to keep.
+   ========================================================================== */
+
+@layer components {
+  .prose-lesson {
+    font-size: var(--text-prose);
+    line-height: 1.7;
+    color: var(--subtle-foreground);
+  }
+
+  .prose-lesson > * + * {
+    margin-block-start: 1.15em;
+  }
+
+  .prose-lesson h2 {
+    font-size: var(--text-display-sm);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.019em;
+    color: var(--foreground);
+    margin-block-start: 2em;
+    margin-block-end: 0.6em;
+  }
+
+  .prose-lesson h3 {
+    font-size: 1.1875rem;
+    font-weight: 600;
+    line-height: 1.35;
+    letter-spacing: -0.014em;
+    color: var(--foreground);
+    margin-block-start: 1.75em;
+    margin-block-end: 0.5em;
+  }
+
+  .prose-lesson strong {
+    font-weight: 600;
+    color: var(--foreground);
+  }
+
+  .prose-lesson a {
+    color: var(--primary-text);
+    font-weight: 500;
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+    text-decoration-thickness: 0.07em;
+    text-decoration-color: color-mix(in oklch, var(--primary), transparent 65%);
+    transition: text-decoration-color var(--duration-fast) var(--ease-quiet);
+  }
+
+  .prose-lesson a:hover {
+    text-decoration-color: var(--primary);
+  }
+
+  .prose-lesson ul,
+  .prose-lesson ol {
+    padding-inline-start: 1.4em;
+  }
+
+  .prose-lesson ul {
+    list-style: disc;
+  }
+
+  .prose-lesson ol {
+    list-style: decimal;
+  }
+
+  .prose-lesson li + li {
+    margin-block-start: 0.4em;
+  }
+
+  .prose-lesson li::marker {
+    color: var(--border-strong);
+  }
+
+  .prose-lesson blockquote {
+    border-inline-start: 2px solid var(--primary);
+    padding-inline-start: 1.1em;
+    color: var(--muted-foreground);
+  }
+
+  .prose-lesson code {
+    font-family: var(--font-mono);
+    font-size: 0.875em;
+    background: var(--subtle);
+    color: var(--foreground);
+    padding: 0.15em 0.4em;
+    border-radius: var(--radius-sm);
+  }
 }
