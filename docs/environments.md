@@ -81,6 +81,12 @@ Buttons for a client error, a server error, and an analytics event, plus a reado
 
 The token lives in `OBSERVABILITY_DEBUG_TOKEN`, set in Vercel for both Preview and Production, and in `.env.local` for local.
 
+### Managing Vercel environment variables
+
+**`vercel env rm NAME development` deletes the entire variable, not just its Development target.** The `[environment]` argument does not narrow the deletion. To remove one scope from a variable that spans several, edit it in the Vercel dashboard. To remove a variable that exists only in one scope, the CLI is fine.
+
+The Supabase integration scopes its variables to Production, Preview and Development. Every actual secret has been removed from Development — password, connection strings, JWT secret, service-role and secret keys. What remains Development-scoped is public by design (project URL, host, database name, anon/publishable keys), so it is not worth another delete-and-restore to clean up.
+
 ### Using monitoring in new code
 
 This wiring only pays off if new code actually uses it. The conventions:
