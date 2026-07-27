@@ -19,7 +19,7 @@ Today the production database has **no schema and no user data**. There is nothi
 - One less project, one less set of migrations and keys to keep aligned. Preview genuinely tests against production-shaped infrastructure.
 - **A preview deployment can write to production data.** Right now that means writing to an empty database. Later it means a branch in progress corrupting real learner progress.
 - `vercel env pull` gives production credentials on a laptop. This is why [docs/environments.md](../environments.md) forbids it for daily development and why local runs entirely on Docker.
-- Destructive migrations are the sharpest edge: a migration run from a preview branch hits production directly.
+- Destructive migrations are the sharpest edge, and sharper than first assessed: the Supabase GitHub integration applies migrations to production **automatically on merge to `main`**. Nobody runs a deploy command, so there is no moment where someone pauses and reconsiders. The pull request is the only review gate, and preview reads the same database — so one bad migration reaches production data and every preview simultaneously.
 
 ## Reversal trigger
 

@@ -67,8 +67,19 @@ Two migration systems in one repo is the classic Supabase + Drizzle failure — 
 ```bash
 npm run db:generate         # schema change → SQL migration
 npm run db:reset            # replay every migration from empty
-supabase db push            # deploy migrations to Paris (deliberate, separate step)
+supabase migration list     # compare local history against Paris
 ```
+
+### Migrations deploy themselves
+
+**A migration merged to `main` is applied to the production database automatically**, by the Supabase GitHub integration. Nobody runs `supabase db push`; by the time you think to, it has already happened.
+
+This was discovered by testing rather than by reading — the deployed app reported `profileTableExists: true` on a database nothing had knowingly pushed to, and `supabase migration list` confirmed both migrations were already applied remotely.
+
+Two consequences worth holding onto:
+
+- **The pull request is the only review gate.** There is no second chance between merge and production.
+- **Blast radius is larger than it looks.** Preview shares the production database ([ADR-0010](decisions/0010-no-staging-database.md)), so a destructive migration reaches production data and every preview at once. Harmless today because there is no data. Not harmless after the ADR-0010 reversal trigger.
 
 ### Rules
 
