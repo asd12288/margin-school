@@ -975,6 +975,25 @@
   animation: skeleton-pulse 1.6s var(--ease-quiet-in-out) infinite;
 }
 
+/* Route progress — a top-level indeterminate crawl for navigations too slow
+   for the link's own pending underline to be reassurance enough. The real
+   duration is unknowable, so it eases toward "almost done" and holds. */
+@keyframes route-progress {
+  0% {
+    transform: scaleX(0);
+  }
+  40% {
+    transform: scaleX(0.7);
+  }
+  100% {
+    transform: scaleX(0.95);
+  }
+}
+
+@utility animate-route-progress {
+  animation: route-progress 8s var(--ease-quiet) forwards;
+}
+
 /* Icon swap — two icons share one grid cell and cross-fade through a blur and
    a scale, instead of one popping out as the other pops in. */
 @utility icon-swap-slot {
