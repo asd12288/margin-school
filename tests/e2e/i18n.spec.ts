@@ -30,11 +30,45 @@ test("serves English at /en and announces it", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("404s an unknown locale rather than falling back", async ({ page }) => {
-  // Silently rendering `/de/…` in French would hand Google a page whose `lang`
-  // attribute lies about its content.
-  const response = await page.goto("/de");
+test.describe("404s an unknown locale rather than falling back", () => {
+  // `/de/…` carries no recognised locale, so the middleware redirect that
+  // adds a prefix negotiates one from `Accept-Language` — same as the bare
+  // `/` redirect above. Pinning the browser's locale to French makes that
+  // negotiation land on `/fr/de/…` deterministically, rather than depending
+  // on whatever language the test runner happens to default to.
+  test.use({ locale: "fr-FR" });
+
+  test("404s an unknown locale rather than falling back", async ({
+    page,
+  }) => {
+    // Silently rendering `/de/…` in French would hand Google a page whose
+    // `lang` attribute lies about its content.
+    const response = await page.goto("/de/anything");
+    expect(response?.status()).toBe(404);
+    // Asserts the rendered UI, not just the status — the previous version of
+    // this test passed identically whether our styled 404 or Next's own
+    // generic page rendered.
+    await expect(page.getByText("Cette page n'existe pas")).toBeVisible();
+    await expect(
+      page.getByText("This page could not be found")
+    ).not.toBeVisible();
+  });
+});
+
+test("404s an unmatched URL under /en with English copy", async ({
+  page,
+}) => {
+  // The deleted `global-not-found.tsx` reconstructed the locale from the
+  // `NEXT_LOCALE` cookie, which next-intl only sets when the negotiated
+  // locale differs from the default — so an English visitor whose cookie was
+  // never set silently got French. The catch-all route reads the locale from
+  // the URL segment instead, so this must render English.
+  const response = await page.goto("/en/not-a-page");
   expect(response?.status()).toBe(404);
+  await expect(page.getByText("This page does not exist")).toBeVisible();
+  await expect(
+    page.getByText("This page could not be found")
+  ).not.toBeVisible();
 });
 
 test("keeps the locale when following an internal link", async ({ page }) => {
