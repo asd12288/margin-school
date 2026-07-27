@@ -56,7 +56,7 @@ export default function DesignSystemPage() {
   return (
     <div className="min-h-full bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
-        <div className="mx-auto flex max-w-[76rem] items-center gap-6 px-6 py-3.5">
+        <div className="mx-auto flex max-w-page items-center gap-6 px-6 py-3.5">
           <div className="flex min-w-0 flex-col">
             <span className="font-heading text-base font-semibold text-foreground">
               Margin School
@@ -91,7 +91,7 @@ export default function DesignSystemPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[76rem] px-6 py-14">
+      <main className="mx-auto max-w-page px-6 py-14">
         <div className="measure-wide">
           <h1 className="text-brand-gradient font-heading text-display-lg font-bold">
             Design system

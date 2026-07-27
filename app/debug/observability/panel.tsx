@@ -144,7 +144,7 @@ function Row({
         {label}
       </button>
       {result ? (
-        <span className={result.ok ? "text-green-600" : "text-amber-600"}>
+        <span className={result.ok ? "text-success" : "text-warning"}>
           {result.ok ? "✓" : "✗"} {result.text}
         </span>
       ) : null}

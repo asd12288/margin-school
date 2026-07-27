@@ -60,8 +60,16 @@ function SelectTrigger({
 function SelectContent({
   className,
   children,
-  position = "item-aligned",
-  align = "center",
+  // Upstream defaults to "item-aligned", which overlays the menu on top of the
+  // trigger with the selected option covering it — the native macOS idiom. On
+  // the web it reads as a rendering fault: the control you just clicked
+  // disappears underneath its own menu. It also suppresses the open animation,
+  // since the component sets `data-[align-trigger=true]:animate-none`.
+  //
+  // "popper" drops the menu below the trigger, keeps the trigger visible, and
+  // lets the menu share the same origin-aware open as every other overlay.
+  position = "popper",
+  align = "start",
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (

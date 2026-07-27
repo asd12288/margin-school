@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
+import { isComplete, toPercent } from "@/lib/progress";
 
 /**
  * Progress, at three scales.
@@ -13,11 +14,6 @@ import { cn } from "@/lib/utils";
  *
  * Every one of them takes its accessible label as a prop. None contain copy.
  */
-
-function percent(completed: number, total: number) {
-  if (total <= 0) return 0;
-  return Math.min(100, Math.max(0, Math.round((completed / total) * 100)));
-}
 
 /* -------------------------------------------------------------------------
    Bar — lesson and chapter scale
@@ -35,8 +31,8 @@ function ProgressBar({
   /** Accessible name, e.g. "11 of 18 lessons complete". */
   label: string;
 }) {
-  const value = percent(completed, total);
-  const done = value === 100;
+  const value = toPercent(completed, total);
+  const done = isComplete(completed, total);
 
   return (
     <div
@@ -80,8 +76,8 @@ function ProgressRing({
   label: string;
   size?: number;
 }) {
-  const value = percent(completed, total);
-  const done = value === 100;
+  const value = toPercent(completed, total);
+  const done = isComplete(completed, total);
   const stroke = 3;
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -126,7 +122,7 @@ function ProgressRing({
         aria-hidden
         data-numeric
         className={cn(
-          "absolute inset-0 flex items-center justify-center text-[0.625rem] font-medium",
+          "absolute inset-0 flex items-center justify-center text-3xs font-medium",
           done ? "text-progress-complete" : "text-muted-foreground"
         )}
       >
@@ -156,6 +152,11 @@ function ProgressRail({
   return (
     <div
       data-slot="progress-rail"
+      // `aria-label` is prohibited on a element with no role — a bare div is
+      // `generic`, and a name on it is dropped by some screen readers and
+      // flagged by axe. `role="img"` is the honest description: a single
+      // graphic summarising position, whose meaning is entirely in the label.
+      role="img"
       aria-label={label}
       className={cn("flex items-center gap-1", className)}
       {...props}

@@ -174,7 +174,7 @@ function ProgressShowcase() {
     >
       <div className="grid gap-8 md:grid-cols-3">
         <div className="flex flex-col gap-3">
-          <code className="font-mono text-[11px] text-muted-foreground">
+          <code className="font-mono text-2xs text-muted-foreground">
             ProgressBar — lesson and chapter
           </code>
           <ProgressBar completed={11} total={18} label="11 of 18 complete" />
@@ -183,7 +183,7 @@ function ProgressShowcase() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <code className="font-mono text-[11px] text-muted-foreground">
+          <code className="font-mono text-2xs text-muted-foreground">
             ProgressRing — course card
           </code>
           <div className="flex items-center gap-4">
@@ -194,7 +194,7 @@ function ProgressShowcase() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <code className="font-mono text-[11px] text-muted-foreground">
+          <code className="font-mono text-2xs text-muted-foreground">
             ProgressRail — position in a chapter
           </code>
           <ProgressRail
@@ -214,7 +214,7 @@ function ProgressShowcase() {
       </div>
 
       <div className="mt-10 flex flex-col gap-3">
-        <code className="font-mono text-[11px] text-muted-foreground">
+        <code className="font-mono text-2xs text-muted-foreground">
           ConceptChip — mastery attaches here, never to a lesson (ADR-0004)
         </code>
         <div className="flex flex-wrap gap-2">
@@ -342,7 +342,7 @@ function LoadingShowcase() {
     >
       <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-3">
-          <code className="font-mono text-[11px] text-muted-foreground">
+          <code className="font-mono text-2xs text-muted-foreground">
             CourseGridSkeleton — three placeholders, never a guess at the real count
           </code>
           <CourseGridSkeleton count={3} />
@@ -350,13 +350,13 @@ function LoadingShowcase() {
 
         <div className="grid gap-8 lg:grid-cols-2">
           <div className="flex flex-col gap-3">
-            <code className="font-mono text-[11px] text-muted-foreground">
+            <code className="font-mono text-2xs text-muted-foreground">
               CurriculumSkeleton
             </code>
             <CurriculumSkeleton chapters={3} />
           </div>
           <div className="flex flex-col gap-3">
-            <code className="font-mono text-[11px] text-muted-foreground">
+            <code className="font-mono text-2xs text-muted-foreground">
               LessonSkeleton
             </code>
             <LessonSkeleton />

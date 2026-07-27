@@ -21,7 +21,7 @@ export function ConsentBanner() {
     <div
       role="dialog"
       aria-label="Analytics consent"
-      className="fixed inset-x-0 bottom-0 z-50 flex flex-col gap-3 border-t border-black/10 bg-white p-4 text-sm text-black sm:flex-row sm:items-center sm:justify-between dark:border-white/15 dark:bg-neutral-900 dark:text-white"
+      className="fixed inset-x-0 bottom-0 z-50 flex flex-col gap-3 border-t border-border bg-card p-4 text-sm text-card-foreground shadow-overlay sm:flex-row sm:items-center sm:justify-between"
     >
       <p className="max-w-2xl">
         We use analytics to understand how the courses are used. Nothing is
@@ -38,7 +38,7 @@ export function ConsentBanner() {
         <button
           type="button"
           onClick={grantAnalyticsConsent}
-          className="rounded bg-black px-3 py-1.5 text-white dark:bg-white dark:text-black"
+          className="rounded-md bg-primary px-3 py-1.5 font-medium text-primary-foreground shadow-brand ring-1 ring-highlight ring-inset transition-colors duration-fast ease-quiet hover:bg-primary/90"
         >
           Accept
         </button>

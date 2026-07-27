@@ -185,6 +185,37 @@ That is AGENTS.md rule 7 working rather than a shortcut around it: `next-intl` i
 
 [lib/fixtures/content.ts](../lib/fixtures/content.ts) types and data match [content-model.md](content-model.md), which asks for exactly this: *"build components against fixtures in this shape."* When Phase 1 lands, the types become the Drizzle inferred types and the data becomes real queries — nothing in `components/margin/` should need to change.
 
+## Enforcement
+
+Three things stop the system drifting, and none of them rely on anyone remembering:
+
+1. **Primitives are unreachable.** The ramps stay out of `@theme`, *and* Tailwind's own palette is cleared with `--color-*: initial`. Without that second half the first is an illusion — Tailwind ships `indigo`, `red`, `neutral` and nineteen more, so `bg-indigo-600` resolved happily to *Tailwind's* indigo, a different colour from the brand with nothing to signal it.
+2. **A lint rule bans arbitrary design values.** `bg-[#0af]`, `p-[13px]`, `text-[11px]` fail the build. Structural escapes stay legal — `transition-[…]` is a property list, `grid-cols-[repeat(…)]` is a layout algorithm, `data-[state=open]:` is a variant. Scoped to our code; `components/ui/**` is vendored and excluded.
+3. **Tests assert the invariants**, including the ones a human eye cannot check.
+
+## Tests
+
+```bash
+npm test        # vitest — tokens, progress maths, cover determinism, fixtures
+npm run test:e2e   # playwright — a11y, contrast, theme, tabs; runs a prod build
+```
+
+`tests/unit/tokens.test.ts` compiles the real stylesheet and asserts which class names produce rules — that semantic roles do and primitive ramps do not. It is the test that would have caught the palette collision above, and it did.
+
+`tests/e2e/contrast.spec.ts` measures contrast on the rendered page in both themes. It converts `lab()` (what the browser actually returns) to linear sRGB and composites alpha over the page background — a translucent `--secondary` reads as ~1:1 otherwise, which would either fail the build for nothing or pass something unreadable. It self-checks by asserting white-on-black is exactly 21.
+
+### Known gap
+
+`design-system.spec.ts` currently **fails** its axe check on three remaining `color-contrast` nodes in light mode:
+
+| Foreground | Background | Ratio |
+| --- | --- | --- |
+| `#adc8bc` | `#f2fdf5` | 1.71 |
+| `#bfc0c4` | `#ffffff` | 1.81 |
+| `#9a9da4` | `#ffffff` | 2.71 |
+
+Left failing on purpose rather than weakened to green — a suite that passes by lowering its own bar is worse than one that names the defect. These are small decorative labels; they need the same solid-role → `*-muted-foreground` treatment already applied to badges, chips and locale hints.
+
 ## Open
 
 - **`next-intl` is not installed.** Until it is, callers pass English literals. The component contracts are already the right shape.

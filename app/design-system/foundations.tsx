@@ -57,7 +57,7 @@ function Swatch({
           className
         )}
       />
-      <code className="font-mono text-[11px] text-muted-foreground">{name}</code>
+      <code className="font-mono text-2xs text-muted-foreground">{name}</code>
     </div>
   );
 }
@@ -189,7 +189,7 @@ function TypographyFoundations() {
               { cls: "text-display-sm", name: "text-display-sm" },
             ].map(({ cls, name }) => (
               <div key={name} className="flex flex-col gap-1">
-                <code className="font-mono text-[11px] text-muted-foreground">
+                <code className="font-mono text-2xs text-muted-foreground">
                   {name}
                 </code>
                 <p className={cn("font-heading font-semibold text-foreground", cls)}>
@@ -211,7 +211,7 @@ function TypographyFoundations() {
               { cls: "text-prose-sm", name: "text-prose-sm" },
             ].map(({ cls, name }) => (
               <div key={name} className="flex flex-col gap-1">
-                <code className="font-mono text-[11px] text-muted-foreground">
+                <code className="font-mono text-2xs text-muted-foreground">
                   {name}
                 </code>
                 <p className={cn("measure-prose text-foreground", cls)}>
@@ -231,7 +231,7 @@ function TypographyFoundations() {
           <div className="flex flex-col gap-3">
             {["text-base", "text-sm", "text-xs"].map((cls) => (
               <div key={cls} className="flex items-baseline gap-4">
-                <code className="w-24 shrink-0 font-mono text-[11px] text-muted-foreground">
+                <code className="w-24 shrink-0 font-mono text-2xs text-muted-foreground">
                   {cls}
                 </code>
                 <p className={cn("font-sans text-foreground", cls)}>
@@ -275,7 +275,7 @@ function TypographyFoundations() {
               { cls: "measure-wide", name: "measure-wide — 88ch" },
             ].map(({ cls, name }) => (
               <div key={cls} className={cn("rounded-lg bg-muted p-3", cls)}>
-                <code className="font-mono text-[11px] text-muted-foreground">
+                <code className="font-mono text-2xs text-muted-foreground">
                   {name}
                 </code>
               </div>
@@ -307,7 +307,7 @@ function MotionFoundations() {
               key={name}
               className="flex flex-col gap-1 rounded-lg border border-border bg-card p-3"
             >
-              <code className="font-mono text-[11px] text-foreground">{name}</code>
+              <code className="font-mono text-2xs text-foreground">{name}</code>
               <span data-numeric className="font-mono text-xs text-accent">
                 {value}
               </span>
@@ -326,7 +326,7 @@ function MotionFoundations() {
               key={name}
               className="flex flex-col gap-1 rounded-lg border border-border bg-card p-3"
             >
-              <code className="font-mono text-[11px] text-foreground">{name}</code>
+              <code className="font-mono text-2xs text-foreground">{name}</code>
               <span className="text-xs text-muted-foreground">{use}</span>
             </div>
           ))}
@@ -349,7 +349,7 @@ function ShapeFoundations() {
             (cls) => (
               <div key={cls} className="flex flex-col gap-1.5">
                 <div className={cn("h-14 border border-border-strong bg-muted", cls)} />
-                <code className="font-mono text-[11px] text-muted-foreground">
+                <code className="font-mono text-2xs text-muted-foreground">
                   {cls}
                 </code>
               </div>
@@ -361,7 +361,7 @@ function ShapeFoundations() {
           {["shadow-card", "shadow-raised", "shadow-overlay"].map((cls) => (
             <div key={cls} className="flex flex-col gap-2">
               <div className={cn("h-20 rounded-xl border border-border bg-card", cls)} />
-              <code className="font-mono text-[11px] text-muted-foreground">
+              <code className="font-mono text-2xs text-muted-foreground">
                 {cls}
               </code>
             </div>

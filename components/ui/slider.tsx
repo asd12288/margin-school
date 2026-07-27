@@ -49,6 +49,13 @@ function Slider({
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
           key={index}
+          // The thumb — not the root — carries `role="slider"`, so it is the
+          // thing that needs the accessible name. Upstream forwards nothing,
+          // which fails axe's `aria-input-field-name` even when the root has a
+          // perfectly good `<Label htmlFor>`: the label names the group, and
+          // the control it points at is not the one announced.
+          aria-label={props["aria-label"]}
+          aria-labelledby={props["aria-labelledby"]}
           className="relative block size-3 shrink-0 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] select-none after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 disabled:pointer-events-none disabled:opacity-50"
         />
       ))}

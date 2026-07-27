@@ -31,25 +31,29 @@ function CourseCardSkeleton({ className, ...props }: React.ComponentProps<"div">
     <div
       data-slot="course-card-skeleton"
       className={cn(
-        "flex flex-col rounded-xl border border-border bg-card p-5 shadow-card",
+        "flex flex-col overflow-hidden rounded-xl border border-border bg-card shadow-card",
         className
       )}
       {...props}
     >
-      <div className="flex items-start justify-between gap-4">
+      {/* Mirrors the card exactly: 16:9 cover, eyebrow, two-line title, two
+          lines of summary, then the meta row. It previously carried a round
+          placeholder for a progress ring the card no longer has — a skeleton
+          that has drifted from its component is worse than none, because it
+          guarantees a layout shift on load. */}
+      <Skeleton className="aspect-video w-full rounded-none" />
+      <div className="flex grow flex-col p-4">
         <Skeleton className="h-3 w-20" />
-        <Skeleton className="size-[34px] rounded-4xl" />
-      </div>
-      <Skeleton className="mt-3 h-5 w-4/5" />
-      <div className="mt-3 flex flex-col gap-2">
-        <Skeleton className="h-3.5 w-full" />
-        <Skeleton className="h-3.5 w-full" />
-        <Skeleton className="h-3.5 w-2/3" />
-      </div>
-      <div className="mt-5 flex gap-3">
-        <Skeleton className="h-3 w-14" />
-        <Skeleton className="h-3 w-16" />
-        <Skeleton className="h-3 w-16" />
+        <Skeleton className="mt-2.5 h-4 w-4/5" />
+        <div className="mt-2.5 flex flex-col gap-2">
+          <Skeleton className="h-3.5 w-full" />
+          <Skeleton className="h-3.5 w-3/5" />
+        </div>
+        <div className="mt-4 flex gap-3">
+          <Skeleton className="h-3 w-12" />
+          <Skeleton className="h-3 w-16" />
+          <Skeleton className="h-3 w-16" />
+        </div>
       </div>
     </div>
   );
@@ -65,7 +69,7 @@ function CourseGridSkeleton({
       data-slot="course-grid-skeleton"
       aria-busy
       className={cn(
-        "grid grid-cols-[repeat(auto-fill,minmax(19rem,1fr))] gap-4",
+        "grid grid-cols-[repeat(auto-fill,minmax(17.5rem,1fr))] gap-5",
         className
       )}
       {...props}
@@ -104,7 +108,7 @@ function LessonSkeleton({ className, ...props }: React.ComponentProps<"div">) {
           <Skeleton key={i} className={cn("h-4", w)} />
         ))}
       </div>
-      <Skeleton className="mt-8 h-[300px] w-full rounded-xl" />
+      <Skeleton className="mt-8 aspect-[720/300] w-full rounded-xl" />
       <div className="mt-8 flex flex-col gap-3">
         {lines.slice(4).map((w, i) => (
           <Skeleton key={i} className={cn("h-4", w)} />

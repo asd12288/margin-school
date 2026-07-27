@@ -5,6 +5,7 @@ import { CourseCover } from "@/components/margin/course-cover";
 import { FreePreviewBadge, MetaRow, MetaStat } from "@/components/margin/meta";
 import { UnavailableInLocaleHint } from "@/components/margin/states";
 import { cn } from "@/lib/utils";
+import { isComplete, toPercent } from "@/lib/progress";
 import type { Course, CourseProgress } from "@/lib/fixtures/content";
 
 /**
@@ -67,12 +68,11 @@ function CourseCard({
   const locked = course.accessState !== null;
   const started = progress !== undefined && progress.lessonsCompleted > 0;
   const percent = progress
-    ? Math.min(
-        100,
-        Math.round((progress.lessonsCompleted / progress.lessonsTotal) * 100)
-      )
+    ? toPercent(progress.lessonsCompleted, progress.lessonsTotal)
     : 0;
-  const complete = percent === 100;
+  const complete = progress
+    ? isComplete(progress.lessonsCompleted, progress.lessonsTotal)
+    : false;
 
   return (
     <article
@@ -180,7 +180,7 @@ function CourseCard({
                 data-numeric
                 className={cn(
                   "text-xs font-medium",
-                  complete ? "text-progress-complete" : "text-primary"
+                  complete ? "text-gain" : "text-primary"
                 )}
               >
                 {labels.progressShort}

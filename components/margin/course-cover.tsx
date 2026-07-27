@@ -2,6 +2,7 @@ import * as React from "react";
 import Image from "next/image";
 
 import { cn } from "@/lib/utils";
+import { coverGradient, coverSeriesPath } from "@/lib/cover";
 
 /**
  * A course cover.
@@ -21,32 +22,6 @@ import { cn } from "@/lib/utils";
  * Deterministic matters: the same course keeps the same cover across renders
  * and reloads, so people navigate by it.
  */
-
-/** FNV-1a. Small, stable, and no dependency. */
-function hash(input: string) {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < input.length; i += 1) {
-    h ^= input.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  return Math.abs(h);
-}
-
-/** A rising-then-settling path, varied by seed. Not real market data — it is
- *  ornament, and pretending otherwise would be its own kind of lie. */
-function seriesPath(seed: number) {
-  const points = 9;
-  let d = "";
-  for (let i = 0; i < points; i += 1) {
-    const x = (i / (points - 1)) * 100;
-    // Deterministic pseudo-noise around a gentle upward drift.
-    const noise = ((seed >> (i * 2)) & 0x0f) / 15;
-    const drift = 1 - i / (points - 1);
-    const y = 18 + drift * 34 + noise * 22;
-    d += `${i === 0 ? "M" : "L"}${x.toFixed(1)},${y.toFixed(1)} `;
-  }
-  return d.trim();
-}
 
 function CourseCover({
   courseId,
@@ -79,16 +54,7 @@ function CourseCover({
     );
   }
 
-  const seed = hash(courseId);
-
-  // Every cover is mixed from the same three cool chart hues — indigo, cyan,
-  // emerald — and varies only in mix ratio and angle. Drawing freely from the
-  // full palette instead would put an amber cover next to a rose one and make
-  // a catalog page look like a swatch book; this way the grid reads as one
-  // wall while each course still keeps a cover you can navigate by.
-  const angle = 120 + (seed % 5) * 15;
-  const mixFrom = (seed % 4) * 22;
-  const mixTo = ((seed >> 4) % 4) * 22;
+  const { angle, mixFrom, mixTo } = coverGradient(courseId);
 
   return (
     <div
@@ -112,11 +78,11 @@ function CourseCover({
           </linearGradient>
         </defs>
         <path
-          d={`${seriesPath(seed)} L100,64 L0,64 Z`}
+          d={`${coverSeriesPath(courseId)} L100,64 L0,64 Z`}
           fill={`url(#fade-${courseId})`}
         />
         <path
-          d={seriesPath(seed)}
+          d={coverSeriesPath(courseId)}
           fill="none"
           stroke="var(--highlight)"
           strokeWidth={1.5}

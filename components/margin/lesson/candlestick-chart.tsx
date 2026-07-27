@@ -31,6 +31,10 @@ const PAD_TOP = 16;
 const PAD_BOTTOM = 28;
 const PAD_RIGHT = 52;
 const PAD_LEFT = 8;
+// In viewBox units, not CSS pixels. At the 34rem minimum width the figure
+// scrolls to, this lands at roughly 10px on screen — the floor for a legible
+// axis label.
+const AXIS_FONT_SIZE = 13;
 
 export interface CandlestickChartLabels {
   /** Accessible summary of the figure, e.g. "EURUSD daily, 1 to 16 June". */
@@ -124,7 +128,8 @@ function CandlestickChart({
               x={VIEW_W - PAD_RIGHT + 8}
               y={y(price)}
               dominantBaseline="middle"
-              className="fill-chart-axis font-mono text-[13px]"
+              className="fill-chart-axis font-mono"
+              fontSize={AXIS_FONT_SIZE}
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {labels.formatPrice(price)}
@@ -187,7 +192,7 @@ function CandlestickChart({
               y={PAD_TOP - 10}
               textAnchor="middle"
               dominantBaseline="central"
-              className="fill-background text-[10px] font-semibold"
+              className="fill-background text-3xs font-semibold"
             >
               {a.number}
             </text>
@@ -202,7 +207,8 @@ function CandlestickChart({
               x={x(i)}
               y={VIEW_H - 8}
               textAnchor="middle"
-              className="fill-chart-axis font-mono text-[13px]"
+              className="fill-chart-axis font-mono"
+              fontSize={AXIS_FONT_SIZE}
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {labels.formatDate(candle.t)}
@@ -220,7 +226,7 @@ function CandlestickChart({
                 aria-hidden
                 className={cn(
                   "mt-0.5 flex size-4 shrink-0 items-center justify-center rounded-4xl",
-                  "bg-chart-annotation text-[10px] font-semibold text-background"
+                  "bg-chart-annotation text-3xs font-semibold text-background"
                 )}
               >
                 {a.number}

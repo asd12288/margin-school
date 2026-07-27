@@ -297,7 +297,7 @@ function UnavailableInLocaleHint({
       data-slot="unavailable-locale-hint"
       className={cn(
         "inline-flex items-center gap-1.5 rounded-4xl border border-info/20",
-        "bg-info-muted px-2 py-0.5 text-xs text-info",
+        "bg-info-muted px-2 py-0.5 text-xs text-info-muted-foreground",
         className
       )}
       {...props}

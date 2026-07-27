@@ -200,7 +200,7 @@ function ExerciseBlockView({ block }: { block: ExerciseBlock }) {
               data-numeric
               className={cn(
                 "flex size-5 shrink-0 items-center justify-center rounded-4xl",
-                "bg-accent font-mono text-[10px] font-semibold text-accent-foreground"
+                "bg-accent font-mono text-3xs font-semibold text-accent-foreground"
               )}
             >
               {i + 1}

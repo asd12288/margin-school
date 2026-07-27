@@ -75,7 +75,7 @@ function Row({
 }) {
   return (
     <div className="flex flex-col gap-2.5">
-      <code className="font-mono text-[11px] text-muted-foreground">{label}</code>
+      <code className="font-mono text-2xs text-muted-foreground">{label}</code>
       <div className="flex flex-wrap items-center gap-2.5">{children}</div>
     </div>
   );
@@ -212,6 +212,7 @@ function PrimitivesShowcase() {
                 </div>
                 <Slider
                   id="ds-slider"
+                  aria-label="Reading width"
                   value={sliderValue}
                   onValueChange={setSliderValue}
                   max={100}
@@ -271,7 +272,7 @@ function PrimitivesShowcase() {
             </Row>
 
             <div>
-              <code className="mb-2.5 block font-mono text-[11px] text-muted-foreground">
+              <code className="mb-2.5 block font-mono text-2xs text-muted-foreground">
                 tabs
               </code>
               <Tabs defaultValue="overview">

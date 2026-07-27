@@ -98,7 +98,7 @@ function ConceptChip({
         "text-xs font-medium shadow-card",
         "transition-[border-color,background-color,box-shadow] duration-fast ease-quiet",
         known
-          ? "border-success/30 bg-success-muted text-success"
+          ? "border-success/30 bg-success-muted text-success-muted-foreground"
           : "border-border bg-card text-subtle-foreground hover:border-border-strong",
         className
       )}
@@ -190,7 +190,7 @@ function MarketFigure({
       <span className="numeric font-mono text-sm text-foreground">{value}</span>
       {change ? (
         <span className={marketChangeVariants({ direction })}>
-          <span aria-hidden className="text-[0.7em]">
+          <span aria-hidden className="text-3xs">
             {glyph}
           </span>
           <span className="numeric font-mono text-xs">{change}</span>
