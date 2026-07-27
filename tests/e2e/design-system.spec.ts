@@ -9,7 +9,8 @@ import { expect, test, type Page } from "@playwright/test";
  * the tree, both of which change what an accessibility scan sees.
  */
 
-const ROUTE = "/design-system";
+// Locale-prefixed: `localePrefix: "always"` means a bare path always redirects.
+const ROUTE = "/fr/design-system";
 
 /**
  * Wait for every running animation to settle.

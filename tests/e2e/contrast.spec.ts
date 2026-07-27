@@ -122,7 +122,7 @@ async function contrastReport(page: Page) {
 
 for (const theme of ["light", "dark"] as const) {
   test(`text contrast meets WCAG AA in ${theme}`, async ({ page }) => {
-    await page.goto("/design-system");
+    await page.goto("/fr/design-system");
     await page.evaluate((t) => localStorage.setItem("theme", t), theme);
     await page.reload();
     await expect

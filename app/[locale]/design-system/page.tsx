@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { setRequestLocale } from "next-intl/server";
 
 import {
   ColourFoundations,
@@ -52,7 +53,14 @@ const sections = [
   { id: "loading", label: "Loading" },
 ];
 
-export default function DesignSystemPage() {
+export default async function DesignSystemPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+
   return (
     <div className="min-h-full bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">

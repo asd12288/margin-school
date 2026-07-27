@@ -230,9 +230,9 @@ The genuine finds, all now fixed:
 
 ## Open
 
-- **`next-intl` is installed, but URL routing is not.** Messages, formatters and `useTranslations` all work, and `messages/{fr,en}.json` carry real copy for every component. What is missing is the `/fr/…` `/en/…` segment that [content-model.md](content-model.md) rule 4 requires, which lands with the app shells in PRO-152.
+- **`next-intl` is wired, with URL routing.** `/fr/…` and `/en/…`, both prerendered (`●` in the build output), messages in `messages/{fr,en}.json`.
 
-  **This currently costs static rendering.** Without a `[locale]` segment, next-intl cannot use `setRequestLocale`, so it reads headers on every render and `/` and `/design-system` moved from `○` to `ƒ` in the build output. That breaks Tier 1 in [ux-architecture.md](ux-architecture.md) and is a real, temporary cost — it resolves when the segment lands and each locale prerenders separately. A cookie-based interim locale was built and reverted: it bought nothing (the pages were already dynamic) and rule 4 rejects cookie switching anyway, because a cookie gives Google one URL for two languages.
+  Two things to know when building on it. **Import `Link` from [i18n/navigation.ts](../i18n/navigation.ts), never `next/link`** — the wrapper carries the active locale, and a bare link drops a French reader onto the default locale, a bug only visible to the users you are not. And **`setRequestLocale` is required in every layout *and* page** that should be static; skip it and everything still works while silently rendering dynamically, which is what cost Tier 1 before the segment existed.
 - **No arbitrary-value lint rule yet.** The token layer makes primitives unreachable, but nothing currently stops `p-[13px]` or `text-[#0af]`. That rule is the missing half of "tokens only" and should land before the app shell.
 - **`Course.level`** exists in the content model but has no UI treatment, by decision — level badges read as gamification. Re-add as plain metadata if the catalog needs it.
 - **`/design-system` is unauthenticated.** It is `noindex` and leaks no data. Gate it behind the [debug-access](../lib/observability/debug-access.ts) token if that changes.

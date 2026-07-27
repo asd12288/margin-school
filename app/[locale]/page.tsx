@@ -1,6 +1,6 @@
-import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getTranslations, setRequestLocale } from "next-intl/server";
 
+import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/margin/states";
 import { Compass } from "lucide-react";
@@ -17,7 +17,16 @@ import { Compass } from "lucide-react";
  *
  * The real marketing page is Phase 8.
  */
-export default async function Home() {
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  // Required per page, not just per layout. Without it this route falls back
+  // to dynamic rendering even though the layout opted in.
+  setRequestLocale(locale);
+
   const t = await getTranslations();
 
   return (

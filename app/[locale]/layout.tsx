@@ -1,9 +1,12 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
-import "./globals.css";
+import "../globals.css";
 
-import { NextIntlClientProvider } from "next-intl";
-import { getLocale, getMessages } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { setRequestLocale } from "next-intl/server";
+
+import { routing } from "@/i18n/routing";
 
 import { ConsentBanner } from "@/components/consent-banner";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -41,16 +44,32 @@ export const metadata: Metadata = {
   description: "Learn the financial markets, from the beginning.",
 };
 
-export default async function RootLayout({
+/**
+ * Prerender both locales. Without this every page falls back to dynamic
+ * rendering and Tier 1 in docs/ux-architecture.md is lost — which is exactly
+ * what happened before the `[locale]` segment existed.
+ */
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export default async function LocaleLayout({
   children,
+  params,
 }: Readonly<{
   children: React.ReactNode;
+  params: Promise<{ locale: string }>;
 }>) {
-  // Resolved server-side by i18n/request.ts. `lang` is set from it rather than
-  // hardcoded — a French page announcing `lang="en"` makes a screen reader read
-  // French with English pronunciation rules, which is worse than no attribute.
-  const locale = await getLocale();
-  const messages = await getMessages();
+  const { locale } = await params;
+
+  // A URL can carry anything. `/de/…` must 404 rather than silently render in
+  // French, which would hand Google a page whose `lang` lies about it.
+  if (!hasLocale(routing.locales, locale)) notFound();
+
+  // Opts this render into static generation. Skipping it is the single most
+  // common next-intl mistake: everything still works, and every page silently
+  // becomes dynamic.
+  setRequestLocale(locale);
 
   return (
     <html
@@ -61,7 +80,7 @@ export default async function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <NextIntlClientProvider locale={locale} messages={messages}>
+        <NextIntlClientProvider>
           <ThemeProvider>
             <AnalyticsProvider>{children}</AnalyticsProvider>
             <ConsentBanner />

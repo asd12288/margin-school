@@ -1,5 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
+import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
+
+import { routing } from "@/i18n/routing";
 
 import {
   GUEST_ONLY_PREFIXES,
@@ -7,6 +10,7 @@ import {
   SIGN_IN_PATH,
   AFTER_SIGN_IN_PATH,
   matchesPrefix,
+  stripLocale,
 } from "@/lib/auth/routes";
 
 /**
@@ -25,8 +29,24 @@ import {
  *
  * Note: `middleware.ts` was renamed to `proxy.ts` in Next 16.
  */
+/**
+ * next-intl's routing middleware. It redirects a bare `/dashboard` to
+ * `/fr/dashboard` and negotiates the locale from `Accept-Language` on first
+ * visit.
+ */
+const handleIntl = createIntlMiddleware(routing);
+
 export async function proxy(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  // Locale routing runs first, and its result becomes the base response so the
+  // cookies Supabase refreshes below are set on the object that is actually
+  // returned. Running it after the auth checks would mean redirecting an
+  // unauthenticated user to a locale-less `/sign-in`, which next-intl would
+  // then redirect again — two round trips for one navigation.
+  let response = handleIntl(request);
+
+  // A redirect or rewrite from locale routing is final; there is nothing to
+  // authorize about a URL that is about to change.
+  if (response.headers.get("location")) return response;
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -42,8 +62,14 @@ export async function proxy(request: NextRequest) {
           }
 
           // Rebuild the response so the refreshed cookies reach both the
-          // browser and the server components rendering this request.
-          response = NextResponse.next({ request });
+          // browser and the server components rendering this request. The
+          // rebuild has to go back through locale routing, or the rewrite it
+          // applied is lost and every request lands on the unprefixed path.
+          const rebuilt = handleIntl(request);
+          for (const [key, value] of response.headers.entries()) {
+            if (!rebuilt.headers.has(key)) rebuilt.headers.set(key, value);
+          }
+          response = rebuilt;
 
           for (const { name, value, options } of cookiesToSet) {
             response.cookies.set(name, value, options);
@@ -63,18 +89,29 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  if (!user && matchesPrefix(pathname, PROTECTED_PREFIXES)) {
+  // Compare locale-free, redirect locale-prefixed. The constants in routes.ts
+  // are stored bare so neither side needs two variants.
+  const locale = pathname.split("/")[1];
+  const prefix = routing.locales.includes(
+    locale as (typeof routing.locales)[number],
+  )
+    ? `/${locale}`
+    : `/${routing.defaultLocale}`;
+  const unprefixed = stripLocale(pathname, routing.locales);
+
+  if (!user && matchesPrefix(unprefixed, PROTECTED_PREFIXES)) {
     const url = request.nextUrl.clone();
-    url.pathname = SIGN_IN_PATH;
-    // Preserve where they were going so sign-in can return them there.
+    url.pathname = `${prefix}${SIGN_IN_PATH}`;
+    // Preserve where they were going so sign-in can return them there —
+    // including the locale, or the return trip changes language.
     url.searchParams.set("next", pathname);
 
     return NextResponse.redirect(url);
   }
 
-  if (user && matchesPrefix(pathname, GUEST_ONLY_PREFIXES)) {
+  if (user && matchesPrefix(unprefixed, GUEST_ONLY_PREFIXES)) {
     const url = request.nextUrl.clone();
-    url.pathname = AFTER_SIGN_IN_PATH;
+    url.pathname = `${prefix}${AFTER_SIGN_IN_PATH}`;
     url.search = "";
 
     return NextResponse.redirect(url);
