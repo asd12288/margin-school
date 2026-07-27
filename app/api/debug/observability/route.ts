@@ -45,6 +45,38 @@ async function checkDatabase() {
  *   GET /api/debug/observability?token=…             → environment report
  *   GET /api/debug/observability?token=…&throw=1     → server error into Sentry
  */
+/**
+ * Whether the request carries a valid session, and whether the Data Access
+ * Layer can resolve it to a profile. Reports identifiers only — never an
+ * email — so the endpoint stays safe to read in production.
+ */
+async function checkAuth() {
+  try {
+    const { getCurrentUser, getCurrentProfile } = await import("@/lib/auth/dal");
+
+    const user = await getCurrentUser();
+    if (!user) return { signedIn: false };
+
+    const profile = await getCurrentProfile();
+
+    return {
+      signedIn: true,
+      userId: user.id,
+      // False here means the signup trigger did not fire — a real defect,
+      // worth surfacing rather than silently treating as "no access".
+      profileFound: Boolean(profile),
+      role: profile?.role ?? null,
+      locale: profile?.locale ?? null,
+      subscriptionStatus: profile?.subscriptionStatus ?? null,
+    };
+  } catch (error) {
+    return {
+      signedIn: false,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}
+
 export async function GET(request: Request) {
   const url = new URL(request.url);
 
@@ -96,5 +128,6 @@ export async function GET(request: Request) {
           : null,
       ...(await checkDatabase()),
     },
+    auth: await checkAuth(),
   });
 }
