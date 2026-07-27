@@ -404,6 +404,7 @@
   --info: var(--indigo-600);
   --info-foreground: var(--neutral-0);
   --info-muted: var(--indigo-50);
+  --info-muted-foreground: var(--indigo-800);
 
   /* One step darker than the surface role: these are almost always small
      text, and emerald-600 measured under AA on white. */
@@ -522,7 +523,8 @@
   --success-muted-foreground: var(--emerald-200);
   --info: var(--indigo-400);
   --info-foreground: var(--neutral-1000);
-  --info-muted: oklch(0.322 0.126 270 / 0.4);
+  --info-muted: oklch(0.325 0.128 262 / 0.45);
+  --info-muted-foreground: var(--indigo-200);
 
   --gain: var(--emerald-400);
   --gain-muted: oklch(0.404 0.092 158 / 0.35);

@@ -167,6 +167,43 @@ describe("themes", () => {
     }
   });
 
+  it("gives every registered role a value in both themes", () => {
+    // A role can be registered in `@theme` and resolve to nothing. The utility
+    // still generates — `color: var(--info-muted-foreground)` is valid CSS —
+    // so nothing errors, the declaration is simply dropped and the element
+    // inherits. That is invisible in review and survived an axe scan here,
+    // because the inherited colour happened to pass contrast.
+    // Read the source, not the compiled output: Tailwind merges and reorders
+    // `:root` rules, so slicing the compiled CSS by section comment finds the
+    // wrong boundaries. This assertion is about how the stylesheet is
+    // authored.
+    const source = readFileSync(cssPath, "utf8");
+
+    const themeBlock = source.slice(0, source.indexOf("Layer 1"));
+    const registered = [
+      ...themeBlock.matchAll(/--color-([a-z0-9-]+):\s*var\(--([a-z0-9-]+)\)/g),
+    ].map((m) => m[2]);
+
+    const lightBlock = source.slice(
+      source.indexOf("Layer 2 — semantic roles, light"),
+      source.indexOf("Layer 2 — semantic roles, dark")
+    );
+    const darkBlock = source.slice(
+      source.indexOf("Layer 2 — semantic roles, dark"),
+      source.indexOf("   Base\n")
+    );
+
+    const undefinedInLight = registered.filter(
+      (r) => !new RegExp(`^\\s*--${r}:`, "m").test(lightBlock)
+    );
+    const undefinedInDark = registered.filter(
+      (r) => !new RegExp(`^\\s*--${r}:`, "m").test(darkBlock)
+    );
+
+    expect(undefinedInLight, "roles with no light value").toEqual([]);
+    expect(undefinedInDark, "roles with no dark value").toEqual([]);
+  });
+
   it("uses a class-based dark variant, not a media query", () => {
     // A media-query-only dark mode cannot be user-switched, and the product
     // needs a real toggle: people study in the evening.
