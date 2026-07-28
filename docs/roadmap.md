@@ -38,6 +38,8 @@ Tailwind 4 theme tokens, typography scale, colour system for light/dark, shadcn/
 
 Three shells: public (marketing/catalog), app (study), admin. Navigation, locale switching, responsive layout. The shell must render instantly and never blink on navigation — see [ux-architecture.md](ux-architecture.md).
 
+**Built out of order with Phase 1, deliberately.** The full route map — every URL through Phase 12, translated per locale — was decided now rather than deferred, because URLs are the one thing a public product cannot revise cheaply once shipped; see [ADR-0011](decisions/0011-route-map.md). The catalog and course pages render against [lib/fixtures/content.ts](../lib/fixtures/content.ts) rather than the real schema, because content-model.md defers the content tables until something renders a lesson — no table before it has a consumer — and nothing did until this phase. Cache Components (`cacheComponents: true`) landed with it, which forces a specific shape on every gated page: the auth check lives in an inner async component behind its own `<Suspense>` boundary, not in the page body — see [ux-architecture.md](ux-architecture.md#suspense-gating-is-not-optional-under-cache-components). Frames for the four gated routes (`/learn`, `/my-courses`, `/account`, `/admin`) exist ahead of Phase 4's real auth, calling `requireProfile`/`requireRole` against a profile row created directly for testing, not through a sign-up flow.
+
 **Done when:** navigating between routes never re-renders the navigation.
 
 ## Phase 4 — Auth + roles · M
@@ -80,7 +82,7 @@ Take Udemy's information architecture. Do not take its commerce psychology — s
 
 ## Phase 9 — Study area v1 (linear) · L
 
-Enrolment, lesson player rendering every block type, progress and resume, completion, notes, bookmarks, "continue where you left off" dashboard, course completion.
+Enrolment, lesson player rendering every block type, progress and resume, completion, notes, bookmarks, "continue where you left off" on `/learn` (see [ADR-0011](decisions/0011-route-map.md) — there is no dashboard), course completion.
 
 **No AI, no adaptivity yet.** A genuinely good linear course player.
 
