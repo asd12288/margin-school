@@ -265,9 +265,15 @@ function LessonShowcase() {
           <p className="font-mono text-xs tracking-wide text-brand uppercase">
             Reading a price chart · Chapter 2
           </p>
-          <h2 className="mt-2 font-heading text-display font-semibold text-foreground">
+          {/*
+           * `h3`, not `h2`: on the real lesson page this title is the page's
+           * `h1`, but here the article is a demo nested inside `<Section>`'s
+           * own `h2`. The size is unchanged — only the level moves, so the
+           * demo still shows what a lesson header actually looks like.
+           */}
+          <h3 className="mt-2 font-heading text-display font-semibold text-foreground">
             Anatomy of a candlestick
-          </h2>
+          </h3>
           <MetaRow className="mt-3">
             <MetaStat icon={BookOpen}>Lesson 1 of 3</MetaStat>
             <MetaStat>
@@ -280,7 +286,17 @@ function LessonShowcase() {
           </div>
         </header>
 
-        <LessonBlocks blocks={sampleBlocks} labels={lessonLabels} className="mt-2" />
+        {/*
+         * The article's title is an `h3` here, so its content sections are
+         * `h4`. On the real lesson page the title is an `h1` and this prop
+         * goes away — `h2` is the default for exactly that reason.
+         */}
+        <LessonBlocks
+          blocks={sampleBlocks}
+          labels={lessonLabels}
+          headingLevel="h4"
+          className="mt-2"
+        />
       </article>
     </Section>
   );
