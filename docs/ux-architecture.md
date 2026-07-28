@@ -20,11 +20,33 @@ This content is identical for everyone and changes only when content is publishe
 
 The frame — navigation, sidebar, page header, course title — renders instantly from cache. Only genuinely personal parts (progress, position, mastery) stream in behind Suspense.
 
-Next 16 ships `unstable_instant`, which validates at build time that Suspense boundaries are placed correctly for client navigation — catching a misplaced boundary that would otherwise only surface as a blank screen in production. **It cannot currently be used on these routes.** Tried against `(public)/layout.tsx` and `(app)/layout.tsx`: the `as const` form shown in Next's own docs does not build (the segment-config extractor only reads `satisfies`), and every locale-aware shell layout blocks validation. The second one is the real blocker and it is structural: during validation `params` never resolves before the Runtime stage, so *any* `await params` outside a `<Suspense>` boundary blocks the static shell — including one that only wants `locale` for `setRequestLocale`, which next-intl needs in order to stay static. Declaring `samples` on the config fixes *which* params may be read, not *when* they resolve; `unstable_rootParams`, the sanctioned way to read a root param without that cost, was removed with no replacement shipped yet. So a shell that renders localized chrome synchronously — which is the point of Tier 2 — cannot pass. The error surfaces with a component stack ending in the root layout's providers (`AnalyticsProvider`, `ThemeProvider`); that is the children-prop owner chain, not the culprit. Revisit when the API stabilizes — this is deferred, not abandoned.
+### Instant navigation
 
-Leaf pages are a different matter and are worth writing to the standard anyway: `app/[locale]/(public)/course/[course]/page.tsx` follows the pattern from Next's own instant-navigation guide — a synchronous page body, `params.then(…)` inside `<Suspense>`, and a `use cache` component taking plain values — and validates cleanly on its own. Enabling its export is blocked only by the shell above it.
+Next 16 ships `unstable_instant`, which validates at build time that Suspense boundaries are placed correctly for **client navigation** — catching a misplaced boundary that would otherwise only surface as a blank screen in production. It is on, and it is enforcing.
 
-What still holds without it: `cacheComponents` already fails the build on any uncached data read outside a Suspense boundary, which is what actually keeps personal data behind the boundary today (see the gating subsection above). The check `unstable_instant` would add on top is narrower — it validates client-navigation entry points specifically — so its absence does not remove the build-time protection that matters most.
+`next/root-params` is what made it usable. Under validation every server `params` access defers to the Runtime stage (`createServerParamsInInstantValidation` in `next/dist/server/request/params.js`), so *any* `await params` outside a `<Suspense>` boundary blocks the static shell — including one that only wants `locale` for `setRequestLocale`. Declaring `samples` fixes *which* params may be read, not *when* they resolve. `next/root-params` is the exemption: a root param is part of the route key, so `getRootParam` resolves it immediately and a per-locale static shell genuinely exists. It is the shipped replacement for `unstable_rootParams`, which `version-16.md` still describes as removed with no alternative; the module exists but is undocumented and untyped, hence the annotations at each call site.
+
+**Where the config lives, and why it differs by shell:**
+
+| Segment | Config | Why |
+| --- | --- | --- |
+| `(app)/layout.tsx` | layout-level | Covers every app route at once. Its `<Suspense>` around `children` is load-bearing — each app page awaits `params` in its body. |
+| `(public)/layout.tsx` | **none, and cannot have one** | See below. |
+| `(public)/courses`, `course/[course]`, `legal/[doc]` | page-level | The public routes that can satisfy it. A page-level config still re-renders the shell during validation, so the shell is covered by each. |
+| `(public)/[...rest]` | none | Cannot ever be validated — its whole job is to `notFound()`. |
+
+The public shell cannot carry a layout-level config because a config there applies to every route in the group, including `[...rest]`, which can never render (`Could not validate unstable_instant because an error prevented the target segment from rendering`). A child cannot opt out either: `isPageAllowedToBlock` in `next/dist/server/app-render/instant-validation/instant-config.js` walks top-down and returns `false` as soon as it meets a non-`false` config above it, so `export const unstable_instant = false` on the catch-all is ignored.
+
+**Rules the build enforces, each learned by hitting it:**
+
+- Samples must name **every** param the route reads, including ones read inside `<Suspense>`. Inner segments *replace* an outer segment's samples rather than merging (`resolveInstantConfigSamplesForPage`), so `course/[course]` must name `locale` *and* `course`.
+- `searchParams` must be declared too. `q: null` is meaningful — it validates the page as a visitor who searched for nothing.
+- The config is read by **static analysis, not evaluation**. `sampleCourses[0].slug` fails with `Invalid segment configuration export detected`; the slug must be a literal. `as const` fails for the same reason — the extractor has no case for `TsAsExpression`.
+- Samples are rendered for real, so a made-up slug `notFound()`s and validates the not-found path instead of the page.
+
+**Not enabled on the fully-static public pages** (`/`, `/about`, `/pricing`, `/concepts`, `/help`). They trip `next-prerender-dynamic-metadata`: with no dynamic hole of their own, metadata resolution becomes the sole blocking one, and localized metadata is inherently params-dependent. Worth revisiting when the metadata story settles.
+
+**What `cacheComponents` does and this does not.** `cacheComponents` is what fails the build on *uncached data* — a session read in the header — and that remains the protection that matters most; verified by unwrapping `AccountSlot`, which fails on routes that have no instant config at all. `unstable_instant` adds a narrower, different check: `params`/`searchParams` holes that block the static shell at client-navigation entry points. Verified by removing the `<Suspense>` around `children` in `(app)/layout.tsx`, which `cacheComponents` tolerates and instant validation rejects with `Build-time instant validation failed for route "/[locale]/account"`.
 
 Cached content and personal data must never be fetched inside the same cached function. Cache the frame; stream the person.
 

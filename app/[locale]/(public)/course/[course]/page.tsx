@@ -32,9 +32,10 @@ import type { Locale } from "@/lib/fixtures/content";
  * `notFound()` — confirmed against this Next.js version by hitting an unlisted
  * slug after `next build && next start` and getting an uncaught 500.
  *
- * **2. Instant-navigation validation.** `unstable_instant` (Task 13) is
- * stricter than the above, and this page is written to satisfy it even though
- * the export cannot be switched on yet:
+ * **2. Instant-navigation validation.** `unstable_instant` is stricter than
+ * the above, and this page is written to satisfy it — the export is below.
+ * See the "Instant navigation" subsection of docs/ux-architecture.md for the
+ * whole picture; the two constraints that shape *this file* are:
  *
  * - **Nothing awaits `params` in a component body.** During validation every
  *   server `params` access is deferred to the Runtime stage
@@ -56,11 +57,19 @@ import type { Locale } from "@/lib/fixtures/content";
  *   (`resolveInstantConfigSamplesForPage` in `instant-config.js`), which is
  *   what keeps course slugs out of the shared shell layout's config.
  *
- * That export is deliberately absent for now: a config here turns validation
- * on for this route, and validation then re-renders `(public)/layout.tsx`,
- * whose own `await params` (which `setRequestLocale` needs, and next-intl
- * needs that to stay static) blocks. See `.superpowers/sdd/task-13-report.md`
- * for the shell-level blocker — this page is no longer part of it.
+ * That export is present now. It was absent while `(public)/layout.tsx` still
+ * did `await params` for `setRequestLocale`, which blocked the shell for every
+ * route under it; the shell reads the locale through `next/root-params`
+ * instead, so the blocker is gone and this page validates.
+ *
+ * The `samples` below name **both** params, because an inner segment's samples
+ * replace an outer segment's rather than merging with them
+ * (`resolveInstantConfigSamplesForPage` in `instant-config.js`). Inheriting the
+ * layout's locale-only samples is what the build rejects, in as many words:
+ * `Route "/[locale]/course/[course]" accessed param "course" which is not
+ * defined in the samples of unstable_instant`. The slug is a real one from
+ * `sampleCourses` — the validator renders the sample for real, so a made-up
+ * slug would `notFound()` and validate the not-found path instead of the page.
  *
  * **No `setRequestLocale` here.** Every other Suspense-split page in this repo
  * calls it; this one cannot, because calling it means awaiting `params` in the
@@ -89,6 +98,21 @@ import type { Locale } from "@/lib/fixtures/content";
  * server/client boundary. Plurals and durations are formatted here, on the
  * server, and what crosses is already words. See design-system.md:183.
  */
+// The slug is written out, not `sampleCourses[0].slug`. Segment configs are
+// read by static analysis at build time, not evaluated — an expression it
+// cannot fold is rejected wholesale with "Invalid segment configuration export
+// detected", the same class of failure as the `as const` form. It must stay a
+// literal, so it must stay in step with lib/fixtures/content.ts by hand; the
+// build fails loudly (`notFound()` during validation) if this slug stops
+// existing, which is the check that keeps it honest.
+export const unstable_instant = {
+  prefetch: "static",
+  samples: [
+    { params: { locale: "fr", course: "reading-a-price-chart" } },
+    { params: { locale: "en", course: "reading-a-price-chart" } },
+  ],
+};
+
 export function generateStaticParams() {
   return sampleCourses.map((course) => ({ course: course.slug }));
 }
