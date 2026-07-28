@@ -105,7 +105,12 @@ Not applied, and why: **page side-by-side** and **like button** target surfaces 
 
 Audited at 375px by measuring rather than eyeballing. No element overflows the viewport and the document does not scroll horizontally.
 
-Two things the audit turned up:
+**Horizontal overflow is not the only way a layout breaks on a phone**, and the two worst cases here caused none:
+
+- **A fixed overlay eats the bottom of the page.** The consent banner is `position: fixed`, so it takes no part in layout and covers whatever the page ends with — the sign-out button at the foot of onboarding, the delete-account field at the foot of `/account`. The element is reachable by scrolling and then *not clickable*, because a fixed overlay intercepts the pointer wherever you scroll it to. `ConsentBanner` now measures itself into `--consent-banner-height` and `body` reserves that much padding. Measured, not hardcoded: it is 72px on desktop and 116px at 375px, and French runs longer again.
+- **A two-word label wraps and takes the header with it.** Nav links had no `whitespace-nowrap`, so "Mes cours" broke across two lines inside a `h-14` header and pushed it taller. French supplies the two-word labels, so this was invisible in English — the locale most of the audit was done in.
+
+Two things the original audit turned up:
 
 - **The chart.** Its axis labels rendered at **6px** on a phone, because a 720-unit viewBox scaled into 343px shrinks the type with everything else. The figure now scrolls horizontally inside `chart-scroll` below `34rem` and the axis type is set at 13 units, so labels never render under ~10px. A price chart has an irreducible amount of detail; swiping it is honest, squinting at it is not.
 - **Touch targets.** Checkbox, radio and switch measure 16–18px visually, which looks like a WCAG 2.5.8 failure and is not — all three already carry `after:-inset-x-3 after:-inset-y-2`, so the real hit area is comfortably over 24px. A pseudo-element does not show up in `getBoundingClientRect`, which is what makes this easy to "fix" twice.

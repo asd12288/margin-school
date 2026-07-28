@@ -160,6 +160,68 @@ test.describe("a new account, end to end", () => {
   });
 });
 
+test.describe("the consent banner", () => {
+  /**
+   * The banner is fixed to the bottom, so it covers whatever the page ends
+   * with — and a fixed overlay intercepts the pointer wherever you scroll it
+   * to, so the element is reachable and still unclickable. At 375px, where the
+   * message wraps and the buttons drop onto their own row, that was the
+   * sign-out button at the foot of onboarding.
+   *
+   * The other tests here answer the banner up front, which is what a visitor
+   * does and what keeps them about auth. This one deliberately leaves it
+   * unanswered, because that is the only state in which the bug exists.
+   */
+  test("does not cover the end of the page", async ({ page }) => {
+    // Undoes the `beforeEach` above. Init scripts run in registration order,
+    // so this one wins.
+    await page.addInitScript(() => {
+      window.localStorage.removeItem("ms-analytics-consent");
+    });
+
+    await signUp(page, freshEmail("banner"));
+    await expect(page.getByRole("dialog")).toBeVisible();
+
+    // The page reserves exactly the banner's measured height, so nothing ends
+    // up underneath it. Measured rather than hardcoded because the height
+    // changes with viewport width and with locale.
+    const { reserved, bannerHeight } = await page.evaluate(() => ({
+      reserved: parseFloat(getComputedStyle(document.body).paddingBottom),
+      bannerHeight:
+        document.querySelector('[role="dialog"]')?.clientHeight ?? 0,
+    }));
+
+    expect(bannerHeight).toBeGreaterThan(0);
+    expect(reserved).toBeGreaterThanOrEqual(bannerHeight);
+
+    // The real assertion: the click lands. Before the fix this timed out,
+    // because the banner was on top of the button.
+    await page.getByRole("button", { name: "Sign out" }).click();
+    await expect(page).toHaveURL(/\/en$/);
+  });
+
+  test("gives the space back once answered", async ({ page }) => {
+    await page.addInitScript(() => {
+      window.localStorage.removeItem("ms-analytics-consent");
+    });
+
+    await page.goto("/en");
+    await page.getByRole("button", { name: "Decline" }).click();
+
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+
+    // Leaving the reservation in place would keep a strip of empty space at
+    // the bottom of every page for the rest of the session.
+    await expect
+      .poll(() =>
+        page.evaluate(() =>
+          parseFloat(getComputedStyle(document.body).paddingBottom),
+        ),
+      )
+      .toBe(0);
+  });
+});
+
 test.describe("password reset, through the actual email", () => {
   test("request a link, follow it, set a new password, sign in with it", async ({
     page,
