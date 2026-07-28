@@ -1,15 +1,28 @@
 "use client";
 
 import * as React from "react";
+import { Globe } from "lucide-react";
 import { useParams } from "next/navigation";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 export interface LocaleSwitcherLabels {
-  /** Accessible name for the group, e.g. "Language". */
-  group: string;
+  /**
+   * Accessible name for the trigger, already stating the active language —
+   * e.g. "Current language: English" / "Langue actuelle : Français". Built
+   * server-side in `lib/shell-labels.ts`, where the active locale is known,
+   * so the component never has to assemble a sentence out of a template.
+   */
+  current: string;
   fr: string;
   en: string;
 }
@@ -26,35 +39,35 @@ export interface LocaleSwitcherLabels {
  *
  * `params` is forwarded so dynamic routes keep their slug across the switch.
  *
- * The keyboard model is the ARIA radio pattern, and it is not decoration: a
- * radiogroup is one tab stop, and arrow keys move between options. Declaring
- * the role without the roving tabindex below would announce "radio, 1 of 2"
- * to a screen reader and then ignore the arrow key they press next.
+ * Keyboard behaviour used to be hand-rolled (roving tabindex, arrow keys) to
+ * satisfy the ARIA radiogroup pattern the old segmented control needed.
+ * `DropdownMenu`'s `RadioGroup`/`RadioItem` give the same `menuitemradio`
+ * semantics and correct arrow-key navigation natively, so none of that
+ * survives here — moving to a menu was the point.
  */
 function LocaleSwitcher({
   labels,
   className,
-  ...props
-}: Omit<React.ComponentProps<"div">, "children"> & {
+}: {
   labels: LocaleSwitcherLabels;
+  className?: string;
 }) {
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();
   const [pending, startTransition] = React.useTransition();
-  const buttons = React.useRef<Array<HTMLButtonElement | null>>([]);
 
-  // Falls back to the first option if the URL carries no recognisable locale,
-  // so the group always has exactly one tab stop rather than becoming
-  // unreachable by keyboard.
-  const current = routing.locales.indexOf(params.locale as Locale);
-  const activeIndex = current === -1 ? 0 : current;
+  // Falls back to the routing default if the URL carries no recognisable
+  // locale, so the radio group always has a defined `value`.
+  const current = routing.locales.includes(params.locale as Locale)
+    ? (params.locale as Locale)
+    : routing.defaultLocale;
 
   function switchTo(locale: Locale) {
     startTransition(() => {
-      // The cast is next-intl's documented shape for forwarding dynamic
-      // params: `pathname` carries `[course]`, `params` carries its value.
       router.replace(
+        // The cast is next-intl's documented shape for forwarding dynamic
+        // params: `pathname` carries `[course]`, `params` carries its value.
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         { pathname, params: params as any },
         { locale }
@@ -62,62 +75,33 @@ function LocaleSwitcher({
     });
   }
 
-  function handleKeyDown(event: React.KeyboardEvent, index: number) {
-    const forward = event.key === "ArrowRight" || event.key === "ArrowDown";
-    const back = event.key === "ArrowLeft" || event.key === "ArrowUp";
-    if (!forward && !back) return;
-
-    event.preventDefault();
-
-    const count = routing.locales.length;
-    const next = (index + (forward ? 1 : -1) + count) % count;
-
-    buttons.current[next]?.focus();
-    switchTo(routing.locales[next]);
-  }
-
   return (
-    <div
-      role="radiogroup"
-      aria-label={labels.group}
-      data-pending={pending}
-      className={cn(
-        "inline-flex items-center gap-0.5 rounded-4xl border border-border bg-muted p-0.5",
-        "data-[pending=true]:opacity-70 transition-opacity duration-fast ease-quiet",
-        className
-      )}
-      {...props}
-    >
-      {routing.locales.map((locale, index) => {
-        const selected = index === activeIndex;
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={labels.current}
+        data-pending={pending}
+        className={cn(
+          "flex size-8 items-center justify-center rounded-4xl border border-border bg-muted text-muted-foreground outline-none transition-colors duration-fast ease-quiet hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50",
+          "data-[pending=true]:opacity-70",
+          className
+        )}
+      >
+        <Globe className="size-4" />
+      </DropdownMenuTrigger>
 
-        return (
-          <button
-            key={locale}
-            ref={(node) => {
-              buttons.current[index] = node;
-            }}
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            // Roving tabindex: one tab stop for the whole group.
-            tabIndex={selected ? 0 : -1}
-            onClick={() => switchTo(locale)}
-            onKeyDown={(event) => handleKeyDown(event, index)}
-            className={cn(
-              "rounded-4xl px-2.5 py-1 text-xs outline-none",
-              "transition-[background-color,color] duration-fast ease-quiet",
-              "focus-visible:ring-3 focus-visible:ring-ring/50",
-              selected
-                ? "bg-background text-foreground shadow-card"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {labels[locale]}
-          </button>
-        );
-      })}
-    </div>
+      <DropdownMenuContent align="end">
+        <DropdownMenuRadioGroup
+          value={current}
+          onValueChange={(value) => switchTo(value as Locale)}
+        >
+          {routing.locales.map((locale) => (
+            <DropdownMenuRadioItem key={locale} value={locale}>
+              {labels[locale]}
+            </DropdownMenuRadioItem>
+          ))}
+        </DropdownMenuRadioGroup>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 

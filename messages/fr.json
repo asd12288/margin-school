@@ -97,9 +97,13 @@
       "signOut": "Se déconnecter"
     },
     "locale": {
-      "group": "Langue",
+      "current": "Langue actuelle : {locale}",
       "fr": "Français",
       "en": "English"
+    },
+    "search": {
+      "label": "Rechercher un cours",
+      "placeholder": "Rechercher un cours"
     },
     "disclaimer": "Margin School est un service éducatif. Rien ici ne constitue un conseil en investissement, une recommandation ou un signal d'achat ou de vente. Le trading comporte des risques, y compris la perte de votre capital."
   },

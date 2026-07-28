@@ -97,9 +97,13 @@
       "signOut": "Sign out"
     },
     "locale": {
-      "group": "Language",
+      "current": "Current language: {locale}",
       "fr": "Français",
       "en": "English"
+    },
+    "search": {
+      "label": "Search courses",
+      "placeholder": "Search courses"
     },
     "disclaimer": "Margin School is educational. Nothing here is investment advice, a recommendation, or a signal to buy or sell. Trading carries risk, including the loss of your capital."
   },

@@ -1,10 +1,11 @@
 import "server-only";
 
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 
 import type { AccountSlotLabels } from "@/components/margin/shell/account-slot";
 import type { LocaleSwitcherLabels } from "@/components/margin/shell/locale-switcher";
 import type { ThemeToggleLabels } from "@/components/margin/theme-toggle";
+import type { Locale } from "@/i18n/routing";
 
 export interface ShellLabels {
   brand: string;
@@ -34,6 +35,8 @@ export interface ShellLabels {
  */
 export async function getShellLabels(): Promise<ShellLabels> {
   const t = await getTranslations();
+  const locale = (await getLocale()) as Locale;
+  const localeNames = { fr: t("shell.locale.fr"), en: t("shell.locale.en") };
 
   return {
     brand: t("shell.brand"),
@@ -51,9 +54,9 @@ export async function getShellLabels(): Promise<ShellLabels> {
       system: t("theme.system"),
     },
     locale: {
-      group: t("shell.locale.group"),
-      fr: t("shell.locale.fr"),
-      en: t("shell.locale.en"),
+      current: t("shell.locale.current", { locale: localeNames[locale] }),
+      fr: localeNames.fr,
+      en: localeNames.en,
     },
     account: {
       signIn: t("shell.account.signIn"),
