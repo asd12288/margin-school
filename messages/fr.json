@@ -105,7 +105,27 @@
       "label": "Rechercher un cours",
       "placeholder": "Rechercher un cours"
     },
-    "disclaimer": "Margin School est un service éducatif. Rien ici ne constitue un conseil en investissement, une recommandation ou un signal d'achat ou de vente. Le trading comporte des risques, y compris la perte de votre capital."
+    "disclaimer": "Margin School est un service éducatif. Rien ici ne constitue un conseil en investissement, une recommandation ou un signal d'achat ou de vente. Le trading comporte des risques, y compris la perte de votre capital.",
+    "footer": {
+      "exploreHeading": "Découvrir",
+      "legalHeading": "Informations légales",
+      "copyright": "© {year} Margin School",
+      "cookiePreferences": "Préférences de cookies"
+    }
+  },
+  "legal": {
+    "placeholder": "Contenu provisoire",
+    "notice": "Ce document est en cours de rédaction. Margin School est une plateforme éducative : rien ici ne constitue un conseil en investissement, une recommandation ou un signal d'achat ou de vente.",
+    "terms": { "title": "Conditions d'utilisation" },
+    "privacy": { "title": "Politique de confidentialité" },
+    "mentions": { "title": "Mentions légales" },
+    "accessibility": { "title": "Déclaration d'accessibilité" }
+  },
+  "consent": {
+    "label": "Consentement pour les mesures d'audience",
+    "message": "Nous utilisons des outils de mesure d'audience pour comprendre l'usage des cours. Rien n'est enregistré tant que vous n'avez pas donné votre accord.",
+    "decline": "Refuser",
+    "accept": "Accepter"
   },
   "frames": {
     "signIn": { "title": "Connexion", "description": "La connexion arrive en phase 4." },

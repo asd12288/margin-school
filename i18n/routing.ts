@@ -53,6 +53,13 @@ const pathnames = {
   "/sign-in": { fr: "/connexion", en: "/sign-in" },
   "/sign-up": { fr: "/inscription", en: "/sign-up" },
 
+  // Legal — one document, four slugs (terms/privacy/mentions/accessibility).
+  // French uses "mentions" as the base segment rather than "legal" because
+  // "mentions légales" is the term a French visitor actually looks for, and
+  // because "legal" has no natural French cognate that isn't a translation
+  // of the English word.
+  "/legal/[doc]": { fr: "/mentions/[doc]", en: "/legal/[doc]" },
+
   // App
   "/learn": { fr: "/apprendre", en: "/learn" },
   "/my-courses": { fr: "/mes-cours", en: "/my-courses" },

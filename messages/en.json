@@ -105,7 +105,27 @@
       "label": "Search courses",
       "placeholder": "Search courses"
     },
-    "disclaimer": "Margin School is educational. Nothing here is investment advice, a recommendation, or a signal to buy or sell. Trading carries risk, including the loss of your capital."
+    "disclaimer": "Margin School is educational. Nothing here is investment advice, a recommendation, or a signal to buy or sell. Trading carries risk, including the loss of your capital.",
+    "footer": {
+      "exploreHeading": "Explore",
+      "legalHeading": "Legal",
+      "copyright": "© {year} Margin School",
+      "cookiePreferences": "Cookie preferences"
+    }
+  },
+  "legal": {
+    "placeholder": "Placeholder",
+    "notice": "This document is being prepared. Margin School is an educational platform: nothing here is investment advice, a recommendation, or a signal to buy or sell.",
+    "terms": { "title": "Terms of use" },
+    "privacy": { "title": "Privacy policy" },
+    "mentions": { "title": "Legal notice" },
+    "accessibility": { "title": "Accessibility statement" }
+  },
+  "consent": {
+    "label": "Analytics consent",
+    "message": "We use analytics to understand how the courses are used. Nothing is recorded until you agree.",
+    "decline": "Decline",
+    "accept": "Accept"
   },
   "frames": {
     "signIn": { "title": "Sign in", "description": "Sign-in arrives in Phase 4." },

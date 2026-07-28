@@ -1,4 +1,4 @@
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { setRequestLocale } from "next-intl/server";
 
 import { SiteFooter } from "@/components/margin/shell/site-footer";
 import { SiteHeader } from "@/components/margin/shell/site-header";
@@ -24,7 +24,6 @@ export default async function PublicLayout({
   setRequestLocale(locale);
 
   const labels = await getShellLabels();
-  const t = await getTranslations();
 
   return (
     <>
@@ -33,7 +32,7 @@ export default async function PublicLayout({
       <div id="main" className="flex flex-1 flex-col">
         {children}
       </div>
-      <SiteFooter labels={{ brand: labels.brand, disclaimer: t("shell.disclaimer") }} />
+      <SiteFooter labels={labels.footer} />
     </>
   );
 }
