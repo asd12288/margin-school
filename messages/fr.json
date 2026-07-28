@@ -129,10 +129,18 @@
   "legal": {
     "placeholder": "Contenu provisoire",
     "notice": "Ce document est en cours de rédaction. Margin School est une plateforme éducative : rien ici ne constitue un conseil en investissement, une recommandation ou un signal d'achat ou de vente.",
-    "terms": { "title": "Conditions d'utilisation" },
-    "privacy": { "title": "Politique de confidentialité" },
-    "mentions": { "title": "Mentions légales" },
-    "accessibility": { "title": "Déclaration d'accessibilité" }
+    "terms": {
+      "title": "Conditions d'utilisation"
+    },
+    "privacy": {
+      "title": "Politique de confidentialité"
+    },
+    "mentions": {
+      "title": "Mentions légales"
+    },
+    "accessibility": {
+      "title": "Déclaration d'accessibilité"
+    }
   },
   "pages": {
     "home": {
@@ -168,12 +176,18 @@
     "accept": "Accepter"
   },
   "frames": {
-    "signIn": { "title": "Connexion", "description": "La connexion arrive en phase 4." },
-    "signUp": { "title": "Créer un compte", "description": "L'inscription arrive en phase 4." },
-    "learn": { "title": "Votre prochaine étape", "description": "La prochaine action arrive en phase 9." },
-    "myCourses": { "title": "Mes cours", "description": "L'inscription aux cours arrive en phase 9." },
-    "account": { "title": "Compte", "description": "Les réglages du compte arrivent en phase 4." },
-    "admin": { "title": "Admin", "description": "Le studio de contenu arrive en phase 7." }
+    "learn": {
+      "title": "Votre prochaine étape",
+      "description": "La prochaine action arrive en phase 9."
+    },
+    "myCourses": {
+      "title": "Mes cours",
+      "description": "L'inscription aux cours arrive en phase 9."
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "Le studio de contenu arrive en phase 7."
+    }
   },
   "errors": {
     "notFound": {
@@ -186,5 +200,171 @@
       "description": "C'est de notre côté. Réessayez — et si cela persiste, nous en sommes déjà informés.",
       "retry": "Réessayer"
     }
+  },
+  "auth": {
+    "shared": {
+      "email": "E-mail",
+      "password": "Mot de passe",
+      "newPassword": "Nouveau mot de passe",
+      "confirmPassword": "Confirmez le nouveau mot de passe",
+      "passwordHint": "8 caractères minimum.",
+      "google": "Continuer avec Google",
+      "or": "ou"
+    },
+    "panel": {
+      "headline": "Comprenez vraiment les marchés, une notion à la fois.",
+      "points": {
+        "everything": "Tous les cours, actuels et à venir, inclus",
+        "languages": "Rédigé en français et en anglais",
+        "cancel": "Résiliable à tout moment"
+      }
+    },
+    "signIn": {
+      "title": "Connexion",
+      "subtitle": "Reprenez où vous en étiez.",
+      "submit": "Se connecter",
+      "submitPending": "Connexion en cours",
+      "forgotPassword": "Mot de passe oublié ?",
+      "noAccount": "Pas encore de compte ?",
+      "signUpLink": "En créer un"
+    },
+    "signUp": {
+      "title": "Créez votre compte",
+      "subtitle": "Tout le site, dans les deux langues.",
+      "submit": "Créer mon compte",
+      "submitPending": "Création du compte",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "signInLink": "Se connecter",
+      "continueToOnboarding": "Continuer"
+    },
+    "forgotPassword": {
+      "title": "Réinitialiser votre mot de passe",
+      "subtitle": "Nous vous envoyons un lien pour en choisir un nouveau.",
+      "submit": "Envoyer le lien",
+      "submitPending": "Envoi en cours",
+      "backToSignIn": "Retour à la connexion"
+    },
+    "resetPassword": {
+      "title": "Choisissez un nouveau mot de passe",
+      "subtitle": "Et vous êtes de retour.",
+      "submit": "Enregistrer le mot de passe",
+      "submitPending": "Enregistrement"
+    },
+    "errors": {
+      "emailRequired": "Saisissez votre adresse e-mail.",
+      "emailInvalid": "Cela ne ressemble pas à une adresse e-mail.",
+      "passwordRequired": "Saisissez votre mot de passe.",
+      "passwordTooShort": "Utilisez au moins 8 caractères.",
+      "passwordConfirmRequired": "Saisissez à nouveau le mot de passe.",
+      "passwordMismatch": "Les deux mots de passe ne correspondent pas.",
+      "currentPasswordWrong": "Ce n'est pas votre mot de passe actuel.",
+      "displayNameRequired": "Dites-nous comment vous appeler.",
+      "displayNameTooLong": "C'est un peu long — 60 caractères maximum.",
+      "experienceLevelRequired": "Choisissez la réponse la plus proche.",
+      "goalRequired": "Choisissez ce qui vous amène.",
+      "localeRequired": "Choisissez une langue.",
+      "confirmationMismatch": "Le mot ne correspond pas.",
+      "invalidCredentials": "Cet e-mail et ce mot de passe ne correspondent à aucun compte.",
+      "emailNotConfirmed": "Confirmez d'abord votre adresse e-mail — vérifiez votre boîte de réception.",
+      "emailTaken": "Un compte existe déjà avec cette adresse.",
+      "samePassword": "C'est déjà votre mot de passe.",
+      "signupDisabled": "Les inscriptions sont fermées pour le moment.",
+      "tooManyRequests": "Trop de tentatives. Attendez une minute et réessayez.",
+      "linkExpired": "Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.",
+      "linkInvalid": "Ce lien n'est pas valide. Demandez-en un nouveau.",
+      "oauthFailed": "La connexion Google n'a pas abouti. Réessayez.",
+      "unexpected": "Quelque chose a échoué de notre côté. Réessayez."
+    },
+    "notices": {
+      "checkEmail": "Vérifiez votre boîte de réception — nous vous avons envoyé un lien de confirmation.",
+      "checkEmailReset": "Si un compte existe pour cette adresse, un lien de réinitialisation est en route. Il est valable une heure et ne fonctionne qu'une fois.",
+      "passwordChanged": "Votre mot de passe a été modifié."
+    }
+  },
+  "onboarding": {
+    "title": "Bienvenue",
+    "subtitle": "Quatre questions rapides, pour vous faire démarrer au bon endroit.",
+    "submit": "Commencer",
+    "submitPending": "Préparation en cours",
+    "panel": {
+      "headline": "Dites-nous d'où vous partez.",
+      "points": {
+        "everything": "Vous pourrez tout modifier plus tard",
+        "languages": "Rien de tout cela n'est partagé",
+        "cancel": "Cela prend une trentaine de secondes"
+      }
+    },
+    "name": {
+      "legend": "Comment devons-nous vous appeler ?",
+      "label": "Nom",
+      "placeholder": "Camille"
+    },
+    "language": {
+      "legend": "Dans quelle langue souhaitez-vous apprendre ?"
+    },
+    "level": {
+      "legend": "Que connaissez-vous déjà des marchés ?",
+      "beginner": {
+        "label": "Je pars de zéro"
+      },
+      "intermediate": {
+        "label": "Je connais les bases"
+      },
+      "advanced": {
+        "label": "J'investis déjà"
+      }
+    },
+    "goal": {
+      "legend": "Qu'est-ce qui vous amène ?",
+      "understand_markets": {
+        "label": "Comprendre le fonctionnement des marchés"
+      },
+      "read_charts": {
+        "label": "Apprendre à lire un graphique"
+      },
+      "manage_risk": {
+        "label": "Gérer le risque correctement"
+      },
+      "build_strategy": {
+        "label": "Construire ma propre approche"
+      }
+    }
+  },
+  "account": {
+    "title": "Compte",
+    "subtitle": "Vos informations, votre langue et votre mot de passe.",
+    "role": {
+      "label": "Rôle",
+      "student": "Étudiant",
+      "editor": "Éditeur",
+      "admin": "Administrateur"
+    },
+    "profile": {
+      "title": "À propos de vous",
+      "description": "Tout ce qui suit n'est affiché que pour vous.",
+      "submit": "Enregistrer",
+      "submitPending": "Enregistrement",
+      "saved": "Enregistré."
+    },
+    "password": {
+      "title": "Mot de passe",
+      "description": "Le modifier ne déconnecte personne d'autre.",
+      "current": "Mot de passe actuel",
+      "submit": "Modifier le mot de passe",
+      "submitPending": "Modification"
+    },
+    "email": {
+      "title": "E-mail",
+      "description": "Sert à vous connecter. Le changer n'est pas encore possible."
+    },
+    "danger": {
+      "title": "Supprimer votre compte",
+      "description": "Cela efface votre compte et tout ce qui y est rattaché — progression, notes, préférences. C'est irréversible.",
+      "confirmWord": "SUPPRIMER",
+      "confirmLabel": "Tapez {word} pour confirmer",
+      "submit": "Supprimer définitivement mon compte",
+      "submitPending": "Suppression"
+    },
+    "signOut": "Se déconnecter"
   }
 }

@@ -2,10 +2,12 @@
 
 import { UserRound } from "lucide-react";
 
+import { SignOutForm } from "@/components/margin/auth/sign-out-form";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "@/i18n/navigation";
@@ -21,9 +23,11 @@ export interface AccountMenuLabels {
 /**
  * The signed-in control. Client, because it opens.
  *
- * Sign-out is a link to a route that does not exist until Phase 4; it is
- * rendered disabled rather than omitted so the menu's shape does not change
- * when Phase 4 lands.
+ * Sign-out is a submit button in its own form rather than a
+ * `DropdownMenuItem`. Radix's item calls `preventDefault` to close the menu,
+ * which cancels the submit before it reaches the action — the menu closes and
+ * nothing else happens. `SignOutForm` carries the item's styling instead; see
+ * the note there for why it is a POST and not a link.
  */
 function AccountMenu({
   labels,
@@ -53,7 +57,9 @@ function AccountMenu({
             <Link href="/admin">{labels.admin}</Link>
           </DropdownMenuItem>
         ) : null}
-        <DropdownMenuItem disabled>{labels.signOut}</DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+        <SignOutForm variant="menuitem" label={labels.signOut} />
       </DropdownMenuContent>
     </DropdownMenu>
   );

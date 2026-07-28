@@ -105,7 +105,12 @@ Not applied, and why: **page side-by-side** and **like button** target surfaces 
 
 Audited at 375px by measuring rather than eyeballing. No element overflows the viewport and the document does not scroll horizontally.
 
-Two things the audit turned up:
+**Horizontal overflow is not the only way a layout breaks on a phone**, and the two worst cases here caused none:
+
+- **A fixed overlay eats the bottom of the page.** The consent banner is `position: fixed`, so it takes no part in layout and covers whatever the page ends with — the sign-out button at the foot of onboarding, the delete-account field at the foot of `/account`. The element is reachable by scrolling and then *not clickable*, because a fixed overlay intercepts the pointer wherever you scroll it to. `ConsentBanner` now measures itself into `--consent-banner-height` and `body` reserves that much padding. Measured, not hardcoded: it is 72px on desktop and 116px at 375px, and French runs longer again.
+- **A two-word label wraps and takes the header with it.** Nav links had no `whitespace-nowrap`, so "Mes cours" broke across two lines inside a `h-14` header and pushed it taller. French supplies the two-word labels, so this was invisible in English — the locale most of the audit was done in.
+
+Two things the original audit turned up:
 
 - **The chart.** Its axis labels rendered at **6px** on a phone, because a 720-unit viewBox scaled into 343px shrinks the type with everything else. The figure now scrolls horizontally inside `chart-scroll` below `34rem` and the axis type is set at 13 units, so labels never render under ~10px. A price chart has an irreducible amount of detail; swiping it is honest, squinting at it is not.
 - **Touch targets.** Checkbox, radio and switch measure 16–18px visually, which looks like a WCAG 2.5.8 failure and is not — all three already carry `after:-inset-x-3 after:-inset-y-2`, so the real hit area is comfortably over 24px. A pseudo-element does not show up in `getBoundingClientRect`, which is what makes this easy to "fix" twice.
@@ -155,6 +160,7 @@ Dark is not an inversion. The ground is a deep cool neutral rather than black, t
 | `skeletons` | Layout-identical, component-level |
 | `meta` | Duration, counts, concept chips, free-preview, market figures |
 | `theme-toggle` | Light / dark / system |
+| `auth/*` | Two-column auth frame, form parts, choice cards, the four auth forms |
 
 ### What the course card deliberately does not have
 
@@ -167,6 +173,22 @@ None of them appear here. Access is one all-access subscription ([ADR-0001](deci
 `CourseCover` renders real artwork when `coverImageUrl` is set, and otherwise draws a deterministic abstract figure from the course id — a gradient mixed from the three cool chart hues plus a line that behaves like a price series.
 
 Generated rather than stock photography, for two reasons. A stock photo of a trading desk reads as real editorial and quietly becomes permanent, which rule 1 forbids; an abstract figure never will. And a 40-course catalog looks finished on day one with no art budget spent before anyone has read a lesson. The mix is constrained to indigo/cyan/emerald so a catalog page reads as one wall instead of a swatch book.
+
+### The auth screens
+
+Form left, decoration right, and the right column disappears below `lg`. The form is first in the DOM, so reading order and tab order reach the inputs without traversing marketing copy — the responsive choice and the accessible one agree here.
+
+What the right column may hold is constrained by [ADR-0002](decisions/0002-no-fictional-instructors.md): no testimonials, no ratings, no student counts, no faces. What is left is the argument from depth, plus the risk disclaimer — which appears on the way in, not only in the footer, because this is where someone decides to buy a financial-education product.
+
+The figure behind it is a **fixed, invented** price series, server-rendered as SVG with no client JS. Invented because a real chart on a sign-up screen reads as a market claim; fixed rather than generated because it is one figure in one place. It sits at 45% opacity under a gradient wash — at full strength the stroke was the loudest thing on the screen and crossed the headline at whatever height the viewport happened to put it, so the copy's contrast moved with the window.
+
+**Choice cards are native `<input type="radio">`, not Radix.** A native group inside a `<fieldset>` gives arrow-key navigation, "2 of 4" announcements, and a form that submits without JavaScript — which matters most on `/onboarding`, since it blocks ([ADR-0012](decisions/0012-blocking-onboarding.md)) and a JS-only door is one some people cannot open. The input is `sr-only` rather than `display: none`, because a hidden input is not focusable and the keyboard behaviour goes with it.
+
+One line per choice, with an icon instead of a description. The cards first shipped with a sentence under every label; four questions each explaining themselves turned a thirty-second form into a page of prose. The icon distinguishes the options at a glance without adding a line to read. Icons cross the server/client boundary as **names**, not components — a component is not serializable as a prop — and `ChoiceGroup` resolves them against its own registry.
+
+**A mutating form redirects; it does not return a success notice** — with one exception, sign-up, which has an analytics event to fire from the browser first. This is not only for tidiness: `changePasswordAction` rotates the session's tokens, so returning state made React re-render the page inside the same response that was replacing its auth cookies. Under load that render never settled, and the button sat disabled on its spinner while the password had in fact been changed. The success message rides back on the URL instead.
+
+> `peer-checked:` compiles to `.peer:checked ~ &`, so it only reaches the input's **siblings**. Styling a grandchild (the tick, the icon) with it silently does nothing. The checked styles for those are declared on the sibling wrapper and reach down by descendant selector.
 
 ### No gamification
 

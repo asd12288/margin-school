@@ -3,7 +3,7 @@
 Subscription platform teaching financial markets, beginner-first, in French and English.
 We are the sole publisher: we produce all content. There are no external instructors and nothing is sold per course.
 
-**Status: pre-implementation.** Decisions are made and documented; almost no application code exists yet. Do not infer intent from the codebase — read the docs.
+**Status: Phases 0–4 of [docs/roadmap.md](docs/roadmap.md) are built** — foundations, design system, app shell, auth and roles. Phase 5's entitlement boundary (`canAccess`) does **not** exist yet, so there is nothing to gate content with; nor is there a content schema, and the catalog renders from fixtures. Decisions still live in the docs rather than in the code, so read them first — but the code is now real enough to be worth reading too.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know

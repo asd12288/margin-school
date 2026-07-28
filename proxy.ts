@@ -129,12 +129,26 @@ export async function proxy(request: NextRequest) {
 export const config = {
   matcher: [
     /**
-     * Everything except static assets and image files.
+     * Everything except static assets, image files, and the two route-handler
+     * trees.
      *
      * The matcher matters more than it looks: this runs on prefetches too, and
      * each run costs a round trip to the auth server. Excluding assets keeps
      * that off the hot path for anything that could never carry a session.
+     *
+     * **`api/` and `auth/` must stay excluded.** Neither lives under
+     * `[locale]`, and next-intl's middleware has no notion of a route it should
+     * leave alone — it redirects *any* unprefixed path, so `/auth/callback`
+     * became `/fr/auth/callback` and 404'd, taking Google sign-in and the whole
+     * password reset with it. `/api/debug/observability` had the same fault
+     * before these routes existed; the debug panel's fetch was following a
+     * redirect to `/fr/api/…` and getting a 404. One exclusion fixes both.
+     *
+     * Skipping the proxy costs these routes nothing. Its job here is refreshing
+     * the session cookie for rendered pages; a route handler builds its own
+     * Supabase client and, unlike a server component, is allowed to write
+     * cookies itself.
      */
-    "/((?!_next/static|_next/image|favicon.ico|monitoring|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?)$).*)",
+    "/((?!api/|auth/|_next/static|_next/image|favicon.ico|monitoring|.*\\.(?:svg|png|jpg|jpeg|gif|webp|avif|ico|woff2?)$).*)",
   ],
 };

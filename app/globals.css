@@ -580,11 +580,32 @@
   html {
     @apply font-sans;
     -webkit-tap-highlight-color: transparent;
+    /* So `#main` and other in-page targets do not land under the consent
+       banner. See the note on `body` below. */
+    scroll-padding-bottom: var(--consent-banner-height, 0px);
   }
 
   body {
     @apply bg-background text-foreground;
     font-synthesis-weight: none;
+
+    /* Room for the consent banner.
+     *
+     * The banner is `position: fixed` at the bottom, so it sits *over* the
+     * page rather than in it — and at 375px, where its message wraps to four
+     * lines and the buttons drop onto their own row, it is tall enough to
+     * cover whatever the page ends with. That was the sign-out button at the
+     * foot of onboarding and the delete-account field at the foot of
+     * `/account`: reachable by scrolling, and then not clickable, because a
+     * fixed overlay still intercepts the pointer wherever you scroll it to.
+     *
+     * `ConsentBanner` measures itself and publishes its height here, so the
+     * reservation tracks the real element — which changes with viewport width
+     * and with locale, French running 15–20% longer. It resolves to `0px`
+     * whenever the banner is not mounted, which is every page load after the
+     * visitor has answered.
+     */
+    padding-bottom: var(--consent-banner-height, 0px);
   }
 
   /* Headings are separated from body text by weight and tracking, not by a
