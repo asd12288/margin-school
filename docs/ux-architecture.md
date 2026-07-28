@@ -12,6 +12,8 @@ This content is identical for everyone and changes only when content is publishe
 
 **A skeleton in Tier 1 is a bug.** It means something that should have been instant was not cached. This is also what makes SEO work — the acquisition channel depends on it.
 
+**A public content route must return a real `404` HTTP status, not merely render a 404 body, before it is exposed to search.** Rendering the designed not-found page while still returning `200` is a soft 404 — search engines index the URL as real content. This is easy to get right by accident and wrong by accident: under this project's Cache Components setup, a `notFound()` that resolves inside a `<Suspense>` boundary (required whenever the matched value isn't in that route's `generateStaticParams` list — see `app/[locale]/(public)/course/[course]/page.tsx`) can only ship `200` with `<meta name="robots" content="noindex">`, because the status is committed the moment the Suspense fallback streams. `dynamicParams` — the pre-Cache-Components escape hatch for this — no longer exists once Cache Components is enabled. Before a Tier 1 route with unenumerated params is linked from a sitemap or otherwise made indexable, confirm it returns a genuine `404`, not a `noindex`-tagged `200`.
+
 ## Tier 2 — Instant shell, streamed data.
 
 **Applies to:** dashboard, my courses, study area, admin lists — anything with a stable frame and personal content.
