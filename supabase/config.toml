@@ -549,6 +549,22 @@ additional_redirect_urls = [
 # they control.
 enable_confirmations = true
 
+# The two below are the warning at the top of this block, made real. Neither
+# was overridden on the first push, so both inherited the local value and
+# quietly weakened production — exactly the "an override merely forgotten
+# inherits the localhost value silently" failure, found by reading the diff
+# `config push` printed rather than by anything catching it.
+#
+# `1s` locally so the e2e suite can request several resets in a row. In
+# production it is the only thing standing between a stranger's inbox and
+# someone hammering the reset form at it.
+max_frequency = "60s"
+# Six digits locally because it is easier to read out of the mail catcher.
+# Production had eight before the first push and should have kept it: each
+# extra digit is another factor of ten against guessing inside the hour the
+# code lives for.
+otp_length = 8
+
 [remotes.production.auth.rate_limit]
 # Back to Supabase's defaults. The base values are inflated for the e2e suite,
 # which signs in hundreds of times per run from one IP; shipping those to
