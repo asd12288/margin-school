@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { redirect } from "next/navigation";
+import type { NextRequest } from "next/server";
 import type { EmailOtpType } from "@supabase/supabase-js";
 
 import { getPathname } from "@/i18n/navigation";
@@ -29,8 +30,20 @@ import { createSupabaseServerClient } from "@/lib/auth/supabase-server";
  * working sign-in and a broken password reset**, which is why they are in the
  * repo rather than only in the dashboard — see docs/environments.md.
  */
+/**
+ * **`redirect()` from `next/navigation`, never `NextResponse.redirect()`.**
+ *
+ * This is the whole reason the flow works. `verifyOtp` writes the new session
+ * through the `cookies()` store, and Next attaches those writes to the
+ * response *it* builds. `NextResponse.redirect()` constructs a different
+ * response object, which carries none of them — so the browser followed the
+ * redirect with no session, `requireUser()` on `/reset-password` found nobody,
+ * and the person was bounced to sign-in holding a link that had just been
+ * silently spent. The URL was right and the exchange had succeeded; only the
+ * cookies were missing, which is what made it look like the token was bad.
+ */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
 
   const tokenHash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
@@ -42,9 +55,25 @@ export async function GET(request: NextRequest) {
   // email client's `Accept-Language` is not the person's.
   const locale = localeFromPath(next);
 
-  if (!tokenHash || !type) {
-    return redirectToSignIn(origin, locale, "linkInvalid");
-  }
+  const destination = await resolveDestination({ tokenHash, type, next, locale });
+
+  // Outside everything above, and never inside a `try`: `redirect` works by
+  // throwing, so a `catch` would swallow it.
+  redirect(destination);
+}
+
+async function resolveDestination({
+  tokenHash,
+  type,
+  next,
+  locale,
+}: {
+  tokenHash: string | null;
+  type: EmailOtpType | null;
+  next: string | null;
+  locale: Locale;
+}): Promise<string> {
+  if (!tokenHash || !type) return signInWithError(locale, "linkInvalid");
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
@@ -55,14 +84,15 @@ export async function GET(request: NextRequest) {
    * The sign-in page turns this key into an offer to send a fresh one rather
    * than a dead end.
    */
-  if (error) return redirectToSignIn(origin, locale, "linkExpired");
+  if (error) return signInWithError(locale, "linkExpired");
 
-  const fallback = getPathname({
-    href: type === "recovery" ? RESET_PASSWORD_PATH : ONBOARDING_PATH,
-    locale,
-  });
-
-  return NextResponse.redirect(new URL(next ?? fallback, origin));
+  return (
+    next ??
+    getPathname({
+      href: type === "recovery" ? RESET_PASSWORD_PATH : ONBOARDING_PATH,
+      locale,
+    })
+  );
 }
 
 /** `/fr/nouveau-mot-de-passe` → `fr`. */
@@ -74,9 +104,6 @@ function localeFromPath(path: string | null): Locale {
     : routing.defaultLocale;
 }
 
-function redirectToSignIn(origin: string, locale: Locale, reason: string) {
-  const url = new URL(getPathname({ href: SIGN_IN_PATH, locale }), origin);
-  url.searchParams.set("error", reason);
-
-  return NextResponse.redirect(url);
+function signInWithError(locale: Locale, reason: string) {
+  return `${getPathname({ href: SIGN_IN_PATH, locale })}?error=${reason}`;
 }

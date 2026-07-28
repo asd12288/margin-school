@@ -99,6 +99,8 @@ The replacements live in [`supabase/templates/`](../supabase/templates/) and sen
 
 **Nothing syncs them to production.** `config.toml` configures the local Docker stack only; the hosted project keeps its own copies, set in the Supabase dashboard under Authentication → Emails. When deploying to a new project, paste both templates in — otherwise every "reset your password" link lands on a page that cannot see its own token.
 
+The link is built on `{{ .RedirectTo }}`, **not** `{{ .SiteURL }}`. `SiteURL` is one value per Supabase project, and preview deployments share production's ([ADR-0010](decisions/0010-no-staging-database.md)) — so a reset requested on a preview would mail a link to production. `RedirectTo` is what the app passed in, with the origin read off the request, so the link returns to whichever deployment sent it. Locally it was pinning every link to port 3000 regardless of where the app was running, which is how the e2e suite on 3100 caught it.
+
 They are bilingual (French block, then English) because Supabase sends one template per event and knows nothing about the recipient's language. Per-locale templates arrive with Resend in Phase 10.
 
 ### Rate limits are per-IP and bite the test suite

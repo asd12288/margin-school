@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 
 import { ChoiceGroup, type Choice } from "@/components/margin/auth/choice-group";
 import { Field, FormMessage, SubmitButton } from "@/components/margin/auth/form-parts";
@@ -125,19 +126,31 @@ export interface PasswordFormLabels extends FormFeedbackLabels {
  * Changing a known password, which is why it asks for the current one — see
  * the action for why that check is ours rather than Supabase's.
  *
- * This one stays on the page and reports success, since nothing about the URL
- * changes.
+ * Like the other two, this redirects on success rather than returning a
+ * notice. The reason is specific to this action and worth reading before
+ * "simplifying" it back: see `changePasswordAction`.
  */
 function PasswordForm({ labels }: { labels: PasswordFormLabels }) {
   const [state, formAction] = useActionState(changePasswordAction, EMPTY_FORM_STATE);
 
   const error = messageFor(labels.errors, state.error);
-  const notice = messageFor(labels.notices, state.notice);
 
   return (
     <form action={formAction} className="flex flex-col gap-5">
       {error ? <FormMessage tone="error">{error}</FormMessage> : null}
-      {notice ? <FormMessage tone="success">{notice}</FormMessage> : null}
+
+      {/*
+       * Success arrives on the URL, not in action state: the action redirects
+       * rather than returning, so that the rotated session cookies land before
+       * this page renders again. See the note in `changePasswordAction`.
+       *
+       * `useSearchParams` needs its own boundary to stay statically
+       * renderable, and it renders nothing in the ordinary case, so
+       * `fallback={null}` costs nothing.
+       */}
+      <Suspense fallback={null}>
+        <ChangedNotice label={labels.notices.passwordChanged} />
+      </Suspense>
 
       <Field
         id="currentPassword"
@@ -174,6 +187,16 @@ function PasswordForm({ labels }: { labels: PasswordFormLabels }) {
       />
     </form>
   );
+}
+
+/**
+ * The "your password has been changed" banner, shown when the action's
+ * redirect brought us back with `?changed=password`.
+ */
+function ChangedNotice({ label }: { label: string }) {
+  if (useSearchParams().get("changed") !== "password") return null;
+
+  return <FormMessage tone="success">{label}</FormMessage>;
 }
 
 /* -------------------------------------------------------------------------

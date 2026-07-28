@@ -1,4 +1,5 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { redirect } from "next/navigation";
+import type { NextRequest } from "next/server";
 
 import { getPathname } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
@@ -21,8 +22,15 @@ import { createSupabaseServerClient } from "@/lib/auth/supabase-server";
  * because nothing else in this request remembers what language the person was
  * reading before they left for Google.
  */
+/**
+ * **`redirect()` from `next/navigation`, never `NextResponse.redirect()`** —
+ * see the long note in `app/auth/confirm/route.ts`. `exchangeCodeForSession`
+ * writes the session through the `cookies()` store, and only the response Next
+ * builds itself carries those writes. A hand-built `NextResponse` drops them
+ * and the visitor arrives signed out.
+ */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
 
   const code = searchParams.get("code");
   const locale = readLocale(searchParams.get("locale"));
@@ -36,21 +44,19 @@ export async function GET(request: NextRequest) {
    */
   const providerError = searchParams.get("error");
   if (providerError) {
-    return redirectToSignIn(
-      origin,
-      locale,
-      providerError === "access_denied" ? null : "oauthFailed",
+    redirect(
+      signInPath(locale, providerError === "access_denied" ? null : "oauthFailed"),
     );
   }
 
-  if (!code) return redirectToSignIn(origin, locale, "oauthFailed");
+  if (!code) redirect(signInPath(locale, "oauthFailed"));
 
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.exchangeCodeForSession(code);
 
   // A code is single-use and short-lived, so the usual cause here is a
   // refresh of this URL or a stale link, not an attack.
-  if (error) return redirectToSignIn(origin, locale, "linkExpired");
+  if (error) redirect(signInPath(locale, "linkExpired"));
 
   /**
    * Onboarding wins over `next`.
@@ -64,14 +70,14 @@ export async function GET(request: NextRequest) {
   const onboarded = profile?.onboardedAt != null;
 
   const next = onboarded ? await sameOriginPath(searchParams.get("next")) : null;
-  const destination =
-    next ??
-    getPathname({
-      href: onboarded ? AFTER_SIGN_IN_PATH : ONBOARDING_PATH,
-      locale,
-    });
 
-  return NextResponse.redirect(new URL(destination, origin));
+  redirect(
+    next ??
+      getPathname({
+        href: onboarded ? AFTER_SIGN_IN_PATH : ONBOARDING_PATH,
+        locale,
+      }),
+  );
 }
 
 function readLocale(value: string | null): Locale {
@@ -86,9 +92,7 @@ function readLocale(value: string | null): Locale {
  * user input — the sign-in page still only renders keys it recognises, so a
  * hand-crafted `?error=` cannot inject anything.
  */
-function redirectToSignIn(origin: string, locale: Locale, reason: string | null) {
-  const url = new URL(getPathname({ href: SIGN_IN_PATH, locale }), origin);
-  if (reason) url.searchParams.set("error", reason);
-
-  return NextResponse.redirect(url);
+function signInPath(locale: Locale, reason: string | null) {
+  const path = getPathname({ href: SIGN_IN_PATH, locale });
+  return reason ? `${path}?error=${reason}` : path;
 }

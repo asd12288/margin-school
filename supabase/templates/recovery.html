@@ -3,15 +3,21 @@
 
   Two things here are load-bearing rather than stylistic.
 
-  `{{ .TokenHash }}` sent to our own `/auth/confirm`, not `{{ .ConfirmationURL }}`:
-  the stock URL returns the token in a fragment, which never reaches a server,
-  so a server-rendered app cannot complete the exchange. See
-  app/auth/confirm/route.ts.
+  `{{ .TokenHash }}` rather than `{{ .ConfirmationURL }}`: the stock URL returns
+  the token in a fragment, which never reaches a server, so a server-rendered
+  app cannot complete the exchange. See app/auth/confirm/route.ts.
 
-  `next={{ .RedirectTo }}` carries the locale. `RedirectTo` is the absolute URL
-  the app passed to `resetPasswordForEmail` — already localized
-  (`/fr/nouveau-mot-de-passe`) and already checked against Supabase's redirect
-  allow-list. `/auth/confirm` checks it again against its own origin before
+  The link is built on `{{ .RedirectTo }}` and **not** on `{{ .SiteURL }}`.
+  `RedirectTo` is what the app passed to `resetPasswordForEmail` — our own
+  `/auth/confirm?next=<localized reset page>`, absolute, with the origin taken
+  from the request that asked for the reset. `SiteURL` is a single value
+  configured on the Supabase project, so it is the same for every deployment
+  sharing it: preview deploys share production's (ADR-0010), so a reset asked
+  for on a preview would have mailed a link to production, and locally it
+  pinned every link to port 3000 regardless of where the app was running.
+
+  Hence `&` and not `?` below — `RedirectTo` already carries `?next=`.
+  `/auth/confirm` re-checks that `next` against its own origin before
   redirecting, because a redirect target arriving by email is exactly where an
   open redirect lives.
 
@@ -30,7 +36,7 @@
 
   <p style="margin: 24px 0;">
     <a
-      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next={{ .RedirectTo }}"
+      href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery"
       style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 500;"
     >
       Choisir un nouveau mot de passe
@@ -49,7 +55,7 @@
 
   <p style="margin: 24px 0;">
     <a
-      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next={{ .RedirectTo }}"
+      href="{{ .RedirectTo }}&token_hash={{ .TokenHash }}&type=recovery"
       style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 500;"
     >
       Choose a new password

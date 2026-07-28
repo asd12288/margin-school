@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { OnboardingForm } from "@/components/margin/auth/onboarding-form";
+import { SignOutForm } from "@/components/margin/auth/sign-out-form";
 import { getPathname } from "@/i18n/navigation";
 import { routing, type Locale } from "@/i18n/routing";
 import { getCurrentUser, isOnboarded, requireProfile } from "@/lib/auth/dal";
@@ -57,18 +58,35 @@ async function OnboardingFrame({ locale }: { locale: string }) {
     redirect(getPathname({ href: AFTER_SIGN_IN_PATH, locale: asLocale(locale) }));
   }
 
+  const t = await getTranslations("account");
+
   return (
-    <OnboardingForm
-      labels={await getOnboardingLabels()}
-      defaults={{
-        displayName: await suggestedName(),
-        // What they are reading right now, not `profile.locale` — the profile
-        // still holds the schema default at this point, and pre-selecting
-        // French for someone on an English page would be answering the
-        // question wrong on their behalf.
-        locale: asLocale(locale),
-      }}
-    />
+    <div className="flex flex-col gap-8">
+      <OnboardingForm
+        labels={await getOnboardingLabels()}
+        defaults={{
+          displayName: await suggestedName(),
+          // What they are reading right now, not `profile.locale` — the
+          // profile still holds the schema default at this point, and
+          // pre-selecting French for someone on an English page would be
+          // answering the question wrong on their behalf.
+          locale: asLocale(locale),
+        }}
+      />
+
+      {/*
+       * The way out.
+       *
+       * This screen blocks every other signed-in route (ADR-0012) and carries
+       * no navigation, so without this the only exit is the logo — which leads
+       * to the public site, where the account menu happens to have a sign-out.
+       * Someone who signed in as the wrong account has no reason to guess
+       * that. A blocking screen owes the reader a door.
+       */}
+      <div className="border-t border-border pt-6">
+        <SignOutForm label={t("signOut")} />
+      </div>
+    </div>
   );
 }
 

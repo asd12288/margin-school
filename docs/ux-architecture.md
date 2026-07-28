@@ -101,6 +101,8 @@ The full map, settled once in [ADR-0011](decisions/0011-route-map.md) because UR
 
 `/reset-password` is signed-in-only and is deliberately **not** in `GUEST_ONLY_PREFIXES`: arriving from a recovery email means `/auth/confirm` has already established a session, so bouncing signed-in users away from it would break the flow it exists for.
 
+**Both route handlers redirect with `redirect()` from `next/navigation`, never `NextResponse.redirect()`.** The Supabase call that precedes each of them writes the new session through the `cookies()` store, and only the response Next builds itself carries those writes. A hand-built `NextResponse` drops them silently: the URL is right, the token exchange succeeded, and the visitor arrives signed out — bounced straight back to sign-in holding a link that has just been spent. It reads as an invalid token and is not one.
+
 The two route handlers live outside `[locale]` and are **excluded from the proxy matcher**. next-intl's middleware has no notion of a route it should leave alone and prefixes anything unprefixed, so `/auth/callback` became `/fr/auth/callback` and 404'd — taking Google sign-in and the entire password reset with it. `/api/*` had the same fault before these routes existed. One exclusion in [proxy.ts](../proxy.ts) covers both.
 
 `/onboarding` blocks every other signed-in route until it is finished — see [ADR-0012](decisions/0012-blocking-onboarding.md). The check cannot live in the proxy, which reads a cookie and never the database; it is `requireOnboardedProfile()` in the Data Access Layer.

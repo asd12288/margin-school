@@ -181,6 +181,8 @@ The figure behind it is a **fixed, invented** price series, server-rendered as S
 
 One line per choice, with an icon instead of a description. The cards first shipped with a sentence under every label; four questions each explaining themselves turned a thirty-second form into a page of prose. The icon distinguishes the options at a glance without adding a line to read. Icons cross the server/client boundary as **names**, not components — a component is not serializable as a prop — and `ChoiceGroup` resolves them against its own registry.
 
+**A mutating form redirects; it does not return a success notice** — with one exception, sign-up, which has an analytics event to fire from the browser first. This is not only for tidiness: `changePasswordAction` rotates the session's tokens, so returning state made React re-render the page inside the same response that was replacing its auth cookies. Under load that render never settled, and the button sat disabled on its spinner while the password had in fact been changed. The success message rides back on the URL instead.
+
 > `peer-checked:` compiles to `.peer:checked ~ &`, so it only reaches the input's **siblings**. Styling a grandchild (the tick, the icon) with it silently does nothing. The checked styles for those are declared on the sibling wrapper and reach down by descendant selector.
 
 ### No gamification

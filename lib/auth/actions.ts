@@ -15,12 +15,16 @@ import {
 import {
   AFTER_SIGN_IN_PATH,
   AUTH_CALLBACK_PATH,
+  AUTH_CONFIRM_PATH,
   ONBOARDING_PATH,
   RESET_PASSWORD_PATH,
   safeNextPath,
 } from "@/lib/auth/routes";
 import { absoluteUrl } from "@/lib/auth/site-url";
-import { createSupabaseAdminClient } from "@/lib/auth/supabase-admin";
+import {
+  createSupabaseAdminClient,
+  createSupabaseCheckClient,
+} from "@/lib/auth/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/auth/supabase-server";
 import {
   collectErrors,
@@ -125,6 +129,30 @@ async function localizedPath(href: StaticPathname): Promise<string> {
   return getPathname({ href, locale: await currentLocale() });
 }
 
+/**
+ * The absolute `/auth/confirm` URL an emailed link should come back to,
+ * carrying where to go once the token is spent.
+ *
+ * **This, not `{{ .SiteURL }}`, is what decides the origin of an auth email's
+ * link**, and the difference is not cosmetic. `SiteURL` is one value
+ * configured on the Supabase project, so every environment sharing that
+ * project gets the same one. Preview deployments share production's
+ * (ADR-0010), so a password reset requested from a preview would have mailed a
+ * link to *production* — and locally it pinned every link to port 3000, which
+ * is how the e2e suite on 3100 first caught this.
+ *
+ * `absoluteUrl` reads the host off the request instead, so the link returns to
+ * whichever deployment actually sent it. The templates interpolate this as
+ * `{{ .RedirectTo }}` and append the token, which is why they append with `&`
+ * — this URL already carries a query string.
+ */
+async function confirmUrl(next: string): Promise<string> {
+  const url = new URL(await absoluteUrl(AUTH_CONFIRM_PATH));
+  url.searchParams.set("next", next);
+
+  return url.toString();
+}
+
 /* -------------------------------------------------------------------------
    Sign up
    ------------------------------------------------------------------------- */
@@ -163,10 +191,11 @@ export async function signUpAction(
     email,
     password,
     options: {
-      // Where the confirmation email lands. Localized, because the email is
-      // the one part of the flow that leaves the browser and comes back with
-      // no memory of what language the person was reading.
-      emailRedirectTo: await absoluteUrl(
+      // Where the confirmation email lands: our own /auth/confirm, carrying
+      // the localized destination. Localized because the email is the one
+      // part of the flow that leaves the browser and comes back with no
+      // memory of what language the person was reading.
+      emailRedirectTo: await confirmUrl(
         getPathname({ href: ONBOARDING_PATH, locale }),
       ),
     },
@@ -300,7 +329,7 @@ export async function requestPasswordResetAction(
   const supabase = await createSupabaseServerClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: await absoluteUrl(await localizedPath(RESET_PASSWORD_PATH)),
+    redirectTo: await confirmUrl(await localizedPath(RESET_PASSWORD_PATH)),
   });
 
   /**
@@ -479,21 +508,44 @@ export async function changePasswordAction(
 
   if (fieldErrors) return { fieldErrors };
 
-  const supabase = await createSupabaseServerClient();
-
-  const { error: verifyError } = await supabase.auth.signInWithPassword({
-    email: user.email!,
-    password: currentPassword,
-  });
+  /**
+   * Checked on a client with no session of its own — see
+   * `createSupabaseCheckClient`. On the cookie-bound client this call is not a
+   * read: `signInWithPassword` issues a fresh session and writes it over the
+   * caller's cookies, as a side effect of what is meant to be a yes/no
+   * question.
+   *
+   * Both calls hash a password with bcrypt, so this action is legitimately the
+   * slowest in the file — a second or more under load. That is a real cost of
+   * verifying rather than trusting the session, and it is worth paying.
+   */
+  const { error: verifyError } = await createSupabaseCheckClient().auth.signInWithPassword(
+    { email: user.email!, password: currentPassword },
+  );
 
   if (verifyError) {
     return { fieldErrors: { currentPassword: "currentPasswordWrong" } };
   }
 
+  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: errorKey(error) };
 
-  return { notice: "passwordChanged" };
+  /**
+   * Redirect rather than return a notice, which is what this did first.
+   *
+   * `updateUser` rotates the session's tokens, so the action's response
+   * carries new auth cookies. Returning state instead makes React re-render
+   * this page inside that same response — a render that re-reads the session
+   * while it is being replaced. Under concurrent load that render never
+   * settled: the action had already succeeded in ~200ms, the password really
+   * was changed, and the button sat disabled on its spinner indefinitely.
+   *
+   * A redirect ends the action, lets the new cookies land, and re-enters the
+   * page as a fresh request. Every other mutating action here already
+   * redirects; this one was the exception.
+   */
+  redirect(`${await localizedPath("/account")}?changed=password`);
 }
 
 /**
