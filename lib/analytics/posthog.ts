@@ -78,3 +78,43 @@ export function capture(
 export function capturePageview(url: string) {
   return capture("$pageview", { $current_url: url });
 }
+
+/**
+ * Ties this browser's events to a person.
+ *
+ * docs/observability.md calls this the single biggest unlock of Phase 4: until
+ * it exists every session is a stranger and retention — the metric that
+ * actually matters for a subscription — cannot be computed at all.
+ *
+ * **The id and nothing else.** No email, no name. Rule 2 of the taxonomy keeps
+ * personal data out of PostHog, and a user id is enough to join sessions
+ * together, which is the whole job.
+ *
+ * Returns false when analytics is not running, exactly like `capture`, so a
+ * signed-in visitor who has not consented is simply never identified.
+ */
+export function identify(userId: string): boolean {
+  if (!ready) return false;
+
+  try {
+    posthog.identify(userId);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Drops the association on sign-out, so a second person signing in on the same
+ * browser does not inherit the first one's identity.
+ */
+export function resetIdentity(): boolean {
+  if (!ready) return false;
+
+  try {
+    posthog.reset();
+    return true;
+  } catch {
+    return false;
+  }
+}

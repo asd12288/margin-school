@@ -13,4 +13,14 @@ export const TEST_PASSWORD = "test-password-123";
 export const TEST_EMAILS = {
   student: "student@test.local",
   editor: "editor@test.local",
+  admin: "admin@test.local",
+  /**
+   * Signed up but never answered the onboarding questions.
+   *
+   * Onboarding blocks (ADR-0012), so every other seeded account has to be
+   * past it or none of the app routes would be reachable in a test. This one
+   * exists to prove the gate is actually there — without it, a bug that
+   * skipped onboarding entirely would look identical to a passing suite.
+   */
+  newcomer: "newcomer@test.local",
 } as const;

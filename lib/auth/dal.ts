@@ -1,10 +1,13 @@
 import "server-only";
 
 import { eq } from "drizzle-orm";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { cache } from "react";
 
-import { SIGN_IN_PATH } from "@/lib/auth/routes";
+import { redirect } from "@/i18n/navigation";
+import { type StaticPathname } from "@/i18n/routing";
+import { ONBOARDING_PATH, SIGN_IN_PATH } from "@/lib/auth/routes";
 import { createSupabaseServerClient } from "@/lib/auth/supabase-server";
 import { db } from "@/lib/db/client";
 import { profile, type Profile } from "@/lib/db/schema";
@@ -57,18 +60,78 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   return row ?? null;
 });
 
+/**
+ * Sends the visitor to a localized route.
+ *
+ * `redirect("/sign-in")` from `next/navigation` would land on the unprefixed
+ * URL, which next-intl's proxy then redirects again — two round trips, and a
+ * French reader passing through an English-looking URL on the way. The
+ * wrapper from i18n/navigation resolves the translated segment
+ * (`/fr/connexion`) in one hop.
+ *
+ * The locale is fetched by the caller rather than in here, and this stays
+ * **synchronous on purpose**. `redirect` works by throwing, and its `never`
+ * return is what tells TypeScript that the line after `if (!current)` is
+ * unreachable — so a `Profile | null` narrows to `Profile` with no assertion.
+ * Wrapping it in an `async` helper turns `never` into `Promise<never>`, the
+ * narrowing is lost, and every call site needs a `!` that would then survive
+ * the guard being deleted.
+ */
+function redirectLocalized(href: StaticPathname, locale: string): never {
+  // `return`, not a bare call. next-intl exports `redirect` as a destructured
+  // property rather than a function declaration, and TypeScript only treats a
+  // never-returning *call* as an unreachable end point when the callee is
+  // explicitly annotated — which a destructured binding is not. Returning the
+  // expression states the same thing in a form the checker accepts.
+  return redirect({ href, locale });
+}
+
 /** For pages that require a signed-in user. Redirects instead of returning null. */
 export async function requireUser() {
   const user = await getCurrentUser();
-  if (!user) redirect(SIGN_IN_PATH);
+  if (!user) redirectLocalized(SIGN_IN_PATH, await getLocale());
 
   return user;
 }
 
-/** For pages that require a profile — anything reading role, locale or access. */
+/**
+ * For pages that require a profile — anything reading role, locale or access.
+ *
+ * Note this does **not** require onboarding to be finished, which makes it
+ * the right gate for exactly two things: `/onboarding` itself, where the
+ * onboarded variant would redirect to itself forever, and `/reset-password`,
+ * where someone arriving from a recovery email must be able to set a password
+ * before being asked anything. Every other signed-in route wants
+ * `requireOnboardedProfile` below.
+ */
 export async function requireProfile(): Promise<Profile> {
   const current = await getCurrentProfile();
-  if (!current) redirect(SIGN_IN_PATH);
+  if (!current) redirectLocalized(SIGN_IN_PATH, await getLocale());
+
+  return current;
+}
+
+/** Onboarding is finished. The only signal is the timestamp — see the schema. */
+export function isOnboarded(current: Profile): boolean {
+  return current.onboardedAt !== null;
+}
+
+/** `editor` and `admin` are staff; `student` is not. */
+export function isStaff(current: Profile): boolean {
+  return current.role === "editor" || current.role === "admin";
+}
+
+/**
+ * The gate for every signed-in route except `/onboarding` and `/account`.
+ *
+ * Onboarding blocks (ADR-0012), so an unfinished profile is bounced to it
+ * rather than allowed through with half its fields null. `/onboarding` itself
+ * must call `requireProfile`, not this — calling this there is an infinite
+ * redirect.
+ */
+export async function requireOnboardedProfile(): Promise<Profile> {
+  const current = await requireProfile();
+  if (!isOnboarded(current)) redirectLocalized(ONBOARDING_PATH, await getLocale());
 
   return current;
 }
@@ -94,11 +157,14 @@ export async function requireProfile(): Promise<Profile> {
  * `dynamic = "force-dynamic"` were both tried as fixes and neither works
  * under `cacheComponents`. The exposure is small in practice: `/admin` is a
  * URL anyone would guess, and nothing else leaks.
+ *
+ * Onboarding is checked before the role is, so a new editor lands on
+ * `/onboarding` rather than on a 404 they have no way to interpret.
  */
 export async function requireRole(
   ...allowed: Array<Profile["role"]>
 ): Promise<Profile> {
-  const current = await requireProfile();
+  const current = await requireOnboardedProfile();
   if (!allowed.includes(current.role)) notFound();
 
   return current;

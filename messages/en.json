@@ -129,10 +129,18 @@
   "legal": {
     "placeholder": "Placeholder",
     "notice": "This document is being prepared. Margin School is an educational platform: nothing here is investment advice, a recommendation, or a signal to buy or sell.",
-    "terms": { "title": "Terms of use" },
-    "privacy": { "title": "Privacy policy" },
-    "mentions": { "title": "Legal notice" },
-    "accessibility": { "title": "Accessibility statement" }
+    "terms": {
+      "title": "Terms of use"
+    },
+    "privacy": {
+      "title": "Privacy policy"
+    },
+    "mentions": {
+      "title": "Legal notice"
+    },
+    "accessibility": {
+      "title": "Accessibility statement"
+    }
   },
   "pages": {
     "home": {
@@ -168,12 +176,18 @@
     "accept": "Accept"
   },
   "frames": {
-    "signIn": { "title": "Sign in", "description": "Sign-in arrives in Phase 4." },
-    "signUp": { "title": "Create an account", "description": "Sign-up arrives in Phase 4." },
-    "learn": { "title": "Your next step", "description": "The next action arrives in Phase 9." },
-    "myCourses": { "title": "My courses", "description": "Enrolment arrives in Phase 9." },
-    "account": { "title": "Account", "description": "Account settings arrive in Phase 4." },
-    "admin": { "title": "Admin", "description": "The content studio arrives in Phase 7." }
+    "learn": {
+      "title": "Your next step",
+      "description": "The next action arrives in Phase 9."
+    },
+    "myCourses": {
+      "title": "My courses",
+      "description": "Enrolment arrives in Phase 9."
+    },
+    "admin": {
+      "title": "Admin",
+      "description": "The content studio arrives in Phase 7."
+    }
   },
   "errors": {
     "notFound": {
@@ -186,5 +200,171 @@
       "description": "This is on us. Try again — and if it keeps happening, it is already reported.",
       "retry": "Try again"
     }
+  },
+  "auth": {
+    "shared": {
+      "email": "Email",
+      "password": "Password",
+      "newPassword": "New password",
+      "confirmPassword": "Confirm new password",
+      "passwordHint": "At least 8 characters.",
+      "google": "Continue with Google",
+      "or": "or"
+    },
+    "panel": {
+      "headline": "Learn how markets actually work, one idea at a time.",
+      "points": {
+        "everything": "Every course, present and future, included",
+        "languages": "Written in French and English",
+        "cancel": "Cancel whenever you like"
+      }
+    },
+    "signIn": {
+      "title": "Sign in",
+      "subtitle": "Pick up where you left off.",
+      "submit": "Sign in",
+      "submitPending": "Signing in",
+      "forgotPassword": "Forgotten your password?",
+      "noAccount": "No account yet?",
+      "signUpLink": "Create one"
+    },
+    "signUp": {
+      "title": "Create your account",
+      "subtitle": "Everything on the site, in both languages.",
+      "submit": "Create account",
+      "submitPending": "Creating your account",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in",
+      "continueToOnboarding": "Continue"
+    },
+    "forgotPassword": {
+      "title": "Reset your password",
+      "subtitle": "We will email you a link to choose a new one.",
+      "submit": "Send the link",
+      "submitPending": "Sending",
+      "backToSignIn": "Back to sign in"
+    },
+    "resetPassword": {
+      "title": "Choose a new password",
+      "subtitle": "Then you are back in.",
+      "submit": "Save the new password",
+      "submitPending": "Saving"
+    },
+    "errors": {
+      "emailRequired": "Enter your email address.",
+      "emailInvalid": "That does not look like an email address.",
+      "passwordRequired": "Enter your password.",
+      "passwordTooShort": "Use at least 8 characters.",
+      "passwordConfirmRequired": "Type the password again.",
+      "passwordMismatch": "The two passwords do not match.",
+      "currentPasswordWrong": "That is not your current password.",
+      "displayNameRequired": "Tell us what to call you.",
+      "displayNameTooLong": "That is a little long — 60 characters at most.",
+      "experienceLevelRequired": "Pick the one closest to you.",
+      "goalRequired": "Pick what you are here for.",
+      "localeRequired": "Choose a language.",
+      "confirmationMismatch": "The word does not match.",
+      "invalidCredentials": "That email and password do not match an account.",
+      "emailNotConfirmed": "Confirm your email address first — check your inbox.",
+      "emailTaken": "There is already an account with that address.",
+      "samePassword": "That is already your password.",
+      "signupDisabled": "New accounts are closed at the moment.",
+      "tooManyRequests": "Too many attempts. Wait a minute and try again.",
+      "linkExpired": "That link has expired or was already used. Ask for a new one.",
+      "linkInvalid": "That link is not valid. Ask for a new one.",
+      "oauthFailed": "Google sign-in did not complete. Try again.",
+      "unexpected": "Something went wrong on our side. Try again."
+    },
+    "notices": {
+      "checkEmail": "Check your inbox — we sent you a link to confirm your address.",
+      "checkEmailReset": "If that address has an account, a reset link is on its way. The link works once and expires in an hour.",
+      "passwordChanged": "Your password has been changed."
+    }
+  },
+  "onboarding": {
+    "title": "Welcome",
+    "subtitle": "Four quick questions, so we can start you in the right place.",
+    "submit": "Start learning",
+    "submitPending": "Setting things up",
+    "panel": {
+      "headline": "Tell us where you are starting from.",
+      "points": {
+        "everything": "You can change any of this later",
+        "languages": "Nothing here is shared with anyone",
+        "cancel": "It takes about thirty seconds"
+      }
+    },
+    "name": {
+      "legend": "What should we call you?",
+      "label": "Name",
+      "placeholder": "Camille"
+    },
+    "language": {
+      "legend": "Which language do you want to learn in?"
+    },
+    "level": {
+      "legend": "How much do you already know about the markets?",
+      "beginner": {
+        "label": "I am starting from scratch"
+      },
+      "intermediate": {
+        "label": "I know the basics"
+      },
+      "advanced": {
+        "label": "I already invest"
+      }
+    },
+    "goal": {
+      "legend": "What brought you here?",
+      "understand_markets": {
+        "label": "Understand how markets work"
+      },
+      "read_charts": {
+        "label": "Learn to read a chart"
+      },
+      "manage_risk": {
+        "label": "Manage risk properly"
+      },
+      "build_strategy": {
+        "label": "Build my own approach"
+      }
+    }
+  },
+  "account": {
+    "title": "Account",
+    "subtitle": "Your details, your language, and your password.",
+    "role": {
+      "label": "Role",
+      "student": "Student",
+      "editor": "Editor",
+      "admin": "Administrator"
+    },
+    "profile": {
+      "title": "About you",
+      "description": "Everything here is only ever shown back to you.",
+      "submit": "Save changes",
+      "submitPending": "Saving",
+      "saved": "Saved."
+    },
+    "password": {
+      "title": "Password",
+      "description": "Changing it signs nobody else out.",
+      "current": "Current password",
+      "submit": "Change password",
+      "submitPending": "Changing"
+    },
+    "email": {
+      "title": "Email",
+      "description": "Used to sign in. Changing it is not available yet."
+    },
+    "danger": {
+      "title": "Delete your account",
+      "description": "This erases your account and everything attached to it — progress, notes, preferences. It cannot be undone.",
+      "confirmWord": "DELETE",
+      "confirmLabel": "Type {word} to confirm",
+      "submit": "Delete my account permanently",
+      "submitPending": "Deleting"
+    },
+    "signOut": "Sign out"
   }
 }

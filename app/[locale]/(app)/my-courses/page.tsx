@@ -2,15 +2,16 @@ import { Suspense } from "react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { Library } from "lucide-react";
 
-import { requireProfile } from "@/lib/auth/dal";
+import { requireOnboardedProfile } from "@/lib/auth/dal";
 import { EmptyState } from "@/components/margin/states";
 
 /**
  * Frame. Enrolment and progress are Phase 9. Gate in the page — see /learn.
  *
  * The gate is split into `MyCoursesFrame` and wrapped in `<Suspense>` because
- * `requireProfile` reads cookies, and under Cache Components an uncached
- * read outside `<Suspense>` blocks the whole route and fails the build.
+ * `requireOnboardedProfile` reads cookies, and under Cache Components an
+ * uncached read outside `<Suspense>` blocks the whole route and fails the
+ * build.
  */
 export default async function MyCoursesPage({
   params,
@@ -30,7 +31,7 @@ export default async function MyCoursesPage({
 }
 
 async function MyCoursesFrame() {
-  await requireProfile();
+  await requireOnboardedProfile();
 
   const t = await getTranslations("frames.myCourses");
 

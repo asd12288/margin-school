@@ -1,0 +1,62 @@
+<!--
+  Password reset.
+
+  Two things here are load-bearing rather than stylistic.
+
+  `{{ .TokenHash }}` sent to our own `/auth/confirm`, not `{{ .ConfirmationURL }}`:
+  the stock URL returns the token in a fragment, which never reaches a server,
+  so a server-rendered app cannot complete the exchange. See
+  app/auth/confirm/route.ts.
+
+  `next={{ .RedirectTo }}` carries the locale. `RedirectTo` is the absolute URL
+  the app passed to `resetPasswordForEmail` — already localized
+  (`/fr/nouveau-mot-de-passe`) and already checked against Supabase's redirect
+  allow-list. `/auth/confirm` checks it again against its own origin before
+  redirecting, because a redirect target arriving by email is exactly where an
+  open redirect lives.
+
+  Bilingual because Supabase sends one template per event and knows nothing
+  about the recipient's language. French first: it is the default locale and
+  the first market. Replaced by per-locale Resend templates in Phase 10.
+
+  Inline styles only — every serious mail client strips <style> blocks.
+-->
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #171719;">
+  <p style="font-size: 18px; font-weight: 600; margin: 0 0 24px;">Margin School</p>
+
+  <p style="font-size: 15px; line-height: 1.6; margin: 0 0 8px;">
+    Vous avez demandé à réinitialiser votre mot de passe. Ce lien est valable une heure et ne fonctionne qu'une fois.
+  </p>
+
+  <p style="margin: 24px 0;">
+    <a
+      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next={{ .RedirectTo }}"
+      style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 500;"
+    >
+      Choisir un nouveau mot de passe
+    </a>
+  </p>
+
+  <p style="font-size: 14px; line-height: 1.6; color: #6b6b76; margin: 0 0 32px;">
+    Si vous n'êtes pas à l'origine de cette demande, ignorez cet e-mail. Votre mot de passe reste inchangé.
+  </p>
+
+  <hr style="border: none; border-top: 1px solid #e4e4e8; margin: 32px 0;" />
+
+  <p style="font-size: 15px; line-height: 1.6; margin: 0 0 8px;">
+    You asked to reset your password. This link works once and expires in an hour.
+  </p>
+
+  <p style="margin: 24px 0;">
+    <a
+      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next={{ .RedirectTo }}"
+      style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 500;"
+    >
+      Choose a new password
+    </a>
+  </p>
+
+  <p style="font-size: 14px; line-height: 1.6; color: #6b6b76; margin: 0;">
+    If this wasn't you, ignore this email. Your password stays as it is.
+  </p>
+</div>

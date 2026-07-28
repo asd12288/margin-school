@@ -1,4 +1,4 @@
-import { pgEnum, pgSchema, pgTable, timestamp, uuid } from "drizzle-orm/pg-core";
+import { pgEnum, pgSchema, pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 /**
  * Supabase Auth owns `auth.users` — email, password hash, sessions, OAuth
@@ -19,6 +19,38 @@ export const userRole = pgEnum("user_role", ["student", "editor", "admin"]);
 
 /** Launch locales. See docs/decisions/0009-french-english-day-one.md. */
 export const userLocale = pgEnum("user_locale", ["fr", "en"]);
+
+/**
+ * Self-reported experience, asked once at onboarding.
+ *
+ * Deliberately the same three values as `Course.level` in
+ * docs/content-model.md, so "what should this person read next" is a
+ * comparison rather than a mapping table. Phase 12 is where that comparison
+ * gets used; storing it now costs one column and saves asking everyone again
+ * later.
+ *
+ * It is a starting point, not a score. Nothing in the UI renders it as a
+ * badge — see the no-gamification rule in docs/design-system.md.
+ */
+export const experienceLevel = pgEnum("experience_level", [
+  "beginner",
+  "intermediate",
+  "advanced",
+]);
+
+/**
+ * Why they are here. Four answers, because a list long enough to need
+ * scrolling stops being a quick question and starts being a form.
+ *
+ * These are the four things a beginner-first markets school can actually
+ * deliver, phrased as outcomes rather than topics.
+ */
+export const learningGoal = pgEnum("learning_goal", [
+  "understand_markets",
+  "read_charts",
+  "manage_risk",
+  "build_strategy",
+]);
 
 /**
  * Denormalised status, not a subscription object. The full `subscription`
@@ -48,6 +80,28 @@ export const profile = pgTable("profile", {
   subscriptionStatus: subscriptionStatus("subscription_status")
     .notNull()
     .default("none"),
+
+  /* --- Onboarding ------------------------------------------------------
+   * All four are nullable, and that is the point: a row exists from the
+   * moment the signup trigger fires, before the person has answered
+   * anything. `onboardedAt` is the only completion signal — a non-null
+   * timestamp means they finished, and no combination of the other three
+   * is read as "done". Inferring completion from "displayName is set"
+   * would silently re-open onboarding for anyone who later clears a field.
+   */
+
+  /**
+   * What we call them. Not a username: it is not unique, not an identifier,
+   * and never appears in a URL. There are no public profiles and no social
+   * surface (ADR-0002), so this is only ever shown back to its owner.
+   */
+  displayName: text("display_name"),
+  experienceLevel: experienceLevel("experience_level"),
+  goal: learningGoal("goal"),
+
+  /** Non-null once onboarding is finished. The gate reads this and nothing else. */
+  onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
+
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

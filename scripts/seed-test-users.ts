@@ -37,16 +37,24 @@ if (!LOCAL_HOSTNAMES.has(hostname)) {
   throw new Error(`Refusing to seed test users against a non-local Supabase: ${url}`);
 }
 
+/**
+ * `onboarded: false` is not an oversight — see the note on
+ * `TEST_EMAILS.newcomer`. Everyone else is marked finished, because
+ * onboarding blocks every signed-in route and an un-onboarded fixture would
+ * land every test on `/onboarding` instead of the page it meant to open.
+ */
 const USERS = [
-  { email: TEST_EMAILS.student, role: "student" as const },
-  { email: TEST_EMAILS.editor, role: "editor" as const },
+  { email: TEST_EMAILS.student, role: "student" as const, onboarded: true },
+  { email: TEST_EMAILS.editor, role: "editor" as const, onboarded: true },
+  { email: TEST_EMAILS.admin, role: "admin" as const, onboarded: true },
+  { email: TEST_EMAILS.newcomer, role: "student" as const, onboarded: false },
 ];
 
 const admin = createClient(url, secret, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
-for (const { email, role } of USERS) {
+for (const { email, role, onboarded } of USERS) {
   const { data, error } = await admin.auth.admin.createUser({
     email,
     password: TEST_PASSWORD,
@@ -64,14 +72,25 @@ for (const { email, role } of USERS) {
 
   if (!id) throw new Error(`Could not resolve a user id for ${email}`);
 
-  // The signup trigger creates the profile with role 'student'; only the
-  // editor needs changing.
-  const { error: roleError } = await admin
+  // The signup trigger creates the profile with role 'student' and every
+  // onboarding column null. This fills in the rest.
+  const { error: profileError } = await admin
     .from("profile")
-    .update({ role })
+    .update({
+      role,
+      // Written in both directions, never left alone. This script is re-run
+      // constantly against accounts that already exist, and a branch that
+      // only *set* the onboarding fields would leave the un-onboarded fixture
+      // permanently onboarded the first time anyone completed the form as
+      // them by hand — quietly disabling the test that proves the gate works.
+      display_name: onboarded ? email.split("@")[0] : null,
+      experience_level: onboarded ? "beginner" : null,
+      goal: onboarded ? "understand_markets" : null,
+      onboarded_at: onboarded ? new Date().toISOString() : null,
+    })
     .eq("id", id);
 
-  if (roleError) throw roleError;
+  if (profileError) throw profileError;
 
-  console.log(`seeded ${email} as ${role}`);
+  console.log(`seeded ${email} as ${role}${onboarded ? "" : " (not onboarded)"}`);
 }

@@ -20,7 +20,11 @@ import { ThemeSwitch } from "./theme-switch";
 function AppHeader({ labels }: { labels: ShellLabels }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center gap-4 px-4 sm:px-6">
+      {/* `gap-2` below `sm`: at 375px the four groups in this row leave about
+          twenty spare pixels, and a 16px gap spent three times is most of
+          them. `min-w-0` so a long label shrinks its own group rather than
+          pushing the controls off the end. */}
+      <div className="mx-auto flex h-14 w-full min-w-0 max-w-6xl items-center gap-2 px-4 sm:gap-4 sm:px-6">
         {/* The wordmark, same as the public header — but pointing at `/learn`,
             because for a signed-in reader "home" is the study area, not the
             marketing page (ADR-0011). No search bar here: the app shell's job
@@ -48,12 +52,15 @@ function AppHeader({ labels }: { labels: ShellLabels }) {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-1" aria-label={labels.navLabel}>
+        <nav
+          className="flex min-w-0 shrink items-center gap-1"
+          aria-label={labels.navLabel}
+        >
           <NavLink href="/learn" segment="learn" label={labels.nav.learn} />
           <NavLink href="/my-courses" segment="my-courses" label={labels.nav.myCourses} />
         </nav>
 
-        <div className="ms-auto flex items-center gap-2">
+        <div className="ms-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           {/* The locale switcher is gone from the *public* header, which has a
               footer to hold it. This shell has no footer, so removing it here
               too would leave a signed-in reader no way to change language at

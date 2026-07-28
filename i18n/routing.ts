@@ -67,6 +67,24 @@ const pathnames = {
   // Auth
   "/sign-in": { fr: "/connexion", en: "/sign-in" },
   "/sign-up": { fr: "/inscription", en: "/sign-up" },
+  "/forgot-password": {
+    fr: "/mot-de-passe-oublie",
+    en: "/forgot-password",
+  },
+  // "nouveau-mot-de-passe" rather than a literal "reinitialiser": the person
+  // reading this URL has already asked for the reset and is now choosing the
+  // replacement, which is what the French says and the English does not.
+  "/reset-password": { fr: "/nouveau-mot-de-passe", en: "/reset-password" },
+
+  /**
+   * Onboarding. `/bienvenue` — "welcome" — rather than a transliteration of
+   * "onboarding", which is jargon in English and not French at all.
+   *
+   * Registered here even though it is private and `noindex`, because
+   * `getPathname` only resolves keys it knows about, and every redirect into
+   * onboarding goes through it.
+   */
+  "/onboarding": { fr: "/bienvenue", en: "/onboarding" },
 
   // Legal — one document, four slugs (terms/privacy/mentions/accessibility).
   // French uses "mentions" as the base segment rather than "legal" because
@@ -96,6 +114,27 @@ export const routing = defineRouting({
 
 export const locales = routing.locales;
 export type Locale = (typeof routing.locales)[number];
+
+/**
+ * The canonical route keys — what `Link href` and `getPathname` accept.
+ *
+ * Exported so code that computes a destination (the auth redirects, mostly)
+ * can be typed against the real route map instead of against `string`. A
+ * `string` there compiles happily and then resolves to an unprefixed URL at
+ * runtime, which is the failure this whole file exists to prevent.
+ */
+export type Pathname = keyof typeof pathnames;
+
+/**
+ * Route keys that need no params — everything except `/course/[course]` and
+ * friends.
+ *
+ * `getPathname` and `redirect` accept a bare string only for these; a dynamic
+ * route has to arrive as `{ pathname, params }`. Redirect destinations in the
+ * auth flow are all static, so typing them this way rejects `/course/[course]`
+ * at compile time instead of producing a URL with a literal `[course]` in it.
+ */
+export type StaticPathname = Exclude<Pathname, `${string}[${string}`>;
 export const defaultLocale = routing.defaultLocale;
 
 export function isLocale(value: string | undefined | null): value is Locale {

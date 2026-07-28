@@ -1,0 +1,51 @@
+<!--
+  Address confirmation, sent on sign-up when `enable_confirmations` is on.
+
+  It is off in the local stack (see [auth.email] in config.toml), so this
+  template is not exercised locally by default — production has it on, which is
+  why the template exists here rather than only in the dashboard. Flip
+  `enable_confirmations` locally to test it.
+
+  Same two load-bearing details as recovery.html: `{{ .TokenHash }}` sent to our
+  own `/auth/confirm` because a fragment never reaches the server, and
+  `next={{ .RedirectTo }}` to carry the locale through the round trip.
+-->
+<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px 24px; color: #171719;">
+  <p style="font-size: 18px; font-weight: 600; margin: 0 0 24px;">Margin School</p>
+
+  <p style="font-size: 15px; line-height: 1.6; margin: 0 0 8px;">
+    Bienvenue. Confirmez votre adresse e-mail pour commencer.
+  </p>
+
+  <p style="margin: 24px 0;">
+    <a
+      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next={{ .RedirectTo }}"
+      style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 500;"
+    >
+      Confirmer mon adresse
+    </a>
+  </p>
+
+  <p style="font-size: 14px; line-height: 1.6; color: #6b6b76; margin: 0 0 32px;">
+    Si vous n'avez pas créé de compte, ignorez cet e-mail.
+  </p>
+
+  <hr style="border: none; border-top: 1px solid #e4e4e8; margin: 32px 0;" />
+
+  <p style="font-size: 15px; line-height: 1.6; margin: 0 0 8px;">
+    Welcome. Confirm your email address to get started.
+  </p>
+
+  <p style="margin: 24px 0;">
+    <a
+      href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=signup&next={{ .RedirectTo }}"
+      style="display: inline-block; background: #4f46e5; color: #ffffff; text-decoration: none; padding: 12px 20px; border-radius: 8px; font-size: 15px; font-weight: 500;"
+    >
+      Confirm my email
+    </a>
+  </p>
+
+  <p style="font-size: 14px; line-height: 1.6; color: #6b6b76; margin: 0;">
+    If you didn't create an account, ignore this email.
+  </p>
+</div>

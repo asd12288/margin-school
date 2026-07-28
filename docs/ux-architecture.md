@@ -91,8 +91,19 @@ The full map, settled once in [ADR-0011](decisions/0011-route-map.md) because UR
 | Route | French | Tier | Built in |
 | --- | --- | --- | --- |
 | `/{locale}/sign-in`, `/sign-up` | `/fr/connexion`, `/fr/inscription` | 1 | 3 (frame), 4 |
-| `/{locale}/forgot-password`, `/reset-password` | `/fr/mot-de-passe-oublie`, … | 1 | 4 |
+| `/{locale}/forgot-password` | `/fr/mot-de-passe-oublie` | 1 | 4 |
+| `/{locale}/reset-password` | `/fr/nouveau-mot-de-passe` | 1 | 4 |
+| `/{locale}/onboarding` | `/fr/bienvenue` | 1 | 4 |
 | `/auth/callback` | *(no locale — route handler)* | — | 4 |
+| `/auth/confirm` | *(no locale — route handler)* | — | 4 |
+
+`/sign-in` stays Tier 1 despite carrying `?next=` and `?error=`. Awaiting `searchParams` in the page body is what would have cost that — under Cache Components an uncached read outside `<Suspense>` fails the build outright — and the obvious fix, wrapping the form in a boundary, would have put a skeleton where the page's only action goes. Both parameters are read inside the client form instead, each behind a boundary around a component that renders nothing in the common case. Any future page tempted to `await searchParams` should look at `components/margin/auth/sign-in-form.tsx` first.
+
+`/reset-password` is signed-in-only and is deliberately **not** in `GUEST_ONLY_PREFIXES`: arriving from a recovery email means `/auth/confirm` has already established a session, so bouncing signed-in users away from it would break the flow it exists for.
+
+The two route handlers live outside `[locale]` and are **excluded from the proxy matcher**. next-intl's middleware has no notion of a route it should leave alone and prefixes anything unprefixed, so `/auth/callback` became `/fr/auth/callback` and 404'd — taking Google sign-in and the entire password reset with it. `/api/*` had the same fault before these routes existed. One exclusion in [proxy.ts](../proxy.ts) covers both.
+
+`/onboarding` blocks every other signed-in route until it is finished — see [ADR-0012](decisions/0012-blocking-onboarding.md). The check cannot live in the proxy, which reads a cookie and never the database; it is `requireOnboardedProfile()` in the Data Access Layer.
 
 ### App — Tier 2, private, `noindex`
 

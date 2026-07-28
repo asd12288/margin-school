@@ -1,7 +1,20 @@
 import { setRequestLocale } from "next-intl/server";
 
-/** Sign-in and sign-up. Deliberately no navigation: one job per screen. */
-export default async function AuthLayout({
+import { AuthLayout } from "@/components/margin/auth/auth-layout";
+import { getAuthPanelLabels } from "@/lib/auth/labels";
+
+/**
+ * Sign in, sign up, and both halves of the password reset.
+ *
+ * Deliberately no navigation: one job per screen. What replaced the empty
+ * frame is a second column carrying the brand — see
+ * `components/margin/auth/auth-layout.tsx` for what is allowed in it and why.
+ *
+ * `/onboarding` is **not** in this group. It is a signed-in route with its own
+ * gate and its own layout, and putting it here would have meant a layout that
+ * sometimes checks a session and sometimes does not.
+ */
+export default async function AuthGroupLayout({
   children,
   params,
 }: {
@@ -11,9 +24,5 @@ export default async function AuthLayout({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  return (
-    <main className="flex flex-1 items-center justify-center px-6 py-16">
-      <div className="measure-narrow w-full">{children}</div>
-    </main>
-  );
+  return <AuthLayout labels={await getAuthPanelLabels()}>{children}</AuthLayout>;
 }

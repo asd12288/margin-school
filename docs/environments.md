@@ -89,6 +89,22 @@ Two consequences worth holding onto:
 4. **Grants are not optional.** Postgres checks `GRANT` before RLS, so a policy on a table with no grant is unreachable — the request fails with "permission denied for table" and the policy never runs. Tables made in the Supabase dashboard get grants implicitly; tables made by a Drizzle migration do not.
 5. Drizzle writes a `meta/` folder alongside the SQL. The Supabase runner ignores it.
 
+## Auth email templates
+
+**The stock Supabase email templates do not work with this app, and the failure is silent.**
+
+`@supabase/ssr` pins `flowType: "pkce"`. Supabase's default templates link to `{{ .ConfirmationURL }}`, which resolves through Supabase's own `/verify` endpoint and returns the token in the URL **fragment** — and a fragment is never sent to the server, so a server-rendered app cannot read it. Sign-in still works, because OAuth returns a `code` in the query string. Password reset does not.
+
+The replacements live in [`supabase/templates/`](../supabase/templates/) and send `{{ .TokenHash }}` to our own `/auth/confirm`, which calls `verifyOtp`. `config.toml` wires them for the local stack.
+
+**Nothing syncs them to production.** `config.toml` configures the local Docker stack only; the hosted project keeps its own copies, set in the Supabase dashboard under Authentication → Emails. When deploying to a new project, paste both templates in — otherwise every "reset your password" link lands on a page that cannot see its own token.
+
+They are bilingual (French block, then English) because Supabase sends one template per event and knows nothing about the recipient's language. Per-locale templates arrive with Resend in Phase 10.
+
+### Rate limits are per-IP and bite the test suite
+
+`[auth.rate_limit].sign_in_sign_ups` defaults to 30 per five minutes per IP. The e2e suite signs in on nearly every test across two viewport projects and several workers, all from one IP, and blows past that partway through — at which point sign-ins are refused and the symptom is `page.goto` timing out, which reads exactly like an application hang. It is raised to 500 in `config.toml`, which affects the local stack only; the hosted project keeps Supabase's defaults, and should.
+
 ## Observability
 
 One Sentry project and one PostHog project, split by environment tag rather than by separate projects. This keeps issue grouping and funnel history intact while remaining filterable.

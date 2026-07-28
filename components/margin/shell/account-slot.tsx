@@ -1,4 +1,5 @@
-import { getCurrentProfile } from "@/lib/auth/dal";
+import { getCurrentProfile, isStaff } from "@/lib/auth/dal";
+import { AnalyticsIdentity } from "@/lib/analytics/identity";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -47,10 +48,17 @@ async function AccountSlot({ labels }: { labels: AccountSlotLabels }) {
   }
 
   return (
-    <AccountMenu
-      labels={labels}
-      isStaff={profile.role === "editor" || profile.role === "admin"}
-    />
+    <>
+      {/*
+       * Identity rides along with the account menu because this component is
+       * the shell's only session read, so it is the one place that already
+       * knows who is signed in on every page. Giving it its own Suspense
+       * boundary somewhere else would mean a second auth round trip per
+       * render for a component that renders nothing.
+       */}
+      <AnalyticsIdentity userId={profile.id} />
+      <AccountMenu labels={labels} isStaff={isStaff(profile)} />
+    </>
   );
 }
 

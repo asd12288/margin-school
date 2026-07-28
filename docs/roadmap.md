@@ -48,6 +48,16 @@ Supabase Auth: email/password, magic link, Google. Roles: `visitor`, `student`, 
 
 **Done when:** an `editor` can reach admin routes and a `student` cannot, enforced server-side.
 
+**Built, with two changes from the plan above.**
+
+**Magic link is not built.** Email/password and Google cover the two ways people actually arrive, and a third passwordless path would have been a third set of email templates to keep correct for no reach we did not already have. Nothing in the design excludes it later.
+
+**Onboarding was added and it blocks** — four questions asked once, gating every signed-in route. It was not in the original scope for this phase; see [ADR-0012](decisions/0012-blocking-onboarding.md) for why it is here rather than in Phase 12, and what it costs.
+
+Google is **configuration, not code**: the button renders only where `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED` is set and the Supabase project has credentials, so a fresh clone runs on email and password with nothing broken. See `[auth.external.google]` in [supabase/config.toml](../supabase/config.toml).
+
+The email flows required rewriting Supabase's stock templates, and this is the part most likely to be missed on a new deployment: `@supabase/ssr` pins PKCE, whose token arrives in a URL fragment that a server never sees. The templates in [supabase/templates/](../supabase/templates/) send `{{ .TokenHash }}` to our own `/auth/confirm` instead. **A project without them has working sign-in and a silently broken password reset** — see [environments.md](environments.md#auth-email-templates).
+
 ## Phase 5 — Entitlement boundary (stubbed) · S
 
 One function, `canAccess(user, resource)`, backed by a subscription status field on the user. **Stripe is not integrated in this phase.** A dev-only toggle sets subscription status.
