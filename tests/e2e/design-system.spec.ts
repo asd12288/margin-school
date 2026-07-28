@@ -1,5 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, test, type Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+
+import { expect, test } from "./fixtures/session";
 
 /**
  * The design system's own regression suite.
@@ -26,16 +28,31 @@ const ROUTE = "/fr/design-system";
  * satisfy a measurement error.
  */
 async function settleAnimations(page: Page) {
-  await page.evaluate(async () => {
-    // Only finite ones. `animate-skeleton-pulse` loops forever by design, and
-    // its `finished` promise never resolves — awaiting the unfiltered list
-    // hangs until the test times out.
-    const finite = document.getAnimations().filter((a) => {
-      const timing = a.effect?.getTiming();
-      return timing ? timing.iterations !== Infinity : true;
+  // Repeatedly, not once. `getAnimations()` is a snapshot, and these shells
+  // stream: the account slot resolves behind its own `<Suspense>` boundary and
+  // can mount *after* the first snapshot is taken, starting an entrance
+  // animation nothing is waiting on. Awaiting one snapshot then scanning
+  // measured that content mid-fade and reported contrast violations that do
+  // not exist at rest — intermittently, roughly one run in six, and only under
+  // the load of a full parallel suite, which is the worst kind of flake to
+  // leave in place. Each pass settles what is running and the next pass picks
+  // up anything that started meanwhile; the loop ends when a pass finds
+  // nothing left.
+  for (let pass = 0; pass < 5; pass++) {
+    const settled = await page.evaluate(async () => {
+      // Only finite ones. `animate-skeleton-pulse` loops forever by design,
+      // and its `finished` promise never resolves — awaiting the unfiltered
+      // list hangs until the test times out.
+      const finite = document.getAnimations().filter((a) => {
+        const timing = a.effect?.getTiming();
+        return timing ? timing.iterations !== Infinity : true;
+      });
+      await Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
+      return finite.length === 0;
     });
-    await Promise.all(finite.map((a) => a.finished.catch(() => undefined)));
-  });
+
+    if (settled) return;
+  }
 }
 
 async function setTheme(page: Page, theme: "light" | "dark") {
@@ -48,6 +65,17 @@ async function setTheme(page: Page, theme: "light" | "dark") {
       page.evaluate(() => document.documentElement.classList.contains("dark"))
     )
     .toBe(theme === "dark");
+}
+
+/** Serious/critical axe violations, as human-readable one-liners. Empty means clean. */
+async function seriousViolations(page: Page) {
+  const results = await new AxeBuilder({ page })
+    .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
+    .analyze();
+
+  return results.violations
+    .filter((v) => ["serious", "critical"].includes(v.impact ?? ""))
+    .map((v) => `${v.id}: ${v.nodes.length} node(s) — ${v.help}`);
 }
 
 test.describe("design system page", () => {
@@ -104,18 +132,50 @@ test.describe("design system page", () => {
     test(`has no serious accessibility violations in ${theme}`, async ({ page }) => {
       await setTheme(page, theme);
       await settleAnimations(page);
-      const results = await new AxeBuilder({ page })
-        .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
-        .analyze();
-
-      const serious = results.violations.filter((v) =>
-        ["serious", "critical"].includes(v.impact ?? "")
-      );
-      expect(
-        serious.map((v) => `${v.id}: ${v.nodes.length} node(s) — ${v.help}`)
-      ).toEqual([]);
+      expect(await seriousViolations(page)).toEqual([]);
     });
   }
+});
+
+/**
+ * The same scan, extended to the app shell. `AppHeader` (task 8) was never
+ * scanned before this task — only the public shell's design-system page was.
+ * `/en` covers the public shell's real chrome (`SiteHeader`, `SiteFooter`,
+ * nav, locale switcher, skip link); every public page shares that chrome, so
+ * one of them is enough to scan it. `/en/learn` covers the signed-in app
+ * shell, which carries more nav items in the same non-wrapping header. Same
+ * pattern as above: settle animations before scanning, in both themes, fail
+ * only on serious/critical.
+ */
+test.describe("shell pages", () => {
+  test.describe("home (public shell)", () => {
+    test.beforeEach(async ({ page }) => {
+      await page.goto("/en");
+    });
+
+    for (const theme of ["light", "dark"] as const) {
+      test(`has no serious accessibility violations in ${theme}`, async ({ page }) => {
+        await setTheme(page, theme);
+        await settleAnimations(page);
+        expect(await seriousViolations(page)).toEqual([]);
+      });
+    }
+  });
+
+  test.describe("learn (app shell, signed in)", () => {
+    test.beforeEach(async ({ page, signInAs }) => {
+      await signInAs("student");
+      await page.goto("/en/learn");
+    });
+
+    for (const theme of ["light", "dark"] as const) {
+      test(`has no serious accessibility violations in ${theme}`, async ({ page }) => {
+        await setTheme(page, theme);
+        await settleAnimations(page);
+        expect(await seriousViolations(page)).toEqual([]);
+      });
+    }
+  });
 });
 
 test.describe("tabs", () => {

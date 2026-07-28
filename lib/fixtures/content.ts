@@ -523,8 +523,12 @@ export const sampleBlocks: Block[] = [
     position: 1,
     schemaVersion: 1,
     type: "heading",
+    // A section heading, not the lesson's title. The lesson entity already
+    // carries its title, and the player renders it — repeating it as the first
+    // body block shows the reader the same words twice and models authoring
+    // we do not want. `level` here is depth inside the lesson, not a tag.
     level: 2,
-    text: "Anatomy of a candlestick",
+    text: "What a candlestick is",
   },
   {
     id: "b2",

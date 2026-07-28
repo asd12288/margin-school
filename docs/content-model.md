@@ -77,6 +77,14 @@ A lesson is an ordered list of typed blocks. Storage is one **row per block**, n
 
 Each block row carries a `schema_version`. Block payloads will change shape; versioning lets old content keep rendering while new content uses a newer shape.
 
+### A heading block's `level` is depth, not a tag
+
+`level: 2` is a section of the lesson body; `level: 3` is a subsection. Neither names an HTML element.
+
+*Why:* the lesson's title is not a block — it lives on the lesson row and the player renders it as the page's `h1`. So a `level: 2` block is an `h2` **there**, and something deeper wherever a lesson is embedded below another heading. The renderer takes the base level from its caller and derives the rest; a block that hardcoded `h2` would produce a flat or skipped hierarchy the moment a lesson appeared anywhere but at the top of a page, which is what it did on `/design-system` until it was fixed.
+
+**A lesson's first block should not repeat its title.** The reader has already seen it. Start with a section heading that says what this part covers, or with the text itself.
+
 ### The chart block is data, never an image
 
 ```

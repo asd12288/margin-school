@@ -11,7 +11,9 @@
     "group": "Thème de couleur",
     "light": "Clair",
     "dark": "Sombre",
-    "system": "Suivre le système"
+    "system": "Suivre le système",
+    "toDark": "Passer au thème sombre",
+    "toLight": "Passer au thème clair"
   },
   "course": {
     "duration": "{hours, plural, =0 {# min} one {# h} other {# h}}",
@@ -24,6 +26,12 @@
     "progress": "{completed} leçons terminées sur {total}",
     "progressShort": "{percent} % terminé",
     "coverAlt": "Illustration du cours {title}"
+  },
+  "courses": {
+    "searchEmpty": {
+      "title": "Aucun cours ne correspond à « {query} »",
+      "description": "Essayez une autre recherche, ou parcourez le catalogue complet."
+    }
   },
   "curriculum": {
     "chapterProgress": "{completed} leçons terminées sur {total}",
@@ -76,6 +84,107 @@
       "title": "Pas encore en français",
       "description": "Cette leçon est publiée en anglais. La traduction française est en cours de rédaction.",
       "action": "La lire en anglais"
+    }
+  },
+  "shell": {
+    "brand": "Margin School",
+    "skipToContent": "Aller au contenu",
+    "nav": {
+      "courses": "Cours",
+      "concepts": "Notions",
+      "pricing": "Abonnement",
+      "about": "À propos",
+      "help": "Aide",
+      "learn": "Apprendre",
+      "myCourses": "Mes cours",
+      "account": "Compte",
+      "admin": "Admin"
+    },
+    "navLabel": "Principal",
+    "account": {
+      "signIn": "Se connecter",
+      "startTrial": "Essai gratuit",
+      "menu": "Votre compte",
+      "signOut": "Se déconnecter"
+    },
+    "locale": {
+      "current": "Langue actuelle : {locale}",
+      "fr": "Français",
+      "en": "English"
+    },
+    "search": {
+      "label": "Rechercher un cours",
+      "placeholder": "Rechercher un cours"
+    },
+    "disclaimer": "Margin School est un service éducatif. Rien ici ne constitue un conseil en investissement, une recommandation ou un signal d'achat ou de vente. Le trading comporte des risques, y compris la perte de votre capital.",
+    "footer": {
+      "tagline": "Apprenez les marchés financiers depuis le début, en langage clair. Un seul abonnement, tout est inclus.",
+      "learnHeading": "Apprendre",
+      "companyHeading": "Margin School",
+      "legalHeading": "Informations légales",
+      "copyright": "© {year} Margin School",
+      "cookiePreferences": "Préférences de cookies"
+    }
+  },
+  "legal": {
+    "placeholder": "Contenu provisoire",
+    "notice": "Ce document est en cours de rédaction. Margin School est une plateforme éducative : rien ici ne constitue un conseil en investissement, une recommandation ou un signal d'achat ou de vente.",
+    "terms": { "title": "Conditions d'utilisation" },
+    "privacy": { "title": "Politique de confidentialité" },
+    "mentions": { "title": "Mentions légales" },
+    "accessibility": { "title": "Déclaration d'accessibilité" }
+  },
+  "pages": {
+    "home": {
+      "badge": "Contenu provisoire",
+      "title": "Margin School",
+      "description": "Apprenez les marchés financiers depuis le début, en langage clair. Le site complet est encore en cours de rédaction — le catalogue est le meilleur point de départ."
+    },
+    "about": {
+      "badge": "Contenu provisoire",
+      "title": "À propos de Margin School",
+      "description": "Cette page expliquera qui publie ces cours et comment ils sont conçus. Elle est en cours de rédaction."
+    },
+    "pricing": {
+      "badge": "Contenu provisoire",
+      "title": "Abonnement",
+      "description": "Un seul abonnement, tout est inclus — tous les cours, dans les deux langues, sans achat à l'unité. Les formules et le parcours d'inscription sont en cours de construction : aucun tarif n'est encore affiché ici."
+    },
+    "concepts": {
+      "badge": "Contenu provisoire",
+      "title": "Notions",
+      "description": "Les cours sont le chemin que vous suivez ; les notions sont ce que vous finissez par savoir. Cet index permettra de parcourir le contenu par idée plutôt que par cours, et de voir ce que vous maîtrisez déjà. Il est en cours de construction."
+    },
+    "help": {
+      "badge": "Contenu provisoire",
+      "title": "Aide",
+      "description": "Les réponses aux questions fréquentes seront réunies ici dès qu'elles seront assez nombreuses pour être utiles."
+    }
+  },
+  "consent": {
+    "label": "Consentement pour les mesures d'audience",
+    "message": "Nous utilisons des outils de mesure d'audience pour comprendre l'usage des cours. Rien n'est enregistré tant que vous n'avez pas donné votre accord.",
+    "decline": "Refuser",
+    "accept": "Accepter"
+  },
+  "frames": {
+    "signIn": { "title": "Connexion", "description": "La connexion arrive en phase 4." },
+    "signUp": { "title": "Créer un compte", "description": "L'inscription arrive en phase 4." },
+    "learn": { "title": "Votre prochaine étape", "description": "La prochaine action arrive en phase 9." },
+    "myCourses": { "title": "Mes cours", "description": "L'inscription aux cours arrive en phase 9." },
+    "account": { "title": "Compte", "description": "Les réglages du compte arrivent en phase 4." },
+    "admin": { "title": "Admin", "description": "Le studio de contenu arrive en phase 7." }
+  },
+  "errors": {
+    "notFound": {
+      "title": "Cette page n'existe pas",
+      "description": "Le lien est peut-être ancien, ou l'adresse légèrement erronée.",
+      "action": "Retour au catalogue"
+    },
+    "unexpected": {
+      "title": "Une erreur est survenue",
+      "description": "C'est de notre côté. Réessayez — et si cela persiste, nous en sommes déjà informés.",
+      "retry": "Réessayer"
     }
   }
 }

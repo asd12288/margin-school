@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import createIntlMiddleware from "next-intl/middleware";
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getPathname } from "@/i18n/navigation";
 import { routing } from "@/i18n/routing";
 
 import {
@@ -9,6 +10,7 @@ import {
   PROTECTED_PREFIXES,
   SIGN_IN_PATH,
   AFTER_SIGN_IN_PATH,
+  canonicalPathFromRewrite,
   matchesPrefix,
   stripLocale,
 } from "@/lib/auth/routes";
@@ -89,21 +91,25 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Compare locale-free, redirect locale-prefixed. The constants in routes.ts
-  // are stored bare so neither side needs two variants.
-  const locale = pathname.split("/")[1];
-  const prefix = routing.locales.includes(
-    locale as (typeof routing.locales)[number],
-  )
-    ? `/${locale}`
-    : `/${routing.defaultLocale}`;
-  const unprefixed = stripLocale(pathname, routing.locales);
+  // Match canonical, redirect localized. next-intl rewrites `/fr/compte` to
+  // `/fr/account`; the prefixes in routes.ts are canonical, so matching the raw
+  // pathname would silently stop protecting every French URL.
+  const canonical = canonicalPathFromRewrite(
+    response.headers.get("x-middleware-rewrite"),
+    pathname
+  );
+  const unprefixed = stripLocale(canonical, routing.locales);
+
+  const segment = pathname.split("/")[1];
+  const locale = routing.locales.includes(segment as (typeof routing.locales)[number])
+    ? (segment as (typeof routing.locales)[number])
+    : routing.defaultLocale;
 
   if (!user && matchesPrefix(unprefixed, PROTECTED_PREFIXES)) {
     const url = request.nextUrl.clone();
-    url.pathname = `${prefix}${SIGN_IN_PATH}`;
-    // Preserve where they were going so sign-in can return them there —
-    // including the locale, or the return trip changes language.
+    url.pathname = getPathname({ href: SIGN_IN_PATH, locale });
+    // Preserve where they were going — including the locale, or the return
+    // trip changes language.
     url.searchParams.set("next", pathname);
 
     return NextResponse.redirect(url);
@@ -111,7 +117,7 @@ export async function proxy(request: NextRequest) {
 
   if (user && matchesPrefix(unprefixed, GUEST_ONLY_PREFIXES)) {
     const url = request.nextUrl.clone();
-    url.pathname = `${prefix}${AFTER_SIGN_IN_PATH}`;
+    url.pathname = getPathname({ href: AFTER_SIGN_IN_PATH, locale });
     url.search = "";
 
     return NextResponse.redirect(url);

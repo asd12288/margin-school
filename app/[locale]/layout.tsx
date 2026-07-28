@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "../globals.css";
 
 import { notFound } from "next/navigation";
+import { locale as rootLocale } from "next/root-params";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { setRequestLocale } from "next-intl/server";
 
@@ -53,14 +54,36 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
+/**
+ * Read the locale through `next/root-params`, not `await params`.
+ *
+ * Both return "fr" here, so the difference is invisible until a segment
+ * below this one exports `unstable_instant`. Under that validator every
+ * `await params` resolves only at the *runtime* stage — unconditionally,
+ * even for a root param, even one enumerated in the config's `samples`
+ * (`createServerParamsInInstantValidation` in
+ * `node_modules/next/dist/server/request/params.js` waits on
+ * `sharedParamsParent`, which is `delayUntilStage(RenderStage.Runtime)`).
+ * A root layout that awaits `params` therefore has no static shell at all,
+ * and every `unstable_instant` route in the app fails its build-time check
+ * with a "runtime data outside `<Suspense>`" error pointed, unhelpfully, at
+ * whatever client provider happens to sit nearest the hole.
+ *
+ * `next/root-params` is the exemption: for a root param it resolves
+ * immediately in that same validator (`getRootParam` in
+ * `node_modules/next/dist/server/request/root-params.js`) because the value
+ * is part of the route key, so a per-locale static shell genuinely exists.
+ * It is the replacement for `unstable_rootParams`, which version-16.md still
+ * describes as removed-with-no-alternative; the module ships but is
+ * undocumented and untyped (`next/root-params.d.ts` is a bare
+ * `declare module`), hence the annotation below.
+ */
 export default async function LocaleLayout({
   children,
-  params,
 }: Readonly<{
   children: React.ReactNode;
-  params: Promise<{ locale: string }>;
 }>) {
-  const { locale } = await params;
+  const locale: string | undefined = await rootLocale();
 
   // A URL can carry anything. `/de/…` must 404 rather than silently render in
   // French, which would hand Google a page whose `lang` lies about it.

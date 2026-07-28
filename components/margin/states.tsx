@@ -22,11 +22,15 @@ import { cn } from "@/lib/utils";
    Shared frame
    ------------------------------------------------------------------------- */
 
+/** Headings this component is willing to render its title as. */
+type HeadingLevel = "h2" | "h3" | "h4" | "h5" | "h6";
+
 function StateFrame({
   icon: Icon,
   tone = "neutral",
   title,
   description,
+  headingLevel: Heading = "h2",
   children,
   className,
   ...props
@@ -35,6 +39,14 @@ function StateFrame({
   tone?: "neutral" | "locked" | "error" | "info";
   title: React.ReactNode;
   description?: React.ReactNode;
+  /**
+   * `StateFrame` has no way to know how deep in the document it sits — that
+   * is the caller's decision, not this component's. The default is `h2`
+   * only because most callers render this as a page's entire primary
+   * content (see the comment below); a caller nesting it under its own
+   * section heading must pass the level down explicitly.
+   */
+  headingLevel?: HeadingLevel;
 }) {
   // The tone is carried by the icon and the border, not by flooding the
   // surface. A full panel of red or blue is the loudest thing on a page, and
@@ -77,9 +89,30 @@ function StateFrame({
           <Icon className="size-4.5" />
         </div>
       ) : null}
-      <p className="font-heading text-base font-semibold text-foreground">
+      {/*
+       * A real heading, not a styled paragraph. `Empty`/`Error`/`Locked`/
+       * `UnavailableInLocale` states are, by design, a surface's entire
+       * primary content (a whole page in the case of `/learn`, `/admin`,
+       * `not-found.tsx`, both `error.tsx` boundaries — see each one's own
+       * comment). Rendering the title as a `<p>` left every one of those
+       * pages without a single heading for assistive tech to land on. The
+       * genuinely inline case — a locked or unavailable row nested inside
+       * a curriculum accordion, next to other headings — has its own
+       * component (`LockedHint`, `UnavailableInLocaleHint`) that was built
+       * exactly so this component would not have to serve both jobs.
+       *
+       * The level defaults to `h2` for that whole-page case, but this
+       * component cannot see its own position in the document — a caller
+       * that nests it under a section heading (the design-system showcase,
+       * for one) must pass `headingLevel="h3"` or deeper. `h2`–`h6` all
+       * pick up `app/globals.css`'s `h1, h2, h3` rule (heading font,
+       * negative tracking) at `h2`/`h3`; deeper levels fall back to the
+       * body font, which is correct — this component's title is never
+       * meant to nest past a subsection.
+       */}
+      <Heading className="font-heading text-base font-semibold text-foreground">
         {title}
-      </p>
+      </Heading>
       {description ? (
         <p className="measure-narrow mt-1.5 text-sm text-muted-foreground">
           {description}
@@ -102,6 +135,7 @@ function EmptyState({
   icon,
   title,
   description,
+  headingLevel,
   action,
   className,
   ...props
@@ -109,6 +143,7 @@ function EmptyState({
   icon?: LucideIcon;
   title: React.ReactNode;
   description?: React.ReactNode;
+  headingLevel?: HeadingLevel;
   action?: React.ReactNode;
 }) {
   return (
@@ -117,6 +152,7 @@ function EmptyState({
       tone="neutral"
       title={title}
       description={description}
+      headingLevel={headingLevel}
       className={className}
       {...props}
     >
@@ -133,6 +169,7 @@ function EmptyState({
 function ErrorState({
   title,
   description,
+  headingLevel,
   retryLabel,
   onRetry,
   className,
@@ -140,6 +177,7 @@ function ErrorState({
 }: Omit<React.ComponentProps<"div">, "title"> & {
   title: React.ReactNode;
   description?: React.ReactNode;
+  headingLevel?: HeadingLevel;
   retryLabel?: string;
   onRetry?: () => void;
 }) {
@@ -149,6 +187,7 @@ function ErrorState({
       tone="error"
       title={title}
       description={description}
+      headingLevel={headingLevel}
       className={className}
       {...props}
     >
@@ -180,6 +219,7 @@ function ErrorState({
 function LockedState({
   title,
   description,
+  headingLevel,
   included,
   action,
   secondaryAction,
@@ -188,6 +228,7 @@ function LockedState({
 }: Omit<React.ComponentProps<"div">, "title"> & {
   title: React.ReactNode;
   description?: React.ReactNode;
+  headingLevel?: HeadingLevel;
   /** What the subscription contains. Facts, not persuasion. */
   included?: React.ReactNode[];
   action?: React.ReactNode;
@@ -199,6 +240,7 @@ function LockedState({
       tone="locked"
       title={title}
       description={description}
+      headingLevel={headingLevel}
       className={className}
       {...props}
     >
@@ -263,12 +305,14 @@ function LockedHint({
 function UnavailableInLocaleState({
   title,
   description,
+  headingLevel,
   action,
   className,
   ...props
 }: Omit<React.ComponentProps<"div">, "title"> & {
   title: React.ReactNode;
   description?: React.ReactNode;
+  headingLevel?: HeadingLevel;
   /** A link to the locale where this content is published. */
   action?: React.ReactNode;
 }) {
@@ -278,6 +322,7 @@ function UnavailableInLocaleState({
       tone="info"
       title={title}
       description={description}
+      headingLevel={headingLevel}
       className={className}
       {...props}
     >

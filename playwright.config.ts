@@ -1,4 +1,15 @@
+import { existsSync } from "node:fs";
+
 import { defineConfig, devices } from "@playwright/test";
+
+// The webServer's `next build`/`next start` load `.env.local` on their own —
+// that's a Next.js built-in. This process is not Next, so without this, the
+// signed-in-session fixture (tests/e2e/fixtures/session.ts) would see an
+// empty publishable key. Loading it here covers both this process and the
+// webServer child process it spawns, which inherits `process.env`.
+if (existsSync(".env.local")) {
+  process.loadEnvFile(".env.local");
+}
 
 const PORT = 3100;
 const baseURL = `http://127.0.0.1:${PORT}`;

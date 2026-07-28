@@ -79,8 +79,21 @@ export async function requireProfile(): Promise<Profile> {
  *
  * 404 rather than 403 is deliberate. Next's `forbidden()` needs the
  * experimental `authInterrupts` flag, and foundational auth should not rest on
- * an experimental API. It is also the better answer for staff routes: a 403
- * confirms that `/admin` exists, a 404 tells a probing student nothing.
+ * an experimental API.
+ *
+ * What the 404 actually buys, under `cacheComponents`: a signed-out prober
+ * never sees this page at all — the proxy redirects before it renders — and
+ * the response body never mentions permissions, roles, or that the route
+ * exists. It does not buy indistinguishability by status code. This gate's
+ * cookie read has to be wrapped in `<Suspense>` (an unwrapped read fails the
+ * build — see docs/ux-architecture.md), so the `notFound()` it throws
+ * streams, and Next serves a streamed response as `200` regardless of what
+ * rendered. A genuinely missing route, by contrast, 404s for real. A
+ * signed-in student hitting `/admin` can therefore tell "exists but blocked"
+ * from "does not exist" by status code alone — `connection()` and
+ * `dynamic = "force-dynamic"` were both tried as fixes and neither works
+ * under `cacheComponents`. The exposure is small in practice: `/admin` is a
+ * URL anyone would guess, and nothing else leaks.
  */
 export async function requireRole(
   ...allowed: Array<Profile["role"]>

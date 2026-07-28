@@ -43,8 +43,39 @@ import type {
    Heading and text
    ------------------------------------------------------------------------- */
 
-function HeadingBlockView({ block }: { block: HeadingBlock }) {
-  const Tag = block.level === 2 ? "h2" : "h3";
+/**
+ * The tag a lesson's top-level content heading renders as.
+ *
+ * `HeadingBlock.level` is **depth within the lesson**, not an HTML tag:
+ * `level: 2` is a section of the lesson body, `level: 3` a subsection. What
+ * those become in the document depends on where the lesson article sits, and
+ * a block renderer cannot know that — so the caller declares it.
+ *
+ * The default is `h2`, which is correct for the real lesson page, where the
+ * lesson's own title is the page's `h1`. The design-system demo nests the
+ * article deeper and says so.
+ */
+export type LessonHeadingLevel = "h2" | "h3" | "h4";
+
+const ONE_DEEPER: Record<LessonHeadingLevel, "h3" | "h4" | "h5"> = {
+  h2: "h3",
+  h3: "h4",
+  h4: "h5",
+};
+
+function HeadingBlockView({
+  block,
+  headingLevel,
+}: {
+  block: HeadingBlock;
+  headingLevel: LessonHeadingLevel;
+}) {
+  const Tag = block.level === 2 ? headingLevel : ONE_DEEPER[headingLevel];
+
+  // Size follows the block's own depth, never the tag. A section heading
+  // should look like a section heading whether the article sits under an `h1`
+  // or three levels down — otherwise the same lesson reads differently
+  // depending on which page happens to embed it.
   return (
     <Tag
       className={cn(
@@ -278,11 +309,18 @@ export interface LessonBlockLabels {
 function LessonBlocks({
   blocks,
   labels,
+  headingLevel = "h2",
   className,
   ...props
 }: Omit<React.ComponentProps<"div">, "children"> & {
   blocks: Block[];
   labels: LessonBlockLabels;
+  /**
+   * The tag for a `level: 2` content heading. Defaults to `h2`, which is right
+   * when the lesson's own title is the page's `h1`. Pass a deeper level when
+   * the article is embedded below that.
+   */
+  headingLevel?: LessonHeadingLevel;
 }) {
   return (
     <div data-slot="lesson-blocks" className={cn("w-full", className)} {...props}>
@@ -293,7 +331,13 @@ function LessonBlocks({
         .map((block) => {
           switch (block.type) {
             case "heading":
-              return <HeadingBlockView key={block.id} block={block} />;
+              return (
+                <HeadingBlockView
+                  key={block.id}
+                  block={block}
+                  headingLevel={headingLevel}
+                />
+              );
             case "text":
               return <TextBlockView key={block.id} block={block} />;
             case "image":

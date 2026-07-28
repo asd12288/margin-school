@@ -233,6 +233,5 @@ The genuine finds, all now fixed:
 - **`next-intl` is wired, with URL routing.** `/fr/…` and `/en/…`, both prerendered (`●` in the build output), messages in `messages/{fr,en}.json`.
 
   Two things to know when building on it. **Import `Link` from [i18n/navigation.ts](../i18n/navigation.ts), never `next/link`** — the wrapper carries the active locale, and a bare link drops a French reader onto the default locale, a bug only visible to the users you are not. And **`setRequestLocale` is required in every layout *and* page** that should be static; skip it and everything still works while silently rendering dynamically, which is what cost Tier 1 before the segment existed.
-- **No arbitrary-value lint rule yet.** The token layer makes primitives unreachable, but nothing currently stops `p-[13px]` or `text-[#0af]`. That rule is the missing half of "tokens only" and should land before the app shell.
 - **`Course.level`** exists in the content model but has no UI treatment, by decision — level badges read as gamification. Re-add as plain metadata if the catalog needs it.
 - **`/design-system` is unauthenticated.** It is `noindex` and leaks no data. Gate it behind the [debug-access](../lib/observability/debug-access.ts) token if that changes.

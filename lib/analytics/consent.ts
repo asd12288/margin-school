@@ -45,3 +45,25 @@ export function grantAnalyticsConsent() {
 export function denyAnalyticsConsent() {
   writeConsent("denied");
 }
+
+/**
+ * Withdraws whatever choice was made and returns state to "unset", which is
+ * what brings `ConsentBanner` back. CNIL requires withdrawal to be exactly as
+ * easy as consent — this is the footer's "cookie preferences" control, the
+ * only way a visitor has to change their mind after the first decision.
+ *
+ * Same shape as `writeConsent`: clear storage, then dispatch the event
+ * `useConsent`'s subscribers are listening for. Skipping the dispatch would
+ * leave every open tab showing the old state until the next reload.
+ */
+export function resetAnalyticsConsent() {
+  try {
+    window.localStorage.removeItem(CONSENT_STORAGE_KEY);
+  } catch {
+    // Non-fatal, same as writeConsent: the choice simply won't persist.
+  }
+
+  window.dispatchEvent(
+    new CustomEvent<ConsentState>(CONSENT_CHANGE_EVENT, { detail: "unset" }),
+  );
+}

@@ -30,11 +30,45 @@ test("serves English at /en and announces it", async ({ page }) => {
   ).toBeVisible();
 });
 
-test("404s an unknown locale rather than falling back", async ({ page }) => {
-  // Silently rendering `/de/…` in French would hand Google a page whose `lang`
-  // attribute lies about its content.
-  const response = await page.goto("/de");
+test.describe("404s an unknown locale rather than falling back", () => {
+  // `/de/…` carries no recognised locale, so the middleware redirect that
+  // adds a prefix negotiates one from `Accept-Language` — same as the bare
+  // `/` redirect above. Pinning the browser's locale to French makes that
+  // negotiation land on `/fr/de/…` deterministically, rather than depending
+  // on whatever language the test runner happens to default to.
+  test.use({ locale: "fr-FR" });
+
+  test("404s an unknown locale rather than falling back", async ({
+    page,
+  }) => {
+    // Silently rendering `/de/…` in French would hand Google a page whose
+    // `lang` attribute lies about its content.
+    const response = await page.goto("/de/anything");
+    expect(response?.status()).toBe(404);
+    // Asserts the rendered UI, not just the status — the previous version of
+    // this test passed identically whether our styled 404 or Next's own
+    // generic page rendered.
+    await expect(page.getByText("Cette page n'existe pas")).toBeVisible();
+    await expect(
+      page.getByText("This page could not be found")
+    ).not.toBeVisible();
+  });
+});
+
+test("404s an unmatched URL under /en with English copy", async ({
+  page,
+}) => {
+  // The deleted `global-not-found.tsx` reconstructed the locale from the
+  // `NEXT_LOCALE` cookie, which next-intl only sets when the negotiated
+  // locale differs from the default — so an English visitor whose cookie was
+  // never set silently got French. The catch-all route reads the locale from
+  // the URL segment instead, so this must render English.
+  const response = await page.goto("/en/not-a-page");
   expect(response?.status()).toBe(404);
+  await expect(page.getByText("This page does not exist")).toBeVisible();
+  await expect(
+    page.getByText("This page could not be found")
+  ).not.toBeVisible();
 });
 
 test("keeps the locale when following an internal link", async ({ page }) => {
@@ -42,5 +76,13 @@ test("keeps the locale when following an internal link", async ({ page }) => {
   await page.getByRole("link", { name: "Browse the catalog" }).click();
   // The locale-aware `Link` carries `/en` through; a bare `next/link` would
   // drop the reader onto the default locale.
-  await expect(page).toHaveURL(/\/en\/design-system$/);
+  //
+  // `/en/courses`, not `/en/design-system`. This button was labelled "Browse
+  // the catalog" while pointing at the internal design-system page, because
+  // the catalog did not exist when it was written; the assertion was built
+  // around the placeholder destination rather than the intended one. What the
+  // test is actually for — the locale surviving a click — is unchanged, and
+  // the French half of it is stronger now: `/courses` translates to
+  // `/catalogue`, so the same link proves segment translation too.
+  await expect(page).toHaveURL(/\/en\/courses$/);
 });

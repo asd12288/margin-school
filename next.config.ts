@@ -7,7 +7,22 @@ import createNextIntlPlugin from "next-intl/plugin";
 const withNextIntl = createNextIntlPlugin("./i18n/request.ts");
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /**
+   * Cache Components: PPR by default, `use cache` to opt in, and React
+   * <Activity> preserving component state across client navigation.
+   *
+   * It is also the enforcement mechanism this project wanted. With it on,
+   * reading uncached dynamic data — cookies, headers, searchParams — outside
+   * a Suspense boundary fails the build instead of silently making the route
+   * dynamic. That is what stops a session read in the header quietly costing
+   * Tier 1 in docs/ux-architecture.md.
+   *
+   * `unstable_instant` is a narrower per-route opt-in layered on top: it
+   * validates that client navigation into a route is instant at every shared
+   * layout boundary. It does not provide the build failure above — this flag
+   * does.
+   */
+  cacheComponents: true,
 };
 
 export default withSentryConfig(withNextIntl(nextConfig), {
