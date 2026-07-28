@@ -4,8 +4,9 @@ import { getLocale, getTranslations } from "next-intl/server";
 
 import type { AccountSlotLabels } from "@/components/margin/shell/account-slot";
 import type { LocaleSwitcherLabels } from "@/components/margin/shell/locale-switcher";
+import type { SearchFieldLabels } from "@/components/margin/shell/search-field";
 import type { SiteFooterLabels } from "@/components/margin/shell/site-footer";
-import type { ThemeToggleLabels } from "@/components/margin/theme-toggle";
+import type { ThemeSwitchLabels } from "@/components/margin/shell/theme-switch";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -29,11 +30,14 @@ export interface ShellLabels {
   navLabel: string;
   nav: {
     courses: string;
+    concepts: string;
+    pricing: string;
     learn: string;
     myCourses: string;
   };
-  theme: ThemeToggleLabels;
+  theme: ThemeSwitchLabels;
   locale: LocaleSwitcherLabels;
+  search: SearchFieldLabels;
   account: AccountSlotLabels;
   footer: SiteFooterLabels;
 }
@@ -65,18 +69,24 @@ export async function getShellLabels(): Promise<ShellLabels> {
     navLabel: t("shell.navLabel"),
     nav: {
       courses: t("shell.nav.courses"),
+      concepts: t("shell.nav.concepts"),
+      pricing: t("shell.nav.pricing"),
       learn: t("shell.nav.learn"),
       myCourses: t("shell.nav.myCourses"),
     },
+    // Phrased as the action the click performs, not the state it is in —
+    // "Switch to dark theme", not "Dark". A toggle whose name describes its
+    // current state leaves a screen-reader user guessing which way it goes.
     theme: {
-      group: t("theme.group"),
-      light: t("theme.light"),
-      dark: t("theme.dark"),
-      system: t("theme.system"),
+      toDark: t("theme.toDark"),
+      toLight: t("theme.toLight"),
     },
     locale: localeLabels,
+    search: {
+      label: t("shell.search.label"),
+      placeholder: t("shell.search.placeholder"),
+    },
     account: {
-      signIn: t("shell.account.signIn"),
       startTrial: t("shell.account.startTrial"),
       menu: t("shell.account.menu"),
       account: t("shell.nav.account"),
@@ -86,16 +96,22 @@ export async function getShellLabels(): Promise<ShellLabels> {
     },
     footer: {
       brand: t("shell.brand"),
+      tagline: t("shell.footer.tagline"),
       disclaimer: t("shell.disclaimer"),
       columns: {
-        explore: {
-          heading: t("shell.footer.exploreHeading"),
+        // Link text reuses the nav keys rather than declaring footer-only
+        // copies: "Courses" naming two different things in the same document
+        // is how a translation drifts.
+        learn: {
+          heading: t("shell.footer.learnHeading"),
           courses: t("shell.nav.courses"),
+          concepts: t("shell.nav.concepts"),
         },
-        account: {
-          heading: t("shell.nav.account"),
-          signIn: t("shell.account.signIn"),
-          startTrial: t("shell.account.startTrial"),
+        company: {
+          heading: t("shell.footer.companyHeading"),
+          about: t("shell.nav.about"),
+          pricing: t("shell.nav.pricing"),
+          help: t("shell.nav.help"),
         },
         legal: {
           heading: t("shell.footer.legalHeading"),

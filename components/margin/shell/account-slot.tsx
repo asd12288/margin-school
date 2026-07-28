@@ -6,7 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AccountMenu, type AccountMenuLabels } from "./account-menu";
 
 export interface AccountSlotLabels extends AccountMenuLabels {
-  signIn: string;
+  /**
+   * The one signed-out action. There is deliberately no `signIn` alongside
+   * it — the header renders a single button and the auth screens switch
+   * between signing in and signing up themselves.
+   */
   startTrial: string;
 }
 
@@ -23,15 +27,22 @@ async function AccountSlot({ labels }: { labels: AccountSlotLabels }) {
   const profile = await getCurrentProfile();
 
   if (!profile) {
+    /**
+     * One button, not the "Sign in" + "Start free trial" pair that stood
+     * here. The auth screens carry their own switcher between signing in and
+     * signing up (Phase 4), so the header does not have to choose for the
+     * visitor — which means the header can spend its remaining width on the
+     * action that matters rather than on two.
+     *
+     * It points at `/sign-up` and says so. A returning subscriber therefore
+     * arrives at the sign-up side and switches once; that is the cost, and it
+     * falls on the people who already know the product rather than on the
+     * ones deciding whether to try it.
+     */
     return (
-      <div className="flex items-center gap-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/sign-in">{labels.signIn}</Link>
-        </Button>
-        <Button size="sm" asChild>
-          <Link href="/sign-up">{labels.startTrial}</Link>
-        </Button>
-      </div>
+      <Button size="sm" asChild>
+        <Link href="/sign-up">{labels.startTrial}</Link>
+      </Button>
     );
   }
 
@@ -47,17 +58,21 @@ async function AccountSlot({ labels }: { labels: AccountSlotLabels }) {
  * Suspense fallback. Fixed size, matching the widest real state, so the header
  * never shifts when the session resolves — skeleton rule 1.
  *
- * Sized to the signed-out state — the two `size="sm"` buttons ("Sign in" +
- * "Start free trial" / "Se connecter" + "Essai gratuit") with their `gap-2` —
- * which is what an anonymous visitor actually sees while the session
- * resolves, and is wider than the signed-in `AccountMenu`. Measured via
- * `getBoundingClientRect()` on a production build: 187px in English, 219px
- * in French (French runs longer). `w-56` (224px) is the smallest Tailwind
- * token at or above the wider (French) measurement. If the button copy
- * changes, re-measure both locales and re-pick the token.
+ * Sized to the signed-out state — the single `size="sm"` trial button — which
+ * is what an anonymous visitor sees while the session resolves, and is wider
+ * than the signed-in `AccountMenu`'s `size-8` trigger.
+ *
+ * It used to reserve `w-56` (224px) for a two-button pair, measured at 187px
+ * in English and 219px in French. Dropping the "Sign in" button removes that
+ * button plus the `gap-2` between them, which puts both locales at roughly
+ * 117px — the two labels ("Start free trial" / "Essai gratuit") happen to set
+ * to nearly the same width. `w-32` (128px) is the smallest token above that
+ * with room to spare. Re-measure with `getBoundingClientRect()` against a
+ * production build if the copy changes; the old number is recorded here so
+ * the next person can see what the reservation is actually made of.
  */
 function AccountSlotSkeleton() {
-  return <Skeleton className="h-8 w-56 rounded-4xl" />;
+  return <Skeleton className="h-8 w-32 rounded-4xl" />;
 }
 
 /**

@@ -15,6 +15,16 @@ import { Compass } from "lucide-react";
  * whole point of AGENTS.md rule 7 and the reason every component takes its
  * words as props.
  *
+ * The badge, heading and lede used to be English literals in the JSX, so a
+ * French visitor to `/fr` read the brand's own home page in English — on the
+ * one page whose job is to demonstrate the translation layer. They are
+ * `pages.home.*` now, the same namespace the other placeholder routes use.
+ *
+ * The copy no longer says "Phase 8" either. Roadmap phase numbers are how we
+ * talk to each other, not something a visitor can act on; the other
+ * placeholder pages say plainly that the page is being written, and this one
+ * now matches them.
+ *
  * The real marketing page is Phase 8.
  */
 export default async function Home({
@@ -33,16 +43,15 @@ export default async function Home({
     <main className="flex flex-1 items-center justify-center px-6 py-24">
       <div className="measure-narrow flex flex-col items-start gap-6">
         <span className="rounded-4xl bg-primary-muted px-2.5 py-1 text-xs font-medium text-primary-text">
-          Placeholder
+          {t("pages.home.badge")}
         </span>
 
         <div className="flex flex-col gap-3">
           <h1 className="text-display-lg font-bold text-foreground">
-            Margin School
+            {t("pages.home.title")}
           </h1>
           <p className="text-prose text-muted-foreground">
-            Learn the financial markets, from the beginning. The marketing site
-            is Phase 8 — this page exists so the root route is not boilerplate.
+            {t("pages.home.description")}
           </p>
         </div>
 
@@ -53,7 +62,17 @@ export default async function Home({
           description={t("states.empty.description")}
           action={
             <Button asChild>
-              <Link href="/design-system">{t("states.empty.action")}</Link>
+              {/*
+               * `/courses`, not `/design-system`. This button has always been
+               * labelled "Browse the catalog" / "Parcourir le catalogue" and
+               * pointed at the internal design-system page instead — correct
+               * when it was written, because the catalog did not exist and a
+               * CTA to nothing is worse than a CTA to somewhere. The catalog
+               * shipped with the fixture-backed pages; this link was never
+               * updated to follow it, so the one button on the home page sent
+               * visitors to an internal, `noindex` reference page.
+               */}
+              <Link href="/courses">{t("states.empty.action")}</Link>
             </Button>
           }
         />

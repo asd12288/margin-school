@@ -24,7 +24,7 @@ import { notFound } from "next/navigation";
  * `generateStaticParams` below is what keeps this route non-streamed. It
  * returns one placeholder `rest` value per locale, which does two things:
  * it gives Next a concrete value to build this segment's static shell from
- * — `SiteHeader`'s `NavLink` (`useSelectedLayoutSegment()`) and
+ * — `SiteHeader`'s `NavLink` (`useSelectedLayoutSegment()`) and the footer's
  * `LocaleSwitcher` (`useParams()`) sit in `(public)/layout.tsx`, outside this
  * file, and need *some* resolved value for `rest` to prerender at all — and,
  * because `dynamicParams` defaults to `true`, it makes every other path under

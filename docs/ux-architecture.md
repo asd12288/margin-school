@@ -20,7 +20,9 @@ This content is identical for everyone and changes only when content is publishe
 
 The frame — navigation, sidebar, page header, course title — renders instantly from cache. Only genuinely personal parts (progress, position, mastery) stream in behind Suspense.
 
-Next 16 ships `unstable_instant`, which validates at build time that Suspense boundaries are placed correctly for client navigation — catching a misplaced boundary that would otherwise only surface as a blank screen in production. **It cannot currently be used on these routes.** Tried against `(public)/layout.tsx` and `(app)/layout.tsx`: the `as const` form shown in Next's own docs does not build (the segment-config extractor only reads `satisfies`); there is no supported way to validate the `[locale]` root param, because `unstable_rootParams` was removed with no replacement shipped yet; and the `(app)` shell fails validation for reasons attributable to the root layout's provider composition, not to either shell layout. Revisit when the API stabilizes — this is deferred, not abandoned.
+Next 16 ships `unstable_instant`, which validates at build time that Suspense boundaries are placed correctly for client navigation — catching a misplaced boundary that would otherwise only surface as a blank screen in production. **It cannot currently be used on these routes.** Tried against `(public)/layout.tsx` and `(app)/layout.tsx`: the `as const` form shown in Next's own docs does not build (the segment-config extractor only reads `satisfies`), and every locale-aware shell layout blocks validation. The second one is the real blocker and it is structural: during validation `params` never resolves before the Runtime stage, so *any* `await params` outside a `<Suspense>` boundary blocks the static shell — including one that only wants `locale` for `setRequestLocale`, which next-intl needs in order to stay static. Declaring `samples` on the config fixes *which* params may be read, not *when* they resolve; `unstable_rootParams`, the sanctioned way to read a root param without that cost, was removed with no replacement shipped yet. So a shell that renders localized chrome synchronously — which is the point of Tier 2 — cannot pass. The error surfaces with a component stack ending in the root layout's providers (`AnalyticsProvider`, `ThemeProvider`); that is the children-prop owner chain, not the culprit. Revisit when the API stabilizes — this is deferred, not abandoned.
+
+Leaf pages are a different matter and are worth writing to the standard anyway: `app/[locale]/(public)/course/[course]/page.tsx` follows the pattern from Next's own instant-navigation guide — a synchronous page body, `params.then(…)` inside `<Suspense>`, and a `use cache` component taking plain values — and validates cleanly on its own. Enabling its export is blocked only by the shell above it.
 
 What still holds without it: `cacheComponents` already fails the build on any uncached data read outside a Suspense boundary, which is what actually keeps personal data behind the boundary today (see the gating subsection above). The check `unstable_instant` would add on top is narrower — it validates client-navigation entry points specifically — so its absence does not remove the build-time protection that matters most.
 
@@ -75,9 +77,14 @@ The full map, settled once in [ADR-0011](decisions/0011-route-map.md) because UR
 | `/{locale}/courses/{group}/{sub}` | `/fr/catalogue/{group}/{sub}` | 1 | 8 |
 | `/{locale}/course/{course}` | `/fr/cours/{course}` | 1 | 3 (fixtures), 8 |
 | `/{locale}/course/{course}/{lesson}` | `/fr/cours/{course}/{lesson}` | 1 | 8 |
-| `/{locale}/concepts`, `/concepts/{concept}` | `/fr/notions`, `/fr/notions/{concept}` | 1 | 8+ |
-| `/{locale}/pricing` | `/fr/abonnement` | 1 | 8 |
-| `/{locale}/about`, `/{locale}/legal/{doc}` | `/fr/a-propos`, `/fr/mentions/{doc}` | 1 | 8 |
+| `/{locale}/concepts` | `/fr/notions` | 1 | 3 (frame), 8 |
+| `/{locale}/concepts/{concept}` | `/fr/notions/{concept}` | 1 | 8+ |
+| `/{locale}/pricing` | `/fr/abonnement` | 1 | 3 (frame), 10 |
+| `/{locale}/about` | `/fr/a-propos` | 1 | 3 (frame), 8 |
+| `/{locale}/help` | `/fr/aide` | 1 | 3 (frame), unscheduled |
+| `/{locale}/legal/{doc}` | `/fr/mentions/{doc}` | 1 | 3 (placeholder), 8 |
+
+`/about`, `/pricing`, `/concepts` and `/help` exist as placeholder frames from Phase 3 rather than waiting for Phase 8, because the footer links to them and a footer link that 404s is worse than a page that admits it is unwritten. `/help` is the one route here that [ADR-0011](decisions/0011-route-map.md) did not settle up front — it was added with the full footer.
 
 ### Auth
 

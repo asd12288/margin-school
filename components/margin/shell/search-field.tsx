@@ -26,8 +26,16 @@ export interface SearchFieldLabels {
  * the component usable from either shell's header without assuming which
  * locale segment it is rendered under.
  *
- * Reading the catalog's `q` parameter is a later task's job — this only has
- * to get it into the URL.
+ * The catalog reads the `q` this submits — see `CourseResults` in
+ * `app/[locale]/(public)/courses/page.tsx`, which filters inside its own
+ * `<Suspense>` boundary so the search never costs the page its Tier 1 frame.
+ *
+ * **Width is the caller's call.** This used to hard-code `max-w-48`, on the
+ * argument that a narrow box suits a guided path better than a marketplace
+ * search bar. The public header now gives it the full centre column
+ * instead — search is the one thing a visitor arriving from a query already
+ * knows how to use. The footprint is a layout decision, so it lives with the
+ * layout; this component just fills what it is given.
  */
 function SearchField({
   locale,
@@ -45,11 +53,21 @@ function SearchField({
       method="GET"
       action={getPathname({ href: "/courses", locale })}
       role="search"
-      // Deliberately narrower than the nav and the account controls: this
-      // product's thesis is a guided path, not a marketplace search box.
-      className={cn("w-full max-w-48", className)}
+      className={cn("w-full", className)}
     >
-      <InputGroup>
+      {/*
+       * Pill, not the vendored `rounded-lg` — every other control in the
+       * header (locale, theme, the trial button, the account menu) is a pill,
+       * and a single squared field in that row was the one shape that did not
+       * belong. Taller than stock too: `InputGroup` is `h-8`, which reads as
+       * an afterthought inside a 4rem header bar.
+       *
+       * Filled rather than outlined for the same reason a search bar usually
+       * is — the header sits on `bg-background/80`, so a field that is only a
+       * border nearly disappears against it. `bg-muted` gives it a body at
+       * rest; focus is already handled by the group's own ring.
+       */}
+      <InputGroup className="h-10 rounded-4xl border-transparent bg-muted ps-1 transition-colors duration-fast ease-quiet hover:bg-subtle has-[[data-slot=input-group-control]:focus-visible]:bg-background">
         <InputGroupAddon>
           <Search aria-hidden="true" />
         </InputGroupAddon>

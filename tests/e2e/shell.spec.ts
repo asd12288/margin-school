@@ -12,23 +12,41 @@ test("a signed-in visitor sees the account menu, not the trial CTA", async ({
 });
 
 /**
- * Phase 3's done-when, stated literally — "the shell must never blink" on
- * navigation.
+ * Phase 3's done-when for the public shell — "the shell must never blink" —
+ * plus the fact that the header's only nav link actually goes somewhere.
  *
- * The brief's own version of this test clicked the public header's
- * "Courses" link and expected `/en/courses` to render. That route does not
- * exist yet: the catalog is Phase 8 (see docs/roadmap.md and the home
- * page's own CTA, which deliberately points at `/design-system` instead —
- * `app/[locale]/(public)/page.tsx` says so directly — and
- * `.superpowers/sdd/task-9-report.md` documents the same 404 as expected).
- * Confirmed with `curl -I /en/courses` against a production build: 404, and
- * that 404 renders outside `(public)/layout.tsx` entirely, so there is no
- * second real page in the public shell to navigate to today — only the
- * signed-in app shell has two.
+ * That second half is not incidental. The catalog (`/courses`, `/catalogue`)
+ * arrived in task 12; before it, this link 404'd, and nothing in the suite
+ * would have said so. Clicking the real link rather than calling
+ * `page.goto("/en/courses")` is the point: it also covers `NavLink`'s
+ * canonical-key `href` surviving `i18n/routing.ts`'s pathname translation.
+ */
+test("the public header's Courses link reaches the catalog, without blinking", async ({
+  page,
+}) => {
+  await page.goto("/en");
+
+  // Same stamp trick as the signed-in test below: if `(public)/layout.tsx`
+  // remounts across the nav, the stamp is gone.
+  await page.locator("header").evaluate((node) => {
+    (node as HTMLElement).dataset.stamp = "kept";
+  });
+
+  await page.locator("header").getByRole("link", { name: "Courses" }).click();
+
+  await expect(page).toHaveURL(/\/en\/courses$/);
+  await expect(page.getByRole("heading", { level: 1, name: "Courses" })).toBeVisible();
+  await expect(page.locator("header")).toHaveAttribute("data-stamp", "kept");
+});
+
+/**
+ * The same done-when, for the signed-in app shell.
  *
- * This uses `/learn` → `/my-courses` instead: both are real, both render
- * `AppHeader`, and the assertion (the header node's identity survives a
- * client-side nav) is exactly the same one the brief intended.
+ * `/learn` → `/my-courses` rather than the public header's own link: these
+ * routes render `AppHeader`, a different component from `SiteHeader` with a
+ * different nav and a different account slot, and the test above already
+ * covers the public one. The assertion is identical — the header node's
+ * identity survives a client-side nav.
  */
 test("navigating does not re-render the navigation", async ({ page, signInAs }) => {
   await signInAs("student");
@@ -47,11 +65,20 @@ test("navigating does not re-render the navigation", async ({ page, signInAs }) 
 });
 
 /**
- * Same substitution as above, and for the same reason: `/en/courses` 404s
- * because the catalog is Phase 8, so switching locale from there never
- * reaches a page with a `LocaleSwitcher` to click. `/learn` ↔ `/apprendre`
- * is one of the same translated-segment pairs (`i18n/routing.ts`) and is a
- * real, signed-in-reachable page today.
+ * `/learn` ↔ `/apprendre` is one of the translated-segment pairs in
+ * `i18n/routing.ts` — the switcher has to rewrite the segment, not just the
+ * locale prefix. Doing it from a signed-in route also proves the switch
+ * survives the app shell's own layout, which the public pages don't exercise.
+ *
+ * `/learn` is also now the *only* place this is reachable from a header: the
+ * public header dropped its locale switcher, which lives in the footer alone.
+ *
+ * Two clicks, not one. The switcher used to be a segmented ARIA radiogroup
+ * whose options were always on screen; it is a `DropdownMenu` now, so the
+ * options are `menuitemradio` — a distinct ARIA role, not `radio` — and they
+ * do not exist in the DOM until the trigger is opened. The old one-liner
+ * `getByRole("radio", …)` did not fail loudly when that changed, it simply
+ * waited 30 seconds for an element that could never appear.
  */
 test("switching locale keeps you on the same page, with translated segments", async ({
   page,
@@ -60,11 +87,46 @@ test("switching locale keeps you on the same page, with translated segments", as
   await signInAs("student");
   await page.goto("/en/learn");
 
-  await page.getByRole("radio", { name: "Français" }).click();
+  await page.getByRole("button", { name: "Current language: English" }).click();
+  await page.getByRole("menuitemradio", { name: "Français" }).click();
 
   // Not /fr/learn — the segment itself is translated.
   await expect(page).toHaveURL(/\/fr\/apprendre$/);
   await expect(page.locator("html")).toHaveAttribute("lang", "fr");
+});
+
+/**
+ * The theme control is a two-state button now, not a three-option menu, and
+ * its accessible name states the action rather than the current theme — so
+ * the name itself is the assertion that it flipped.
+ */
+test("the theme button toggles between light and dark", async ({ page }) => {
+  await page.goto("/en");
+
+  const toDark = page.getByRole("button", { name: "Switch to dark theme" });
+  await expect(toDark).toBeVisible();
+  await toDark.click();
+
+  await expect(page.locator("html")).toHaveClass(/dark/);
+  await expect(
+    page.getByRole("button", { name: "Switch to light theme" })
+  ).toBeVisible();
+});
+
+/**
+ * The public header carries one auth action, not the "Sign in" + "Start free
+ * trial" pair — the auth screens switch between the two themselves. And the
+ * footer must not reintroduce a second one: it previously rendered its own
+ * "Sign in"/"Start free trial" column unconditionally, which pitched a free
+ * trial to signed-in subscribers on every page.
+ */
+test("a signed-out visitor gets exactly one auth action on the page", async ({
+  page,
+}) => {
+  await page.goto("/en");
+
+  await expect(page.getByRole("link", { name: "Start free trial" })).toHaveCount(1);
+  await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0);
 });
 
 /**

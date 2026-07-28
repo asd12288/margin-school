@@ -76,5 +76,13 @@ test("keeps the locale when following an internal link", async ({ page }) => {
   await page.getByRole("link", { name: "Browse the catalog" }).click();
   // The locale-aware `Link` carries `/en` through; a bare `next/link` would
   // drop the reader onto the default locale.
-  await expect(page).toHaveURL(/\/en\/design-system$/);
+  //
+  // `/en/courses`, not `/en/design-system`. This button was labelled "Browse
+  // the catalog" while pointing at the internal design-system page, because
+  // the catalog did not exist when it was written; the assertion was built
+  // around the placeholder destination rather than the intended one. What the
+  // test is actually for — the locale surviving a click — is unchanged, and
+  // the French half of it is stronger now: `/courses` translates to
+  // `/catalogue`, so the same link proves segment translation too.
+  await expect(page).toHaveURL(/\/en\/courses$/);
 });

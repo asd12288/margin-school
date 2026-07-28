@@ -27,6 +27,14 @@ player exists yet (both are Phase 9); the shape is decided now because it drives
 **One second taxonomy — `/concepts`** — the skill graph of ADR-0004 made public.
 Reserved, not built before Phase 8.
 
+**Amended 2026-07-28: `/help` (`/fr/aide`) joins the map.** It was not in the
+original table. The full public footer needs somewhere to send a reader with a
+question, and this project's standing rule is that a footer link points at a
+route that answers — so the URL had to be settled to be linked. `/about`,
+`/pricing`, `/concepts` and `/help` now ship as placeholder frames from Phase 3
+for the same reason; the map was always going to include the first three, and
+building them early costs a page of copy each.
+
 ## Consequences
 
 A beginner's first screen after signing in is an instruction, not a console —

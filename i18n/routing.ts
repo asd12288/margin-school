@@ -49,6 +49,21 @@ const pathnames = {
   },
   "/course/[course]": { fr: "/cours/[course]", en: "/course/[course]" },
 
+  // The rest of the public surface. Each of these is a placeholder frame
+  // today (Phase 8 writes the real thing), but the URLs are settled now for
+  // the reason ADR-0011 settles every URL up front: they are the one thing a
+  // public product cannot revise cheaply, and the footer links to them.
+  //
+  // `/abonnement` rather than `/prix` or `/tarifs`: there is one all-access
+  // subscription and nothing is sold per course (ADR-0001), so the French
+  // segment names the thing you subscribe to, not a price list we do not have.
+  "/about": { fr: "/a-propos", en: "/about" },
+  "/pricing": { fr: "/abonnement", en: "/pricing" },
+  // The skill graph of ADR-0004 made public. "Notions" is what a French
+  // reader looks for; "concepts" exists in French but reads academic.
+  "/concepts": { fr: "/notions", en: "/concepts" },
+  "/help": { fr: "/aide", en: "/help" },
+
   // Auth
   "/sign-in": { fr: "/connexion", en: "/sign-in" },
   "/sign-up": { fr: "/inscription", en: "/sign-up" },

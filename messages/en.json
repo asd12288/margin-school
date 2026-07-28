@@ -11,7 +11,9 @@
     "group": "Colour theme",
     "light": "Light",
     "dark": "Dark",
-    "system": "Follow the system"
+    "system": "Follow the system",
+    "toDark": "Switch to dark theme",
+    "toLight": "Switch to light theme"
   },
   "course": {
     "duration": "{hours, plural, =0 {# min} one {# h} other {# h}}",
@@ -24,6 +26,12 @@
     "progress": "{completed} of {total} lessons complete",
     "progressShort": "{percent}% complete",
     "coverAlt": "Cover art for {title}"
+  },
+  "courses": {
+    "searchEmpty": {
+      "title": "No courses match \"{query}\"",
+      "description": "Try a different search, or browse the full catalog."
+    }
   },
   "curriculum": {
     "chapterProgress": "{completed} of {total} lessons complete",
@@ -83,7 +91,10 @@
     "skipToContent": "Skip to content",
     "nav": {
       "courses": "Courses",
+      "concepts": "Concepts",
       "pricing": "Pricing",
+      "about": "About",
+      "help": "Help",
       "learn": "Learn",
       "myCourses": "My courses",
       "account": "Account",
@@ -107,7 +118,9 @@
     },
     "disclaimer": "Margin School is educational. Nothing here is investment advice, a recommendation, or a signal to buy or sell. Trading carries risk, including the loss of your capital.",
     "footer": {
-      "exploreHeading": "Explore",
+      "tagline": "Learn the financial markets from the beginning, in plain language. One subscription, everything included.",
+      "learnHeading": "Learn",
+      "companyHeading": "Margin School",
       "legalHeading": "Legal",
       "copyright": "© {year} Margin School",
       "cookiePreferences": "Cookie preferences"
@@ -120,6 +133,33 @@
     "privacy": { "title": "Privacy policy" },
     "mentions": { "title": "Legal notice" },
     "accessibility": { "title": "Accessibility statement" }
+  },
+  "pages": {
+    "home": {
+      "badge": "Placeholder",
+      "title": "Margin School",
+      "description": "Learn the financial markets from the beginning, in plain language. The full site is still being written — the catalog is the place to start."
+    },
+    "about": {
+      "badge": "Placeholder",
+      "title": "About Margin School",
+      "description": "This page will explain who publishes these courses and how they are made. It is being written."
+    },
+    "pricing": {
+      "badge": "Placeholder",
+      "title": "Subscription",
+      "description": "One subscription, everything included — every course, in both languages, with no per-course purchase. The plans and the sign-up flow are still being built, so no prices are shown here yet."
+    },
+    "concepts": {
+      "badge": "Placeholder",
+      "title": "Concepts",
+      "description": "Courses are the path you follow; concepts are what you end up knowing. This index will let you browse by idea rather than by course, and see what you have already mastered. It is being built."
+    },
+    "help": {
+      "badge": "Placeholder",
+      "title": "Help",
+      "description": "Answers to common questions will live here once there are enough of them to be useful."
+    }
   },
   "consent": {
     "label": "Analytics consent",
