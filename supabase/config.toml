@@ -502,3 +502,56 @@ enabled = true
 # declarative_schema_path = "./database"
 # JSON string passed through to pg-delta SQL formatting.
 # format_options = "{\"keywordCase\":\"upper\",\"indent\":2,\"maxWidth\":80,\"commaStyle\":\"trailing\"}"
+
+# ===========================================================================
+# Remote overrides.
+#
+# Everything above configures the **local Docker stack**. `supabase config
+# push --project-ref <ref>` applies this file to a hosted project, and the
+# values in this section are layered over the base — which is the only reason
+# that push is safe to run.
+#
+# Pushing the base config unchanged would set production's `site_url` to
+# `http://127.0.0.1:3000`, breaking every auth redirect, and would turn email
+# confirmation **off**, letting anyone sign up as any address. Every
+# local-only value therefore needs an override here, not just the interesting
+# ones. That is the trap: an override that is merely forgotten inherits the
+# localhost value silently.
+#
+# What this exists for is the email templates. They are *not* cosmetic — see
+# `supabase/templates/` — and a project without them has working sign-in and a
+# silently broken password reset. They are inherited from the base config
+# rather than restated, because they are the same everywhere.
+#
+# `config push` is declarative and has no diff or dry-run: it overwrites the
+# hosted project's auth settings with what is computed here, including any
+# change someone made in the dashboard. Read this block before running it.
+# ===========================================================================
+[remotes.production]
+project_id = "zmwguudoqgygawysniki"
+
+[remotes.production.auth]
+# The stable Vercel alias, not a per-deployment URL. Change this the day a
+# custom domain is attached, or every emailed link keeps pointing here.
+site_url = "https://margin-school.vercel.app"
+
+# Preview deployments get a generated hostname per branch, so they cannot be
+# listed exactly. The wildcard is scoped to this project's own Vercel
+# namespace rather than `*.vercel.app`, which would let any Vercel deployment
+# on the internet receive our auth redirects.
+additional_redirect_urls = [
+  "https://margin-school.vercel.app/**",
+  "https://margin-school-*-asd12288s-projects.vercel.app/**",
+]
+
+[remotes.production.auth.email]
+# On, unlike local. Without it, sign-up accepts an address nobody has proven
+# they control.
+enable_confirmations = true
+
+[remotes.production.auth.rate_limit]
+# Back to Supabase's defaults. The base values are inflated for the e2e suite,
+# which signs in hundreds of times per run from one IP; shipping those to
+# production would remove the anti-abuse limit that number exists to be.
+email_sent = 2
+sign_in_sign_ups = 30
