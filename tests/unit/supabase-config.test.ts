@@ -74,6 +74,39 @@ describe("supabase/config.toml — the production remote", () => {
   });
 });
 
+describe("supabase/config.toml — settings production inherits", () => {
+  /**
+   * The base config is not local-only. Anything not restated under
+   * `[remotes.production.*]` is what production gets, so a value that is
+   * merely convenient for the e2e suite ships as a production setting.
+   */
+  it("requires reauthentication before a password change", () => {
+    // Set in the base block on purpose, so the e2e suite runs against the same
+    // rule production does. Off, the Auth API changes a password on a valid
+    // access token alone, with no idea whether the caller knows the old one.
+    expect(valueOf("auth.email", "secure_password_change")).toBe("true");
+  });
+
+  it("keeps MFA off until there is something to answer a challenge", () => {
+    // These are pushed unconditionally — no `if defined` guard, unlike the
+    // captcha block. Enrolment enabled with no AAL2 handling in the app means
+    // someone can enrol a factor through the API and lock themselves out.
+    expect(valueOf("auth.mfa.totp", "enroll_enabled")).toBe("false");
+    expect(valueOf("auth.mfa.totp", "verify_enabled")).toBe("false");
+  });
+
+  it("leaves SMTP off, which is what makes the email rate limit inert", () => {
+    // The CLI only sends `rate_limit_email_sent` when `[auth.email.smtp]` is
+    // enabled, so while it is not, `[remotes.production.auth.rate_limit]
+    // .email_sent` is documentation and the comment there says so.
+    //
+    // Enabling SMTP fails this test on purpose. That is the moment the number
+    // becomes a real production limit, and 2/hour is the cap on Supabase's
+    // shared sender — not a figure anyone chose for a domain of our own.
+    expect(valueOf("auth.email.smtp", "enabled")).not.toBe("true");
+  });
+});
+
 describe("supabase/config.toml — the local stack", () => {
   it("keeps enabled as a literal bool", () => {
     // Substitution runs before parsing, but an unset variable becomes "", and

@@ -2,6 +2,77 @@ import "server-only";
 
 import { headers } from "next/headers";
 
+import { isProduction } from "@/lib/env";
+
+/**
+ * The hostnames this deployment answers to, as the platform reports them.
+ *
+ * Vercel sets all three itself, and a request cannot influence them. That is
+ * what makes them usable as an allowlist for `x-forwarded-host`, which is a
+ * header and therefore data.
+ *
+ *   `VERCEL_PROJECT_PRODUCTION_URL`  the production domain — becomes the
+ *                                    custom domain the day one is attached
+ *   `VERCEL_BRANCH_URL`              `margin-school-git-<branch>-<team>…`
+ *   `VERCEL_URL`                     the per-deployment hostname
+ *
+ * Empty anywhere that is not Vercel, and that emptiness is load-bearing —
+ * see `resolveHost`.
+ */
+function platformHosts(): string[] {
+  return [
+    process.env.VERCEL_PROJECT_PRODUCTION_URL,
+    process.env.VERCEL_BRANCH_URL,
+    process.env.VERCEL_URL,
+  ].filter((host): host is string => Boolean(host));
+}
+
+/**
+ * The host to use when the requested one is not one of ours.
+ *
+ * Production has a stable domain and every emailed link should carry it. A
+ * preview has no such thing, so its own branch hostname is the best available
+ * — and pointing a preview's links at production would recreate exactly the
+ * bug `absoluteUrl` exists to avoid.
+ */
+function canonicalHost(fallback: string[]): string {
+  const preferred = isProduction
+    ? process.env.VERCEL_PROJECT_PRODUCTION_URL
+    : (process.env.VERCEL_BRANCH_URL ?? process.env.VERCEL_URL);
+
+  return preferred ?? fallback[0]!;
+}
+
+/**
+ * The requested host, if we answer to it; the canonical one otherwise.
+ *
+ * Worth being precise about what this defends against, because it is not the
+ * open door it looks like. Vercel does not let a client send
+ * `x-forwarded-host` to a function — it sets the header itself — and every
+ * `redirectTo` we build from this is checked again by Supabase against the
+ * project's redirect allowlist before it is ever put in an email. So this is
+ * the third lock on that door, not the first.
+ *
+ * It earns its place by not depending on either of the other two: a proxy in
+ * front of Vercel, a move off Vercel, or someone widening
+ * `additional_redirect_urls` in supabase/config.toml all quietly remove one,
+ * and none of them would remove this. It fails to the canonical host rather
+ * than throwing, so the worst case is a link to the right site.
+ */
+function resolveHost(requested: string): string {
+  const allowed = platformHosts();
+
+  // Not on Vercel: local development, and the e2e suite on port 3100. There is
+  // no proxy in front and no platform value to compare against, so the request
+  // is the only source there is — which is also why the ports vary freely.
+  if (allowed.length === 0) return requested;
+
+  // Platform values never carry a port, so compare bare hostnames.
+  const hostname = requested.split(":")[0]!;
+
+  return allowed.includes(hostname) ? requested : canonicalHost(allowed);
+}
+
 /**
  * Where this deployment lives, as an absolute origin.
  *
@@ -22,14 +93,23 @@ import { headers } from "next/headers";
 export async function siteOrigin(): Promise<string> {
   const headerList = await headers();
 
-  const host =
-    headerList.get("x-forwarded-host") ?? headerList.get("host") ?? "127.0.0.1:3000";
+  const requested = (
+    headerList.get("x-forwarded-host") ??
+    headerList.get("host") ??
+    "127.0.0.1:3000"
+  ).toLowerCase();
+
+  const host = resolveHost(requested);
 
   // Local development is the only case that is not HTTPS. Defaulting the
   // other way round would send Supabase an `http://` redirect for production,
   // which it rejects as not matching the allowlist.
+  //
+  // `x-forwarded-proto` is only trusted for a host we just vouched for —
+  // otherwise a spoofed pair could downgrade a canonical origin to http and
+  // Supabase would reject the redirect as not matching the allowlist.
   const protocol =
-    headerList.get("x-forwarded-proto") ??
+    (host === requested ? headerList.get("x-forwarded-proto") : null) ??
     (host.startsWith("127.0.0.1") || host.startsWith("localhost") ? "http" : "https");
 
   return `${protocol}://${host}`;

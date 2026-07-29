@@ -273,6 +273,7 @@
       "linkExpired": "That link has expired or was already used. Ask for a new one.",
       "linkInvalid": "That link is not valid. Ask for a new one.",
       "oauthFailed": "Google sign-in did not complete. Try again.",
+      "reauthenticationNeeded": "For your security, sign in again before changing your password.",
       "unexpected": "Something went wrong on our side. Try again."
     },
     "notices": {

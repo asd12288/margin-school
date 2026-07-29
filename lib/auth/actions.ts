@@ -21,10 +21,7 @@ import {
   safeNextPath,
 } from "@/lib/auth/routes";
 import { absoluteUrl } from "@/lib/auth/site-url";
-import {
-  createSupabaseAdminClient,
-  createSupabaseCheckClient,
-} from "@/lib/auth/supabase-admin";
+import { createSupabaseAdminClient } from "@/lib/auth/supabase-admin";
 import { createSupabaseServerClient } from "@/lib/auth/supabase-server";
 import {
   collectErrors,
@@ -90,6 +87,11 @@ const ERROR_KEY_BY_CODE: Record<string, string> = {
   user_banned: "invalidCredentials",
   over_request_rate_limit: "tooManyRequests",
   over_email_send_rate_limit: "tooManyRequests",
+  // Only reachable if the sign-in inside `changePasswordAction` stops running
+  // on the cookie-bound client — see the note there. Mapped rather than left to
+  // fall through to `unexpected`, because "sign in again" is something the
+  // person can act on and "something went wrong" is not.
+  reauthentication_needed: "reauthenticationNeeded",
   otp_expired: "linkExpired",
   flow_state_expired: "linkExpired",
   flow_state_not_found: "linkExpired",
@@ -485,10 +487,12 @@ export async function updateProfileAction(
  * from the recovery flow above: this caller knows their current password and
  * is asked for it.
  *
- * Supabase can enforce that itself via `secure_password_change`, but only by
- * rejecting the whole call, and it is off in this project's config. Verifying
- * here means someone who walked up to an unlocked laptop cannot change the
- * password without knowing the old one — and it costs one extra round trip.
+ * Supabase enforces the same thing via `secure_password_change`, which is now
+ * on — but only as a blunt "has this session signed in within 24 hours", which
+ * says nothing about whether the person at the keyboard knows the password.
+ * The two are not redundant: this check is what stops someone who walked up to
+ * an unlocked laptop, and the config flag is what stops a stolen access token
+ * calling the Auth API directly, where no form of ours is involved.
  */
 export async function changePasswordAction(
   _previous: FormState,
@@ -508,26 +512,38 @@ export async function changePasswordAction(
 
   if (fieldErrors) return { fieldErrors };
 
+  const supabase = await createSupabaseServerClient();
+
   /**
-   * Checked on a client with no session of its own — see
-   * `createSupabaseCheckClient`. On the cookie-bound client this call is not a
-   * read: `signInWithPassword` issues a fresh session and writes it over the
-   * caller's cookies, as a side effect of what is meant to be a yes/no
-   * question.
+   * Checked by signing in again on the **cookie-bound** client, and the fact
+   * that it is the cookie-bound one is load-bearing. This used to run on a
+   * throwaway client with no session, precisely so that a yes/no question
+   * would not rotate the caller's session as a side effect.
+   *
+   * `secure_password_change` is on now (supabase/config.toml), and GoTrue
+   * rejects `updateUser({ password })` with `reauthentication_needed` unless
+   * the session is under 24 hours old — where "age" is the sign-in time, which
+   * does not move when the token refreshes. Anyone who signed in yesterday and
+   * stayed signed in is past it. Signing in here is what makes the session
+   * recent, so the reauthentication GoTrue wants and the check we were already
+   * doing collapse into one call.
+   *
+   * The rotated cookies are harmless: `updateUser` rotates them again a line
+   * below, and the redirect at the end is what lets them land.
    *
    * Both calls hash a password with bcrypt, so this action is legitimately the
-   * slowest in the file — a second or more under load. That is a real cost of
-   * verifying rather than trusting the session, and it is worth paying.
+   * slowest in the file — a second or more under load. That is unchanged; it
+   * was one sign-in plus one update before, and it still is.
    */
-  const { error: verifyError } = await createSupabaseCheckClient().auth.signInWithPassword(
-    { email: user.email!, password: currentPassword },
-  );
+  const { error: verifyError } = await supabase.auth.signInWithPassword({
+    email: user.email!,
+    password: currentPassword,
+  });
 
   if (verifyError) {
     return { fieldErrors: { currentPassword: "currentPasswordWrong" } };
   }
 
-  const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: errorKey(error) };
 

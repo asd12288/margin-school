@@ -109,6 +109,29 @@ They are bilingual (French block, then English) because Supabase sends one templ
 
 `[auth.rate_limit].sign_in_sign_ups` defaults to 30 per five minutes per IP. The e2e suite signs in on nearly every test across two viewport projects and several workers, all from one IP, and blows past that partway through — at which point sign-ins are refused and the symptom is `page.goto` timing out, which reads exactly like an application hang. It is raised to 500 in `config.toml`, which affects the local stack only; the hosted project keeps Supabase's defaults, and should.
 
+**`email_sent` is the exception, and it is not a setting.** The CLI only puts `rate_limit_email_sent` in a push payload when `[auth.email.smtp]` is enabled, and ours is commented out — so `[remotes.production.auth.rate_limit].email_sent = 2` is never sent and the hosted project keeps its own limit. It happens to be 2/hour regardless, because that is the cap on Supabase's built-in sender. The line is kept as a statement of intent and the comment above it says so; wiring up SMTP (Resend, Phase 10) is what makes it real, and is the moment to re-decide the number.
+
+### What a push actually overwrites, and what it leaves alone
+
+Two different rules, and the difference is invisible unless you go looking:
+
+| Block | On a push | Why |
+| --- | --- | --- |
+| `[auth.mfa]` | **always sent** | every `mfa_*` field is assigned unconditionally, so the local values *are* production's |
+| `[auth.captcha]` | **never sent** | the whole block is guarded by "is it defined", and ours is commented out |
+
+So MFA off in production is inherited rather than chosen — and it is nonetheless right, because there is no enrolment screen and nothing that answers an AAL2 challenge at sign-in. Enabling TOTP enrolment would let someone enrol a factor through the API that the app cannot challenge, locking them out. It changes when MFA is built, together with the sign-in flow. Uncommenting `[auth.captcha]`, by contrast, starts overwriting production on the next push to `main`.
+
+### Password changes require a recent sign-in
+
+`[auth.email].secure_password_change` is **on, in the base block**, so the local stack and the e2e suite run against the same rule production does. A rule that is only on in production is one nothing tests.
+
+GoTrue rejects a password update with `reauthentication_needed` unless the session signed in within the last 24 hours (or the caller supplies an emailed nonce). Session age is `auth.sessions.created_at` — the sign-in time, which does **not** move when the token refreshes, so anyone who signed in yesterday and stayed signed in is past it.
+
+Both flows stay inside the window by construction: recovery gets a session seconds old from `verifyOtp`, and `changePasswordAction` re-signs-in to check the current password, which mints one. That last part is why the check runs on the cookie-bound client rather than a throwaway one — the session rotation is the point, not a side effect. Turning it back into a session-less check re-breaks the account form for every visitor older than a day.
+
+What the flag buys over the app's own check is the case no form of ours can see: a stolen access token calling `PUT /auth/v1/user` directly.
+
 ## Google sign-in
 
 **One Google Cloud OAuth client serves all three environments.** This surprises people, so it is worth stating plainly: Google never sees this app's URL. It sees Supabase's. Our `/auth/callback` is the second hop, reached only after Supabase has already finished with Google.
