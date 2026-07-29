@@ -215,10 +215,14 @@ password_requirements = ""
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
 #
-# Raised for the **local stack only**, same reasoning as `sign_in_sign_ups`
-# below: the e2e suite runs the password-reset loop several times per run and
-# two per hour would fail the second one. The hosted project keeps Supabase's
-# default, which is a sensible anti-abuse limit for a real inbox.
+# Read that stock line literally, because it is the whole story: the CLI only
+# assigns `rate_limit_email_sent` in a push payload when `[auth.email.smtp]`
+# exists **and** is enabled. Ours is commented out, so this number reaches the
+# local stack (which gets the full config as env vars) and no further.
+#
+# Raised for the local stack because the e2e suite runs the password-reset loop
+# several times per run and two per hour would fail the second one. The hosted
+# project keeps its own limit — see `[remotes.production.auth.rate_limit]`.
 email_sent = 200
 # Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
 sms_sent = 30
@@ -245,6 +249,13 @@ token_verifications = 30
 web3 = 30
 
 # Configure one of the supported captcha providers: `hcaptcha`, `turnstile`.
+#
+# Commented out, and that is **not** the same as `enabled = false`. The CLI
+# guards the whole block when it builds the push payload — `if (config.captcha
+# !== undefined)` — so an absent block sends no captcha field at all and the
+# hosted project keeps whatever it has. Unlike `[auth.mfa]` below, this one
+# genuinely is local-only by being missing. Uncommenting it starts overwriting
+# production on the next push to `main`.
 # [auth.captcha]
 # enabled = true
 # provider = "hcaptcha"
@@ -259,7 +270,33 @@ double_confirm_changes = true
 # If enabled, users need to confirm their email address before signing in.
 enable_confirmations = false
 # If enabled, users will need to reauthenticate or have logged in recently to change their password.
-secure_password_change = false
+#
+# On, and **deliberately inherited by production** rather than restated under
+# `[remotes.production.auth.email]` — the same treatment as the email templates
+# below, for the same reason: this is not a local-only value, so an override
+# would only add a second place to forget it.
+#
+# It is set here rather than only on the remote so the e2e suite runs against
+# it. A rule that is on in production and off everywhere it is tested is how
+# this file's failures happen.
+#
+# What GoTrue actually enforces (v2.193.1, internal/api/user.go): a password
+# update is rejected with `reauthentication_needed` unless the *session* is
+# under 24 hours old, or the caller supplies a nonce it emails on request. It
+# is not an unconditional "ask for the old password" — session age is
+# `auth.sessions.created_at`, which is the sign-in time and does **not** move
+# when the token refreshes, so a regular visitor is long past it.
+#
+# Both of our flows stay inside the 24 hours by construction:
+#   - recovery: /auth/confirm spends the emailed token with `verifyOtp`, which
+#     mints a session seconds before the form is submitted.
+#   - account:  `changePasswordAction` re-signs-in to check the current
+#     password, which mints one too. That is why the check runs on the
+#     cookie-bound client — see the note there before changing it back.
+#
+# What it buys is the case neither flow can cover: a stolen access token
+# calling `PUT /auth/v1/user` directly, which never passes through our form.
+secure_password_change = true
 # Controls the minimum amount of time that must pass before sending another signup confirmation or password reset email.
 max_frequency = "1s"
 # Number of characters used in the email OTP.
@@ -358,6 +395,20 @@ message_service_sid = ""
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
 # Multi-factor-authentication is available to Supabase Pro plan.
+#
+# **These reach production.** Every `mfa_*` field is assigned unconditionally
+# when the CLI builds the push payload — there is no `if defined` guard like
+# the captcha block above has — so the values below are production's values,
+# inherited rather than chosen. Stating that here so the next reader does not
+# have to rediscover it.
+#
+# They are nonetheless the values we want, which is why there is no override.
+# There is no MFA anywhere in the app: no enrolment screen, and nothing that
+# answers an AAL2 challenge at sign-in. Turning `totp.enroll_enabled` on would
+# let someone enrol a factor through the API that the app cannot then challenge
+# — locking them out of their own account. Off is the safe state until MFA is
+# actually built, at which point this block and the sign-in flow change
+# together.
 [auth.mfa]
 # Control how many MFA factors can be enrolled at once per user.
 max_enrolled_factors = 10
@@ -594,8 +645,19 @@ otp_length = 8
 # Back to Supabase's defaults. The base values are inflated for the e2e suite,
 # which signs in hundreds of times per run from one IP; shipping those to
 # production would remove the anti-abuse limit that number exists to be.
-email_sent = 2
+#
+# `sign_in_sign_ups` is real — it is sent on every push, as `rate_limit_otp`.
 sign_in_sign_ups = 30
+# `email_sent` is **inert, and is kept only to state the intent.** The CLI
+# assigns `rate_limit_email_sent` solely when `[auth.email.smtp]` is enabled,
+# and ours is commented out, so nothing about email rate limiting is sent and
+# production keeps its own value. It happens to be 2/hour anyway — that is the
+# cap on Supabase's built-in SMTP, not something this file achieved.
+#
+# Do not read this line as a setting. It becomes one the day SMTP is wired up
+# (Resend, Phase 10), and that is exactly when it needs re-deciding, because
+# 2/hour is the shared-sender cap, not a sensible limit for a real domain.
+email_sent = 2
 
 [remotes.production.auth.external.google]
 # This block is load-bearing, and the shape of it is the scar from an outage.

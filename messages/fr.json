@@ -273,6 +273,7 @@
       "linkExpired": "Ce lien a expiré ou a déjà été utilisé. Demandez-en un nouveau.",
       "linkInvalid": "Ce lien n'est pas valide. Demandez-en un nouveau.",
       "oauthFailed": "La connexion Google n'a pas abouti. Réessayez.",
+      "reauthenticationNeeded": "Pour votre sécurité, reconnectez-vous avant de changer votre mot de passe.",
       "unexpected": "Quelque chose a échoué de notre côté. Réessayez."
     },
     "notices": {

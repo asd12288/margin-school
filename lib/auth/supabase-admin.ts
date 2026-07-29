@@ -35,36 +35,13 @@ export function createSupabaseAdminClient() {
 }
 
 /**
- * A throwaway client for *checking* a credential, with no session of its own.
+ * There used to be a `createSupabaseCheckClient` here: a session-less client
+ * the change-password flow used to verify the current password without
+ * rotating the caller's session.
  *
- * Used by the change-password flow to confirm the caller knows their current
- * password. It must not be the cookie-bound client from
- * `createSupabaseServerClient`: `signInWithPassword` there is not a read, it is
- * a sign-in — it issues a fresh session and writes it over the caller's
- * cookies, as a side effect of what is meant to be a yes/no question.
- *
- * Publishable key, not the secret one: this is acting as the person signing
- * in, and nothing here needs to bypass row-level security.
+ * It was removed when `secure_password_change` was turned on. GoTrue then
+ * refuses a password update unless the session signed in within the last 24
+ * hours, so the verification has to happen on the cookie-bound client — the
+ * rotation it was written to avoid is now the point of it. See
+ * `changePasswordAction`.
  */
-export function createSupabaseCheckClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
-    {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-        /**
-         * Its own storage key, so this client shares nothing with the
-         * cookie-bound one.
-         *
-         * `@supabase/auth-js` serialises auth calls behind a process-wide lock
-         * named after the storage key, and every client that derives the same
-         * key queues on the same lock. Nothing reads this key — the client
-         * keeps no session — so the name only has to be distinct.
-         */
-        storageKey: "margin-school-password-check",
-      },
-    },
-  );
-}
