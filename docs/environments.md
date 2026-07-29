@@ -107,6 +107,42 @@ They are bilingual (French block, then English) because Supabase sends one templ
 
 `[auth.rate_limit].sign_in_sign_ups` defaults to 30 per five minutes per IP. The e2e suite signs in on nearly every test across two viewport projects and several workers, all from one IP, and blows past that partway through — at which point sign-ins are refused and the symptom is `page.goto` timing out, which reads exactly like an application hang. It is raised to 500 in `config.toml`, which affects the local stack only; the hosted project keeps Supabase's defaults, and should.
 
+## Google sign-in
+
+**One Google Cloud OAuth client serves all three environments.** This surprises people, so it is worth stating plainly: Google never sees this app's URL. It sees Supabase's. Our `/auth/callback` is the second hop, reached only after Supabase has already finished with Google.
+
+So the client carries exactly two authorised redirect URIs:
+
+| URI | Covers |
+| --- | --- |
+| `http://127.0.0.1:54321/auth/v1/callback` | Local Docker stack |
+| `https://zmwguudoqgygawysniki.supabase.co/auth/v1/callback` | **Preview and production** |
+
+Preview needs no entry of its own because it shares production's Supabase project ([ADR-0010](decisions/0010-no-staging-database.md)). Per-deployment preview hostnames never reach Google — they are handled by Supabase's own redirect allowlist, which is what `additional_redirect_urls` in `[remotes.production.auth]` is for. **The day ADR-0010 is reversed and preview gets its own Supabase project, that project's callback needs a third URI here**, or Google sign-in breaks on preview only.
+
+- Google Cloud project `margin-school`, client **"Supabase Auth (local + preview + production)"**.
+- Publishing status is **In production**, user type **External**. In `Testing` only manually-listed test users can sign in *and refresh tokens expire after seven days* — which looks like random sign-outs rather than a configuration choice. Publishing needed no Google review because the app requests only basic scopes (email, profile, openid); adding a sensitive scope later would trigger verification.
+
+### Where the credentials live
+
+**Not in Vercel.** The app process never handles them — Supabase does the token exchange. Vercel holds only `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`, a boolean that decides whether the button is drawn (set for Production and Preview).
+
+| Where | Holds |
+| --- | --- |
+| `.env.local` | client id + secret, read by `config.toml` at `supabase start` |
+| Hosted Supabase project | client id + secret, written by `supabase config push` |
+| Vercel (Production + Preview) | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true` only |
+
+`config.toml` now ships `[auth.external.google] enabled = true`. That field is a literal — the CLI parses it as a bool before env substitution runs — so a clone without the two variables starts with an empty client id rather than failing loudly. Set `enabled = false` if you need to work without credentials.
+
+Pushing to the hosted project substitutes the variables **from the shell you run it in**. Push with them unset and you get `client_id = ""` with `enabled = true`: a Google provider that is broken in production and that the push reports as a success.
+
+```bash
+set -a && source .env.local && set +a && supabase config push --project-ref zmwguudoqgygawysniki
+```
+
+Google will not show you an existing client secret — the value is displayed once, at creation. If it is lost, add a new secret on the client and replace it in both places above; the old one keeps working until you delete it, so there is no downtime.
+
 ## Observability
 
 One Sentry project and one PostHog project, split by environment tag rather than by separate projects. This keeps issue grouping and funnel history intact while remaining filterable.

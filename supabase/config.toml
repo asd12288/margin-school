@@ -394,30 +394,39 @@ skip_nonce_check = false
 email_optional = false
 
 # ---------------------------------------------------------------------------
-# Google.
+# Google. **Set up — see docs/environments.md.**
 #
-# Off by default, and `enabled` is a **literal** — not `env(...)` like the two
-# secrets below it. The CLI parses this field as a bool before substitution has
-# anything to offer, so an unset variable resolves to `""` and the whole stack
-# refuses to start with `cannot parse value as 'bool'`. A fresh clone must come
-# up working, so the flag is committed as `false` and flipped by hand.
+# `enabled` is a **literal**, not `env(...)` like the two secrets below it. The
+# CLI parses this field as a bool before substitution has anything to offer, so
+# an unset variable resolves to `""` and the whole stack refuses to start with
+# `cannot parse value as 'bool'`.
 #
-# Turning it on takes four things, three of them outside this repo:
-#   0. Set `enabled = true` here.
-#   1. A Google Cloud OAuth client (Web application).
-#   2. In Google Cloud, authorised redirect URI:
-#      http://127.0.0.1:54321/auth/v1/callback   (local)
-#      https://<project-ref>.supabase.co/auth/v1/callback   (production)
-#      Note this is Supabase's URL, not ours — our /auth/callback is the
-#      second hop and Google never sees it.
-#   3. In .env.local, the three vars below, plus
-#      NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true so the app renders the button.
+# The consequence of it being `true` here: `supabase start` now **requires**
+# SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID and _SECRET in the environment. A
+# fresh clone with no `.env.local` gets a stack that starts with an empty client
+# id and a Google button that fails on click. That is the trade for having the
+# provider on by default for the people actually working on this; if it ever
+# bites a new contributor, flip this to `false` rather than deleting the vars.
+#
+# One Google Cloud OAuth client covers all three environments, because **Google
+# only ever sees Supabase's callback URL, never ours**. Our /auth/callback is
+# the second hop. So the client carries exactly two authorised redirect URIs:
+#   http://127.0.0.1:54321/auth/v1/callback                  (local Docker)
+#   https://zmwguudoqgygawysniki.supabase.co/auth/v1/callback (preview + prod)
+# Preview shares production's Supabase project (ADR-0010), which is why it needs
+# no entry of its own — and why a second Supabase project would need a third URI
+# added in Google Cloud the day ADR-0010 is reversed.
+#
+# Google Cloud project `margin-school`, client "Supabase Auth (local + preview
+# + production)". The app itself never sees these credentials — they live in the
+# Supabase stack, which is why nothing Google-related goes into Vercel except
+# the NEXT_PUBLIC_AUTH_GOOGLE_ENABLED flag that draws the button.
 #
 # `skip_nonce_check` is required for Google specifically on the local stack;
 # the comment on the apple block above says so and it is easy to miss.
 # ---------------------------------------------------------------------------
 [auth.external.google]
-enabled = false
+enabled = true
 client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 redirect_uri = ""
@@ -571,3 +580,23 @@ otp_length = 8
 # production would remove the anti-abuse limit that number exists to be.
 email_sent = 2
 sign_in_sign_ups = 30
+
+[remotes.production.auth.external.google]
+# Restated rather than inherited, and this block is the one place in this file
+# where restating changes nothing: production uses the **same** OAuth client as
+# local, so every value here is identical to the base block. It is written out
+# anyway because the warning at the top of this section — "an override that is
+# merely forgotten inherits the localhost value silently" — cuts both ways. A
+# reader checking what production's Google config is should find an answer here
+# rather than having to know that silence means inheritance.
+#
+# The real hazard is different: `config push` substitutes these env vars from
+# **the shell you run it in**. Push with them unset and `client_id` becomes `""`
+# while `enabled` stays `true`, which is a broken Google provider in production
+# that the push reports as a success. Export both before pushing:
+#
+#   set -a && source .env.local && set +a && supabase config push --project-ref zmwguudoqgygawysniki
+enabled = true
+client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+skip_nonce_check = false
