@@ -86,12 +86,30 @@ const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   // Override default ignores of eslint-config-next.
+  //
+  // Every generated pattern is written `**/…` rather than `…`. A bare pattern
+  // is anchored to this config's directory, so `.next/**` ignores the build
+  // output here and nowhere else — and a git worktree under `.claude/worktrees`
+  // carries its own `.next`, which is how ~36k lint problems from Turbopack
+  // chunks once drowned out the real ones. Build output is build output at any
+  // depth.
   globalIgnores([
     // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
+    "**/.next/**",
+    "**/out/**",
+    "**/build/**",
+    "**/next-env.d.ts",
+    // Not ESLint's job. `**/node_modules/` is an ESLint default and stays one
+    // whether or not it is listed here; it is spelled out so that the set of
+    // things this command does not read is legible in one place.
+    "**/node_modules/**",
+    "**/coverage/**",
+    "**/test-results/**",
+    "**/playwright-report/**",
+    "**/.playwright/**",
+    // Agent worktrees are whole second checkouts of this repo on another
+    // branch. `npm run lint` lints *this* checkout; the worktree lints itself.
+    ".claude/worktrees/**",
     // Vendored shadcn, plus the transitions.dev skill's own reference files.
     "components/ui/**",
     ".agents/**",

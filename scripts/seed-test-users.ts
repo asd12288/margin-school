@@ -54,6 +54,34 @@ const admin = createClient(url, secret, {
   auth: { autoRefreshToken: false, persistSession: false },
 });
 
+/**
+ * Finds an existing user by email, across every page.
+ *
+ * `listUsers()` returns the **first page only** — fifty users — and the
+ * un-paginated version of this lookup worked for exactly as long as the local
+ * stack held fewer than that. Every journey test creates an account and none
+ * of them clean up, so a database that has run the suite a few times has
+ * hundreds, the four fixtures fall off page one, and seeding dies with
+ * "Could not resolve a user id" while the accounts are sitting right there.
+ *
+ * The failure is worse than it sounds: the fixtures exist, so the obvious
+ * reading — "seeding did not work" — sends you looking in the wrong place.
+ */
+async function findUserIdByEmail(email: string): Promise<string | undefined> {
+  const perPage = 200;
+
+  for (let page = 1; ; page++) {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+
+    const match = data.users.find((u) => u.email === email);
+    if (match) return match.id;
+
+    // A short page is the last page.
+    if (data.users.length < perPage) return undefined;
+  }
+}
+
 for (const { email, role, onboarded } of USERS) {
   const { data, error } = await admin.auth.admin.createUser({
     email,
@@ -66,9 +94,7 @@ for (const { email, role, onboarded } of USERS) {
     throw error;
   }
 
-  const id =
-    data?.user?.id ??
-    (await admin.auth.admin.listUsers()).data.users.find((u) => u.email === email)?.id;
+  const id = data?.user?.id ?? (await findUserIdByEmail(email));
 
   if (!id) throw new Error(`Could not resolve a user id for ${email}`);
 
