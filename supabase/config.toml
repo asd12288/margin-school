@@ -291,9 +291,14 @@ otp_expiry = 3600
 # the token has to arrive as a query parameter our own route handler can see,
 # which is what `{{ .TokenHash }}` below produces. See app/auth/confirm/route.ts.
 #
-# These apply to the local stack only. **The production project has its own
-# copies, set in the Supabase dashboard**, and nothing syncs the two — see
-# docs/environments.md.
+# These are **not** local-only, whatever this comment used to say. They are not
+# restated under `[remotes.production.auth.email]`, so they are inherited, and
+# `config push` sends the subjects and both rendered bodies — a push replaces
+# whatever is in the production dashboard. Verified by capturing the push
+# payload, not by reading docs.
+#
+# Which means this repo owns production's templates. Edit them here, not in the
+# dashboard; a dashboard edit survives only until the next push to `main`.
 #
 # Subjects are bilingual for the same reason the bodies are: Supabase sends one
 # template per event with no notion of the recipient's language, and guessing
@@ -396,17 +401,21 @@ email_optional = false
 # ---------------------------------------------------------------------------
 # Google. **Set up — see docs/environments.md.**
 #
-# `enabled` is a **literal**, not `env(...)` like the two secrets below it. The
-# CLI parses this field as a bool before substitution has anything to offer, so
-# an unset variable resolves to `""` and the whole stack refuses to start with
-# `cannot parse value as 'bool'`.
+# `client_id` is a **literal**, and that is the whole point. A Google OAuth
+# client id is public — it travels in the query string of the authorize URL on
+# every single sign-in, so committing it discloses nothing. Writing it as
+# `env(...)` here is what broke production; the block at the bottom of this file
+# has the full story, and it is worth reading before touching either.
 #
-# The consequence of it being `true` here: `supabase start` now **requires**
-# SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID and _SECRET in the environment. A
-# fresh clone with no `.env.local` gets a stack that starts with an empty client
-# id and a Google button that fails on click. That is the trade for having the
-# provider on by default for the people actually working on this; if it ever
-# bites a new contributor, flip this to `false` rather than deleting the vars.
+# `enabled` is a literal for a different reason. Substitution does run before
+# parsing, but an *unset* variable resolves to the empty string, and `""` is not
+# a bool — so `env(...)` here means a fresh clone cannot start the stack at all,
+# with `cannot parse value as 'bool'`.
+#
+# `secret` stays `env(...)` because it is a genuine secret and this file is
+# public. A clone with no `.env.local` therefore gets a rendered Google button
+# that fails at the token exchange rather than a stack that will not boot. If
+# you are working here without Google credentials, set `enabled = false`.
 #
 # One Google Cloud OAuth client covers all three environments, because **Google
 # only ever sees Supabase's callback URL, never ours**. Our /auth/callback is
@@ -427,7 +436,7 @@ email_optional = false
 # ---------------------------------------------------------------------------
 [auth.external.google]
 enabled = true
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
+client_id = "732056954396-8m5517mgsng6evslgr7p4pd1q2ja053n.apps.googleusercontent.com"
 secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
 redirect_uri = ""
 url = ""
@@ -532,9 +541,16 @@ enabled = true
 # silently broken password reset. They are inherited from the base config
 # rather than restated, because they are the same everywhere.
 #
-# `config push` is declarative and has no diff or dry-run: it overwrites the
-# hosted project's auth settings with what is computed here, including any
-# change someone made in the dashboard. Read this block before running it.
+# `config push` is declarative: it overwrites the hosted project's auth settings
+# with what is computed here, including any change someone made in the
+# dashboard. It does print a full unified diff and prompt before applying —
+# that diff is the only safety net this workflow has, so read it rather than
+# reaching for `--yes`. (An earlier version of this comment claimed there was no
+# diff. There is; commit bef100b was written *because* someone read it.)
+#
+# The dangerous push is the one nobody runs: the **GitHub integration re-applies
+# this file on every push to `main`**, with no diff and nobody watching. Assume
+# anything in this section reaches production the moment it is merged.
 # ===========================================================================
 [remotes.production]
 project_id = "zmwguudoqgygawysniki"
@@ -582,21 +598,37 @@ email_sent = 2
 sign_in_sign_ups = 30
 
 [remotes.production.auth.external.google]
-# Restated rather than inherited, and this block is the one place in this file
-# where restating changes nothing: production uses the **same** OAuth client as
-# local, so every value here is identical to the base block. It is written out
-# anyway because the warning at the top of this section — "an override that is
-# merely forgotten inherits the localhost value silently" — cuts both ways. A
-# reader checking what production's Google config is should find an answer here
-# rather than having to know that silence means inheritance.
+# This block is load-bearing, and the shape of it is the scar from an outage.
 #
-# The real hazard is different: `config push` substitutes these env vars from
-# **the shell you run it in**. Push with them unset and `client_id` becomes `""`
-# while `enabled` stays `true`, which is a broken Google provider in production
-# that the push reports as a success. Export both before pushing:
+# It first carried `client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"`,
+# which is correct for a `config push` run by hand from this directory — the CLI
+# reads `.env.local` and substitutes. It is wrong for the way config actually
+# reaches production. **The Supabase GitHub integration re-applies this file on
+# every push to `main`**, from Supabase's own executor: a machine that clones the
+# repo, has no `.env.local`, and — this is the part that bites — does not error
+# on an unresolved reference. It pushes the seven-word string
+# `env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)` as the client id, verbatim.
 #
-#   set -a && source .env.local && set +a && supabase config push --project-ref zmwguudoqgygawysniki
+# That string then went out in the authorize URL and Google answered
+# `401: invalid_client`. Google sign-in was dead in production and preview, and
+# nothing reported a failure — the integration's run was green, because pushing
+# a nonsense client id is not an error, it is just a push. It was found by
+# clicking the button, which is the only thing that would have found it.
+#
+# So: the client id is a **literal**. It is public (it is in every authorize
+# URL), it is identical to the base block, and being a literal is what makes it
+# survive a push from a machine that has no secrets.
 enabled = true
-client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"
-secret = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET)"
+client_id = "732056954396-8m5517mgsng6evslgr7p4pd1q2ja053n.apps.googleusercontent.com"
+# Deliberately empty, and it must stay empty.
+#
+# An empty secret is **omitted** from the push rather than sent as `""`, so
+# production keeps whatever is already set on the project. That is the only
+# mechanism that lets a public file describe a private value: say nothing, and
+# nothing is overwritten. The real secret lives in the Supabase project alone.
+#
+# Never put the secret here — this file is public. Never restore `env(...)`
+# here either: the executor cannot resolve it and would overwrite a working
+# secret with the literal string, which is the same outage in a new costume.
+secret = ""
 skip_nonce_check = false

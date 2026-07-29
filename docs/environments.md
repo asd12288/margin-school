@@ -97,7 +97,9 @@ Two consequences worth holding onto:
 
 The replacements live in [`supabase/templates/`](../supabase/templates/) and send `{{ .TokenHash }}` to our own `/auth/confirm`, which calls `verifyOtp`. `config.toml` wires them for the local stack.
 
-**Nothing syncs them to production.** `config.toml` configures the local Docker stack only; the hosted project keeps its own copies, set in the Supabase dashboard under Authentication → Emails. When deploying to a new project, paste both templates in — otherwise every "reset your password" link lands on a page that cannot see its own token.
+**This repo owns production's templates.** An earlier version of this document said the opposite — that `config.toml` was local-only and nothing synced the templates — and that was wrong. `[auth.email.template.*]` is not restated under `[remotes.production.auth.email]`, so it is inherited, and a config push sends both subjects and both rendered bodies. Verified by capturing the actual push payload.
+
+The consequence runs both ways, and both are easy to get wrong: editing a template in the Supabase dashboard buys you nothing, because the next push to `main` replaces it; and editing `supabase/templates/*.html` *does* change production, whether or not you meant it to. Edit them here.
 
 The link is built on `{{ .RedirectTo }}`, **not** `{{ .SiteURL }}`. `SiteURL` is one value per Supabase project, and preview deployments share production's ([ADR-0010](decisions/0010-no-staging-database.md)) — so a reset requested on a preview would mail a link to production. `RedirectTo` is what the app passed in, with the origin read off the request, so the link returns to whichever deployment sent it. Locally it was pinning every link to port 3000 regardless of where the app was running, which is how the e2e suite on 3100 caught it.
 
@@ -127,21 +129,34 @@ Preview needs no entry of its own because it shares production's Supabase projec
 
 **Not in Vercel.** The app process never handles them — Supabase does the token exchange. Vercel holds only `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED`, a boolean that decides whether the button is drawn (set for Production and Preview).
 
-| Where | Holds |
-| --- | --- |
-| `.env.local` | client id + secret, read by `config.toml` at `supabase start` |
-| Hosted Supabase project | client id + secret, written by `supabase config push` |
-| Vercel (Production + Preview) | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true` only |
+| Where | Holds | Why there |
+| --- | --- | --- |
+| `supabase/config.toml` | the client id, as a literal | public, and must survive a push from a machine with no secrets |
+| `.env.local` | the secret | local stack only; read by `config.toml` at `supabase start` |
+| Hosted Supabase project | the secret | set once, directly on the project; never overwritten by a push |
+| Vercel (Production + Preview) | `NEXT_PUBLIC_AUTH_GOOGLE_ENABLED=true` | draws the button, nothing more |
 
-`config.toml` now ships `[auth.external.google] enabled = true`. That field is a literal — the CLI parses it as a bool before env substitution runs — so a clone without the two variables starts with an empty client id rather than failing loudly. Set `enabled = false` if you need to work without credentials.
+Note the asymmetry: the client id is committed and the secret is not in the repo at all. Note also what is *absent* — no Google credential is stored in Vercel, because the app process never performs the token exchange. Supabase does.
 
-Pushing to the hosted project substitutes the variables **from the shell you run it in**. Push with them unset and you get `client_id = ""` with `enabled = true`: a Google provider that is broken in production and that the push reports as a success.
+### The client id is committed, and that is the fix
+
+**The Supabase GitHub integration re-applies `config.toml` to the production project on every push to `main`** — from Supabase's own executor, which clones the repo and has no `.env.local`. It does not fail on an unresolved `env(...)`; it pushes the reference **as a literal string**.
+
+That is not hypothetical. `client_id = "env(SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID)"` was merged, the integration wrote those seven words as the client id, and Google answered `401: invalid_client` on production and preview. The integration's run was green — pushing a nonsense client id is not an error, it is just a push. It was caught by clicking the button.
+
+So the client id is a plain literal in `config.toml`. It is public — it travels in every authorize URL — so committing it discloses nothing, and being a literal is what makes it survive a push from a machine that holds no secrets.
+
+The secret cannot take the same treatment, so it takes the opposite one: `secret = ""` in the production block. An empty value is **omitted** from the push rather than sent as `""`, which leaves the secret already set on the Supabase project untouched. That is the only way a public file can describe a private value — by saying nothing about it. [`tests/unit/supabase-config.test.ts`](../tests/unit/supabase-config.test.ts) fails if either rule is broken.
+
+To push config by hand:
 
 ```bash
-set -a && source .env.local && set +a && supabase config push --project-ref zmwguudoqgygawysniki
+supabase config push --project-ref zmwguudoqgygawysniki
 ```
 
-Google will not show you an existing client secret — the value is displayed once, at creation. If it is lost, add a new secret on the client and replace it in both places above; the old one keeps working until you delete it, so there is no downtime.
+No `source .env.local` prefix is needed — the CLI loads `.env.local` from the working directory on its own. It prints a full diff and prompts before applying; read it.
+
+Google will not show you an existing client secret — it is displayed once, at creation. If it is lost, add a new secret on the client, put it in your `.env.local`, and set it on the Supabase project directly. The old secret keeps working until you delete it, so there is no downtime.
 
 ## Observability
 
