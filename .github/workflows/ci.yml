@@ -48,6 +48,19 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      # `next-env.d.ts` is git-ignored and generated, and it is what pulls in
+      # `next/image-types/global` — the declarations that make
+      # `import logo from "@/public/brand/…​.png"` resolve. A fresh clone has
+      # never run a Next command, so without this `tsc` reports the three
+      # imports in components/margin/shell/logo.tsx as missing modules and the
+      # failure reads as "the brand assets are not committed" when they are.
+      #
+      # `typegen` rather than a build: it writes the same declarations plus
+      # `.next/dev/types/routes.d.ts` in a couple of seconds and needs no
+      # network. The first run of this workflow failed exactly here.
+      - name: Generate Next types
+        run: npx next typegen
+
       # `next build` type-checks too, but that is minutes away in the other
       # job. This is seconds and catches the common case.
       - name: Type-check
