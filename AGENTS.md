@@ -3,7 +3,7 @@
 Subscription platform teaching financial markets, beginner-first, in French and English.
 We are the sole publisher: we produce all content. There are no external instructors and nothing is sold per course.
 
-**Status: Phases 0–4 of [docs/roadmap.md](docs/roadmap.md) are built** — foundations, design system, app shell, auth and roles. Phase 5's entitlement boundary (`canAccess`) does **not** exist yet, so there is nothing to gate content with; nor is there a content schema, and the catalog renders from fixtures. Decisions still live in the docs rather than in the code, so read them first — but the code is now real enough to be worth reading too.
+**Status: Phases 0–5 of [docs/roadmap.md](docs/roadmap.md) are built** — foundations, design system, app shell, auth and roles, and the entitlement boundary. `canAccess` now exists in [lib/entitlement/can-access.ts](lib/entitlement/can-access.ts) and every locked surface goes through it, with a local-only toggle at `/debug/subscription` standing in for Stripe. There is still **no content schema**: the catalog renders from fixtures, so what the boundary gates is fixture data. Decisions still live in the docs rather than in the code, so read them first — but the code is now real enough to be worth reading too.
 
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know

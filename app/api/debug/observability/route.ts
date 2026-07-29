@@ -1,6 +1,7 @@
 import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 
+import { describeAccess } from "@/lib/entitlement/can-access";
 import { APP_ENV, RELEASE } from "@/lib/env";
 import { hasDebugAccess } from "@/lib/observability/debug-access";
 
@@ -67,7 +68,13 @@ async function checkAuth() {
       profileFound: Boolean(profile),
       role: profile?.role ?? null,
       locale: profile?.locale ?? null,
-      subscriptionStatus: profile?.subscriptionStatus ?? null,
+      // Through the boundary, not around it. Reporting the raw column here
+      // would be a second reader of subscription status outside
+      // lib/entitlement/** — harmless in itself, but the lint rule from
+      // ADR-0006 cannot distinguish a diagnostic read from a gate, and an
+      // exemption is how that rule would start eroding. This also makes the
+      // panel verify entitlement rather than merely echo a column.
+      entitlement: profile ? describeAccess(profile) : null,
     };
   } catch (error) {
     return {

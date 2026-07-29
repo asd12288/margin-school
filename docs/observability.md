@@ -55,6 +55,7 @@ Events mirror the learner journey, not the UI.
 
 | Stage | Events | Lands in |
 | --- | --- | --- |
+| Acquisition | `paywall_viewed` | **Phase 5 — shipped** |
 | Acquisition | `course_viewed` · `preview_started` · `signup_completed` | Phase 8 |
 | Activation | `lesson_started` · `lesson_completed` · `quiz_answered` | Phase 9 |
 | Habit | `review_session_started` · `concept_mastered` | Phase 12 |
@@ -62,6 +63,8 @@ Events mirror the learner journey, not the UI.
 | AI | `tutor_question_asked` · `explain_differently_used` | Phase 11 |
 
 `quiz_answered` carries whether the answer was correct and which concepts it tested — that is what makes per-concept difficulty analysis possible later ([ADR-0004](decisions/0004-content-structure-and-concepts.md)).
+
+`paywall_viewed` ships with the entitlement boundary rather than with billing, and that ordering is the point: it is the **only paywall funnel signal that exists before Stripe does**, so Phase 10 opens with a denominator instead of a blank chart. It fires once per surface — `surface`, `subscription_locked_count`, `prerequisite_locked_count` — not once per locked card, because a catalog with six locked courses is one encounter with the wall. The two counts stay separate for the reason [ADR-0006](decisions/0006-entitlement-boundary-before-billing.md) keeps the denial reasons separate: "pay" and "not yet" are different problems. See [lib/analytics/paywall.tsx](../lib/analytics/paywall.tsx).
 
 ## What gets added, and when
 

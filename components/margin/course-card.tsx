@@ -65,7 +65,10 @@ function CourseCard({
   labels: CourseCardLabels;
   href: string;
 }) {
-  const locked = course.accessState !== null;
+  // The card does not decide access — `labels.locked` is the boundary's answer
+  // already turned into words by `getCourseCardLabels`, and its presence is
+  // the whole signal. ADR-0006: no inline subscription checks, ever.
+  const locked = labels.locked !== undefined;
   const started = progress !== undefined && progress.lessonsCompleted > 0;
   const percent = progress
     ? toPercent(progress.lessonsCompleted, progress.lessonsTotal)
@@ -109,7 +112,7 @@ function CourseCard({
           ) : (
             <span />
           )}
-          {locked && labels.locked ? (
+          {labels.locked ? (
             <span
               title={labels.locked}
               className="flex size-6 items-center justify-center rounded-4xl bg-background/85 text-muted-foreground shadow-card backdrop-blur-sm"

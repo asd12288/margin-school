@@ -5,9 +5,13 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CourseCard, CourseGrid } from "@/components/margin/course-card";
 import { CourseGridSkeleton } from "@/components/margin/skeletons";
 import { EmptyState } from "@/components/margin/states";
+import { PaywallViewed } from "@/lib/analytics/paywall";
+import { getCurrentProfile } from "@/lib/auth/dal";
 import { getCourseCardLabels, getCourseHref } from "@/lib/course-labels";
+import { canAccess } from "@/lib/entitlement/can-access";
+import { isComplete } from "@/lib/progress";
 import { sampleCourses, sampleProgress } from "@/lib/fixtures/content";
-import type { Course } from "@/lib/fixtures/content";
+import type { Course, CourseProgress } from "@/lib/fixtures/content";
 import type { Locale } from "@/i18n/routing";
 
 /**
@@ -100,42 +104,101 @@ async function CourseResults({
     );
   }
 
+  /*
+   * The real viewer, not a stand-in.
+   *
+   * This component already awaits `searchParams`, so it is runtime-only under
+   * Cache Components and reading the profile here costs nothing that was not
+   * already spent — the page's static shell (the heading) still prerenders and
+   * this grid still streams behind `CourseGridSkeleton`, exactly as before.
+   * `getCurrentProfile()` returns `null` for a signed-out visitor, which is a
+   * viewer the boundary understands rather than a case to special-case here.
+   *
+   * Note what is *not* happening: this is not inside a `use cache` scope, so
+   * content and user data are not being joined in one (AGENTS.md rule 3).
+   */
+  const viewer = await getCurrentProfile();
+
   // `labels` is async now, so the whole list is resolved before rendering
   // rather than per-card inside the map. `getCourseCardLabels` is the one
-  // place the `accessState` → label mapping lives, shared with the home
-  // page's rail and the course page's "where to go next" rail — three copies
-  // of it was three chances for "needs a prerequisite" to be mislabelled as
-  // "needs a subscription".
+  // place the decision → label mapping lives, shared with the home page's rail
+  // and the course page's "where to go next" rail — three copies of it was
+  // three chances for "needs a prerequisite" to be mislabelled as "needs a
+  // subscription".
   const cards = await Promise.all(
     courses.map(async (course) => {
       const progress = sampleProgress.find((p) => p.courseId === course.id);
+      const access = canAccess(viewer, {
+        isFreePreview: course.isFreePreview,
+        prerequisiteMet: prerequisitesMet(course),
+      });
 
       return {
         course,
         progress,
+        access,
         href: getCourseHref(course, locale as Locale),
         labels: await getCourseCardLabels({
           course,
           locale: locale as Locale,
+          access,
           progress,
         }),
       };
     })
   );
 
+  const denials = cards
+    .map(({ access }) => (access.allowed ? null : access.reason))
+    .filter((reason) => reason !== null);
+
   return (
-    <CourseGrid className="mt-8">
-      {cards.map(({ course, progress, href, labels }) => (
-        <CourseCard
-          key={course.id}
-          course={course}
-          progress={progress}
-          href={href}
-          labels={labels}
-        />
-      ))}
-    </CourseGrid>
+    <>
+      <PaywallViewed
+        surface="catalog"
+        subscriptionLockedCount={
+          denials.filter((r) => r === "requires-subscription").length
+        }
+        prerequisiteLockedCount={
+          denials.filter((r) => r === "requires-prerequisite").length
+        }
+      />
+      <CourseGrid className="mt-8">
+        {cards.map(({ course, progress, href, labels }) => (
+          <CourseCard
+            key={course.id}
+            course={course}
+            progress={progress}
+            href={href}
+            labels={labels}
+          />
+        ))}
+      </CourseGrid>
+    </>
   );
+}
+
+/**
+ * Has this viewer finished everything that comes first?
+ *
+ * User data, so it is computed out here and handed to the boundary rather than
+ * stored on the course — content declares its prerequisites, progress decides
+ * whether they are met. A course with no prerequisites returns `true` and the
+ * boundary then never mentions them.
+ *
+ * Reads the progress fixture directly for now; Phase 9 replaces it with real
+ * `lesson_progress` and this function keeps its signature.
+ */
+function prerequisitesMet(course: Course): boolean {
+  return course.prerequisiteCourseIds.every((id) => {
+    const progress: CourseProgress | undefined = sampleProgress.find(
+      (p) => p.courseId === id
+    );
+    return (
+      progress !== undefined &&
+      isComplete(progress.lessonsCompleted, progress.lessonsTotal)
+    );
+  });
 }
 
 export default async function CoursesPage({

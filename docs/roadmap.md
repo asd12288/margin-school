@@ -66,6 +66,14 @@ Every gate in the product calls this and nothing else. See [ADR-0006](decisions/
 
 **Done when:** a free lesson and a paid lesson behave differently, with no payment provider present.
 
+**Built, with three changes from the plan above.**
+
+**It returns a decision, not a `boolean`** — `{ allowed: true } | { allowed: false, reason }`. There are two reasons a learner is blocked and they are different problems; a boolean discards the difference at the moment it was decided and pushes every caller into re-deriving it, which is the inline check the ADR forbids. ADR-0006 is amended accordingly.
+
+**The toggle is local only, not local-and-preview.** Preview shares the production database ([ADR-0010](decisions/0010-no-staging-database.md)), so a subscription toggle there would write to real production rows from a URL anyone with an SSO session can open. It is gated on both the environment *and* the database it is about to write to, because `APP_ENV` falls back to `local` when unset and would otherwise fail open.
+
+**Cached public surfaces state a content fact; runtime surfaces state a decision.** `canAccess` reads user data and cannot be called inside `use cache` (hard rule 3), so the catalog — whose grid already streams — asks the boundary about the real viewer, while `/course/[course]` says what is true of the *course* ("included in the subscription"). Personalising the course page needs its lock state split into its own `<Suspense>` boundary and belongs with Phase 8.
+
 ## Phase 6 — Walking skeleton · S
 
 One course, one chapter, three lessons. Authored crudely in admin → listed in catalog → played in study. Deliberately ugly, deliberately end-to-end.
