@@ -38,6 +38,13 @@ export default defineConfig({
     command: `npx next build && npx next start --port ${PORT}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
-    timeout: 180_000,
+    // Covers a cold `next build` *and* the start that follows it, on a machine
+    // that may be doing other things. 180s used to be enough and quietly
+    // stopped being — the suite then fails with "Timed out waiting from
+    // config.webServer" and no test output at all, which reads like a broken
+    // suite rather than a slow build. Raised rather than trimmed because the
+    // only cost of a generous ceiling is how long a genuinely stuck build
+    // hangs before it admits it.
+    timeout: 600_000,
   },
 });
