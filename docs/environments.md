@@ -58,6 +58,23 @@ The Supabase integration already provides these in Vercel — **do not add a dup
 
 Locally, `.env.local` sets `DATABASE_URL` to the Docker Postgres. When Drizzle lands, read `DATABASE_URL ?? POSTGRES_URL` so one code path covers both, and point migrations at the non-pooling URL.
 
+## Continuous integration
+
+[.github/workflows/ci.yml](../.github/workflows/ci.yml) runs on every pull request into `main` and on `main` itself. Two jobs, in parallel:
+
+| Job | Runs | Needs env |
+| --- | --- | --- |
+| **Lint, types and unit tests** | `npm run lint` · `npx tsc --noEmit` · `npm run test` | No |
+| **Production build** | `npm run build` | Placeholders only |
+
+**The build job is the point.** Cache Components and `unstable_instant` are the two constraints in [ux-architecture.md](ux-architecture.md) that fail at *build* time and nowhere else — a route that quietly stopped prerendering, or an uncached `cookies()` read outside a `<Suspense>` boundary, is invisible to lint, types and the unit suite alike. It surfaces here or it surfaces in production.
+
+**Its environment variables are placeholders and nothing connects to them.** `DATABASE_URL` exists because [lib/db/client.ts](../lib/db/client.ts) throws at module scope without it, and `postgres()` connects lazily; the Supabase pair exists because `createServerClient` throws immediately on an undefined URL, and prerendering `/courses` reaches it through `getCurrentProfile()`. With no session cookie the auth call fails, `getCurrentUser()` returns `null`, and no query is made. **Never put real credentials here** — CI has no reason to reach any environment, and a workflow file is public.
+
+`NEXT_PUBLIC_APP_ENV` is deliberately unset, so `lib/env.ts` resolves `local` — the value under which the most routes actually render. `production` would make `/debug/subscription` 404 at build time and quietly stop covering it.
+
+**The Playwright suite is not in CI.** It needs the Supabase Docker stack, the seed script and a production build to serve, which is a much slower job than these two; bolting it on is how a suite becomes something people learn to ignore. Run it locally with `npm run test:e2e` before anything that touches auth or routing.
+
 ## Database migrations
 
 **Drizzle authors the schema; the Supabase CLI runs the migrations.** There is exactly one migration history, in `supabase/migrations/`.

@@ -13,6 +13,9 @@ import { FreePreviewBadge } from "@/components/margin/meta";
 import { ProgressBar } from "@/components/margin/progress";
 import { LockedHint, UnavailableInLocaleHint } from "@/components/margin/states";
 import { cn } from "@/lib/utils";
+// Type-only, so nothing from the server-only entitlement module reaches this
+// client bundle — the import is erased at compile time.
+import type { AccessDecision } from "@/lib/entitlement/can-access";
 import type { Chapter, Lesson, Locale } from "@/lib/fixtures/content";
 
 /**
@@ -53,13 +56,19 @@ function LessonRow({
   labels,
   locale,
   current,
+  access,
 }: {
   lesson: Lesson;
   labels: CurriculumLabels;
   locale: Locale;
   current: boolean;
+  access?: AccessDecision;
 }) {
-  const locked = lesson.accessState !== null;
+  // Handed down, never derived. ADR-0006: every gate calls `canAccess` and
+  // nothing else, and a client component cannot call it at all — it reads user
+  // data on the server. A lesson with no decision renders open rather than
+  // guessing, which is the same default the course card takes.
+  const locked = access?.allowed === false;
   const unavailable = !lesson.availableLocales.includes(locale);
 
   return (
@@ -147,6 +156,7 @@ function Curriculum({
   chapters,
   labels,
   locale,
+  access,
   currentLessonId,
   defaultOpenChapterIds,
   className,
@@ -155,6 +165,12 @@ function Curriculum({
   chapters: Chapter[];
   labels: CurriculumLabels;
   locale: Locale;
+  /**
+   * What `canAccess` returned for each lesson, keyed by lesson id — a record
+   * rather than a function for the reason the labels above are records: this
+   * is a client component and functions cannot cross the boundary as props.
+   */
+  access?: Record<string, AccessDecision>;
   currentLessonId?: string;
   defaultOpenChapterIds?: string[];
 }) {
@@ -204,6 +220,7 @@ function Curriculum({
                       labels={labels}
                       locale={locale}
                       current={lesson.id === currentLessonId}
+                      access={access?.[lesson.id]}
                     />
                   ))}
                 </ul>

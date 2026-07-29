@@ -82,6 +82,45 @@ const message =
   "If no token fits, add a semantic role or scale step in app/globals.css " +
   "rather than reaching past the token layer.";
 
+/**
+ * "No inline subscription checks, ever" (ADR-0006) is a wish until something
+ * enforces it. This is the something.
+ *
+ * The catalog and the study area are both large surfaces, and the fourth
+ * inline check gets written at 6pm on a Friday by someone who has not read the
+ * ADR. A rule stops it; a convention does not. Same reasoning as
+ * `tests/unit/tokens.test.ts` and `tests/e2e/contrast.spec.ts`, which enforce
+ * design decisions by tooling rather than by memory.
+ *
+ * **What it matches, and what it deliberately does not.** Any read of a
+ * `subscriptionStatus` property — `profile.subscriptionStatus`,
+ * `viewer?.subscriptionStatus`, a `{ subscriptionStatus }` destructure — plus
+ * the snake_case column name, which is how the same check gets written in raw
+ * SQL. Passing a whole `profile` to `canAccess` is untouched, because that is
+ * the sanctioned path: the boundary reads the field, nobody else does.
+ *
+ * `lib/entitlement/**` is exempt — it *is* the boundary. That is the only
+ * exemption, and it should stay the only one: a display of the current status
+ * looks identical to a gate at the syntax level, so the moment a second
+ * directory is allowed to read the column the rule stops meaning anything.
+ * `describeToggleState` in `lib/entitlement/dev-toggle.ts` exists precisely so
+ * the debug panel can render the value without needing an exemption.
+ */
+const subscriptionMessage =
+  "Inline subscription check. Access is decided by canAccess() in " +
+  "lib/entitlement/can-access.ts and nowhere else — see ADR-0006. Pass the " +
+  "profile to the boundary and render what it returns, rather than reading " +
+  "subscription status here.";
+
+const subscriptionSelectors = [
+  // profile.subscriptionStatus / viewer?.subscriptionStatus
+  'MemberExpression > Identifier[name="subscriptionStatus"]',
+  // const { subscriptionStatus } = profile
+  'ObjectPattern > Property > Identifier[name="subscriptionStatus"]',
+  // The Drizzle column and raw SQL both spell it snake_case.
+  'Literal[value="subscription_status"]',
+];
+
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
@@ -116,6 +155,28 @@ const eslintConfig = defineConfig([
   ]),
   {
     files: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: `Literal[value=/${ARBITRARY_VALUE}/]`,
+          message,
+        },
+        {
+          selector: `TemplateElement[value.raw=/${ARBITRARY_VALUE}/]`,
+          message,
+        },
+        ...subscriptionSelectors.map((selector) => ({
+          selector,
+          message: subscriptionMessage,
+        })),
+      ],
+    },
+  },
+  {
+    // The boundary itself, and the schema that declares the column. Everything
+    // else in the repo goes through canAccess().
+    files: ["lib/entitlement/**/*.{ts,tsx}", "lib/db/schema/**/*.ts"],
     rules: {
       "no-restricted-syntax": [
         "error",

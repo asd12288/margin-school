@@ -1,0 +1,142 @@
+name: CI
+
+# This repo enforces several of its decisions with tooling rather than with
+# memory — the design tokens in tests/unit/tokens.test.ts, the contrast floor
+# in tests/e2e/contrast.spec.ts, and now the entitlement boundary in
+# eslint.config.mjs. None of that is worth anything if it only ever runs on the
+# machine of whoever last remembered to run it.
+#
+# Deliberately not here yet: the Playwright suite. It needs the whole Supabase
+# Docker stack plus seeded users, which is a different and much slower job than
+# these three, and getting it wrong makes CI a thing people learn to ignore.
+# See the note at the bottom.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+# A second push to the same branch makes the first run irrelevant. Cancel it
+# rather than paying for both and reading the stale one by mistake.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Lint, types and unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          # Read from .nvmrc so CI and local development cannot drift. Vercel
+          # runs 24 (docs/environments.md); a version pinned twice is a version
+          # that eventually disagrees with itself.
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Fast checks first. Each one fails on its own line, so a red run says
+      # which of the three broke without opening the log.
+      - name: Lint
+        run: npm run lint
+
+      # `next-env.d.ts` is git-ignored and generated, and it is what pulls in
+      # `next/image-types/global` — the declarations that make
+      # `import logo from "@/public/brand/…​.png"` resolve. A fresh clone has
+      # never run a Next command, so without this `tsc` reports the three
+      # imports in components/margin/shell/logo.tsx as missing modules and the
+      # failure reads as "the brand assets are not committed" when they are.
+      #
+      # `typegen` rather than a build: it writes the same declarations plus
+      # `.next/dev/types/routes.d.ts` in a couple of seconds and needs no
+      # network. The first run of this workflow failed exactly here.
+      - name: Generate Next types
+        run: npx next typegen
+
+      # `next build` type-checks too, but that is minutes away in the other
+      # job. This is seconds and catches the common case.
+      - name: Type-check
+        run: npx tsc --noEmit
+
+      # No environment needed: the unit suite is pure functions, plus a
+      # Tailwind compile and a read of supabase/config.toml. Anything that
+      # needs a database belongs in the e2e suite, not here.
+      - name: Unit tests
+        run: npm run test
+
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - run: npm ci
+
+      # Turbopack's build cache.
+      #
+      # Keyed on the commit so every run writes a fresh entry, with
+      # `restore-keys` falling back to the newest cache for the same lockfile.
+      # Not keyed on hashed sources: this step runs after `npm ci`, and a
+      # `**/*.ts` glob would walk all of node_modules to compute it.
+      - name: Restore Next build cache
+        uses: actions/cache@v6
+        with:
+          path: .next/cache
+          key: ${{ runner.os }}-next-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-next-${{ hashFiles('package-lock.json') }}-
+
+      - name: Build
+        # This job is the only thing that checks Cache Components and
+        # `unstable_instant` still hold — the two constraints in
+        # docs/ux-architecture.md that fail at *build* time and nowhere else.
+        # A route that quietly stopped prerendering shows up here or never.
+        run: npm run build
+        env:
+          # Placeholders, not secrets, and nothing ever connects to them.
+          #
+          # The build imports lib/db/client.ts (via lib/auth/dal.ts, via every
+          # gated page), which throws at module scope when neither DATABASE_URL
+          # nor POSTGRES_URL is set. `postgres()` connects lazily, so a
+          # well-formed string that points nowhere is enough.
+          DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
+          # `createServerClient` throws immediately on an undefined URL or key
+          # — verified, it is not lenient — and prerendering `/courses` reaches
+          # it through `getCurrentProfile()`. With no session cookie the auth
+          # call fails, `getCurrentUser()` returns null, and no query is ever
+          # made; the values only need to exist.
+          NEXT_PUBLIC_SUPABASE_URL: http://127.0.0.1:54321
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_placeholder_not_a_real_key
+          #
+          # NEXT_PUBLIC_APP_ENV is deliberately unset, so lib/env.ts resolves
+          # `local`. That is the value under which the most routes actually
+          # render — `production` would make `/debug/subscription` 404 at build
+          # time and quietly stop covering it. This artifact is discarded; the
+          # point is coverage, not fidelity to a deploy.
+          #
+          # SENTRY_AUTH_TOKEN is also unset. @sentry/nextjs skips source-map
+          # upload and warns rather than failing, which is what we want: CI
+          # proves the app builds, and Vercel owns the uploads for deploys that
+          # are actually served.
+
+# Not covered here, in rough order of what it would cost to add:
+#
+# - **Playwright.** tests/e2e needs `supabase start` (a dozen containers), the
+#   seed script, and a production build to serve. Worth its own workflow with a
+#   longer timeout, not a step bolted onto this one.
+# - **Preview deploys.** Vercel already builds every branch; this exists
+#   because a Vercel build failing tells you late and in a different place
+#   from the PR you are reading.

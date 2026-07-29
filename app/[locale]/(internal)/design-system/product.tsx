@@ -141,12 +141,16 @@ function CatalogShowcase() {
                 lessons: plural(course.lessonCount, "lesson", "lessons"),
                 chapters: plural(course.chapterCount, "chapter", "chapters"),
                 freePreview: course.hasFreePreview ? "Free preview" : undefined,
+                // A showcase of the component, not a gate — PRO-185 keeps this
+                // literal deliberately. The card must render its locked
+                // variant here whatever the boundary would say, so this reads
+                // the fixture's own facts rather than calling `canAccess`.
                 locked:
-                  course.accessState === "requires-subscription"
-                    ? "Included"
-                    : course.accessState === "requires-prerequisite"
-                      ? "Later in the path"
-                      : undefined,
+                  course.prerequisiteCourseIds.length > 0
+                    ? "Later in the path"
+                    : course.isFreePreview
+                      ? undefined
+                      : "Included",
                 unavailableInLocale: course.availableLocales.includes("en")
                   ? undefined
                   : "French only",
@@ -241,6 +245,20 @@ function CurriculumShowcase() {
           chapters={sampleChapters}
           labels={curriculumLabels}
           locale="en"
+          // Literal, like the card's `locked` above: this showcases the locked
+          // row, so it must render whatever the boundary would decide for
+          // whoever is reading `/design-system`. Chapter 3 is the subscription
+          // content in the fixtures.
+          access={Object.fromEntries(
+            sampleChapters.flatMap((chapter) =>
+              chapter.lessons.map((lesson) => [
+                lesson.id,
+                lesson.isFreePreview
+                  ? { allowed: true }
+                  : { allowed: false, reason: "requires-subscription" },
+              ])
+            )
+          )}
           currentLessonId="l4"
           defaultOpenChapterIds={["ch1", "ch2", "ch3"]}
         />

@@ -103,6 +103,10 @@ const pathnames = {
   "/admin": "/admin",
   "/design-system": "/design-system",
   "/debug/observability": "/debug/observability",
+  // The dev-only subscription toggle (ADR-0006). Registered like its
+  // neighbours even though it only ever resolves in local development, so the
+  // collision check in tests/unit/routing.test.ts sees it.
+  "/debug/subscription": "/debug/subscription",
 } as const;
 
 export const routing = defineRouting({

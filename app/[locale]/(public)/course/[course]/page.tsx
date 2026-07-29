@@ -35,6 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { getPathname } from "@/i18n/navigation";
 import { courseHours, getCourseCardLabels, getCourseHref } from "@/lib/course-labels";
+import type { AccessDecision } from "@/lib/entitlement/can-access";
 import { sampleChapters, sampleConcepts, sampleCourses } from "@/lib/fixtures/content";
 import type { Locale } from "@/lib/fixtures/content";
 import type { Locale as RoutingLocale } from "@/i18n/routing";
@@ -246,8 +247,31 @@ async function CourseContent({
   const typedLocale = locale as Locale;
   const routingLocale = locale as RoutingLocale;
   const available = course.availableLocales.includes(typedLocale);
-  const locked = course.accessState !== null;
   const hours = courseHours(course);
+
+  /**
+   * **The content statement, not a viewer's decision.**
+   *
+   * This whole component is a `use cache` scope, and `canAccess` reads user
+   * data — calling it here would join content and user data inside a cached
+   * function, which AGENTS.md rule 3 forbids and which would serve one
+   * visitor's entitlement to everyone after them. So this page says what is
+   * true of the *course* ("included in the subscription", "later in the
+   * path"), which is what a prerendered public page can honestly say and what
+   * the copy was already written as.
+   *
+   * Personalising it is Phase 8/9 work and needs the lock state split out into
+   * its own `<Suspense>` boundary so the frame stays cached and only the
+   * decision streams — the "cache the frame, stream the person" shape in
+   * docs/ux-architecture.md. The catalog already does this, because its grid
+   * was streaming anyway.
+   */
+  const lockedLabel =
+    course.prerequisiteCourseIds.length > 0
+      ? t("course.laterInPath")
+      : course.isFreePreview
+        ? null
+        : t("course.included");
 
   /**
    * **Every link on this page resolves its href here, and renders with
@@ -281,6 +305,14 @@ async function CourseContent({
   const chapterProgress: Record<string, string> = {};
   const chapterCount: Record<string, string> = {};
   const lessonDuration: Record<string, string> = {};
+  /**
+   * Per-lesson lock state, on the same content-only footing as `lockedLabel`
+   * above and for the same reason — this is a cached scope, so there is no
+   * viewer to ask. `is_free_preview` is content-model.md's "only free/paid
+   * switch", so a lesson that is not a preview is subscription content, which
+   * is a fact about the lesson rather than a claim about the reader.
+   */
+  const lessonAccess: Record<string, AccessDecision> = {};
 
   for (const chapter of chapters) {
     const completed = chapter.lessons.filter((lesson) => lesson.completed).length;
@@ -293,6 +325,9 @@ async function CourseContent({
       lessonDuration[lesson.id] = t("curriculum.lessonDuration", {
         minutes: lesson.estimatedMinutes,
       });
+      lessonAccess[lesson.id] = lesson.isFreePreview
+        ? { allowed: true }
+        : { allowed: false, reason: "requires-subscription" };
     }
   }
 
@@ -352,15 +387,7 @@ async function CourseContent({
                 {t("course.freePreview")}
               </FreePreviewBadge>
             ) : null}
-            {locked ? (
-              <LockedHint
-                label={
-                  course.accessState === "requires-prerequisite"
-                    ? t("course.laterInPath")
-                    : t("course.included")
-                }
-              />
-            ) : null}
+            {lockedLabel ? <LockedHint label={lockedLabel} /> : null}
             {available ? null : (
               <UnavailableInLocaleHint label={t("course.notInThisLanguage")} />
             )}
@@ -435,6 +462,7 @@ async function CourseContent({
               className="mt-6"
               chapters={chapters}
               locale={typedLocale}
+              access={lessonAccess}
               labels={{
                 chapterProgress,
                 chapterCount,

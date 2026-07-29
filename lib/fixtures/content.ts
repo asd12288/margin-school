@@ -18,8 +18,15 @@ export type Level = "beginner" | "intermediate" | "advanced";
  *  draft in EN, and every read path has to survive that. */
 export type PublishStatus = "draft" | "in_review" | "published" | "archived";
 
-/** Why a learner cannot open something. `null` means they can. */
-export type AccessState = null | "requires-subscription" | "requires-prerequisite";
+/**
+ * Why a learner cannot open something is no longer a field.
+ *
+ * It used to be `accessState` on `Course` and `Lesson` — a verdict baked into
+ * the content, identical for everyone, which is the thing ADR-0006 forbids.
+ * The verdict now comes from `canAccess` in `lib/entitlement/can-access.ts`,
+ * computed from the viewer and the content facts below; `AccessDenial` there
+ * carries the same two reasons this type used to.
+ */
 
 export interface Concept {
   id: string;
@@ -54,7 +61,29 @@ export interface Course {
   status: PublishStatus;
   /** Locales this course is actually readable in. */
   availableLocales: Locale[];
-  accessState: AccessState;
+  /**
+   * You can make real progress here without subscribing.
+   *
+   * Distinct from `hasFreePreview` below, and the pair is not redundant: a
+   * subscriber-only course may still offer a single taster lesson (that is
+   * `hasFreePreview` and it is what the badge shows), while a free course is
+   * one you can actually work through. `reading-a-price-chart` is the second;
+   * `risk-before-reward` is the first.
+   *
+   * In the real schema this is a rollup over the course's lessons and their
+   * `is_free_preview`, the same way `conceptIds` rolls up `lesson_concept`.
+   */
+  isFreePreview: boolean;
+  /**
+   * Courses that come first.
+   *
+   * Content declares the prerequisite; whether a given learner has *met* it is
+   * user data, so it is computed at the call site and handed to `canAccess` as
+   * `prerequisiteMet` rather than stored here. Keeping the two apart is what
+   * stops a viewer-specific verdict leaking back into cacheable content.
+   */
+  prerequisiteCourseIds: string[];
+  /** Contains at least one free preview lesson. Drives the badge, not the gate. */
   hasFreePreview: boolean;
   /**
    * Cover art. Null until the content team produces it — `CourseCover` draws
@@ -108,10 +137,10 @@ export interface Lesson {
   title: string;
   position: number;
   estimatedMinutes: number;
+  /** content-model.md calls this "the only free/paid switch". */
   isFreePreview: boolean;
   status: PublishStatus;
   availableLocales: Locale[];
-  accessState: AccessState;
   completed: boolean;
 }
 
@@ -297,7 +326,8 @@ export const sampleCourses: Course[] = [
     lessonCount: 18,
     status: "published",
     availableLocales: ["fr", "en"],
-    accessState: null,
+    isFreePreview: true,
+    prerequisiteCourseIds: [],
     hasFreePreview: true,
     outcomes: [
       "Open any price chart and know what you are looking at",
@@ -338,7 +368,8 @@ export const sampleCourses: Course[] = [
     lessonCount: 12,
     status: "published",
     availableLocales: ["fr", "en"],
-    accessState: null,
+    isFreePreview: true,
+    prerequisiteCourseIds: [],
     hasFreePreview: false,
     outcomes: [
       "Explain why a price moves at all, in one sentence",
@@ -377,7 +408,8 @@ export const sampleCourses: Course[] = [
     lessonCount: 21,
     status: "published",
     availableLocales: ["fr", "en"],
-    accessState: "requires-subscription",
+    isFreePreview: false,
+    prerequisiteCourseIds: [],
     hasFreePreview: true,
     outcomes: [
       "Decide how much you are willing to lose before you decide anything else",
@@ -417,7 +449,8 @@ export const sampleCourses: Course[] = [
     lessonCount: 14,
     status: "published",
     availableLocales: ["fr"],
-    accessState: "requires-subscription",
+    isFreePreview: false,
+    prerequisiteCourseIds: [],
     hasFreePreview: false,
     outcomes: [
       "Say exactly what leverage is, without using the word 'multiply'",
@@ -456,7 +489,8 @@ export const sampleCourses: Course[] = [
     lessonCount: 24,
     status: "published",
     availableLocales: ["fr", "en"],
-    accessState: "requires-subscription",
+    isFreePreview: false,
+    prerequisiteCourseIds: [],
     hasFreePreview: false,
     outcomes: [
       "Decide what a portfolio is for before deciding what is in it",
@@ -496,7 +530,8 @@ export const sampleCourses: Course[] = [
     lessonCount: 19,
     status: "published",
     availableLocales: ["fr", "en"],
-    accessState: "requires-prerequisite",
+    isFreePreview: false,
+    prerequisiteCourseIds: ["co1", "co2"],
     hasFreePreview: false,
     outcomes: [
       "Read a book of bids and asks and say where the price is",
@@ -559,7 +594,6 @@ export const sampleChapters: Chapter[] = [
         isFreePreview: true,
         status: "published",
         availableLocales: ["fr", "en"],
-        accessState: null,
         completed: true,
       },
       {
@@ -571,7 +605,6 @@ export const sampleChapters: Chapter[] = [
         isFreePreview: true,
         status: "published",
         availableLocales: ["fr", "en"],
-        accessState: null,
         completed: true,
       },
       {
@@ -580,10 +613,9 @@ export const sampleChapters: Chapter[] = [
         title: "Line, bar, candle",
         position: 3,
         estimatedMinutes: 14,
-        isFreePreview: false,
+        isFreePreview: true,
         status: "published",
         availableLocales: ["fr", "en"],
-        accessState: null,
         completed: true,
       },
     ],
@@ -599,10 +631,9 @@ export const sampleChapters: Chapter[] = [
         title: "Anatomy of a candlestick",
         position: 1,
         estimatedMinutes: 16,
-        isFreePreview: false,
+        isFreePreview: true,
         status: "published",
         availableLocales: ["fr", "en"],
-        accessState: null,
         completed: false,
       },
       {
@@ -611,10 +642,9 @@ export const sampleChapters: Chapter[] = [
         title: "What a wick tells you",
         position: 2,
         estimatedMinutes: 12,
-        isFreePreview: false,
+        isFreePreview: true,
         status: "published",
         availableLocales: ["fr", "en"],
-        accessState: null,
         completed: false,
       },
       {
@@ -623,12 +653,11 @@ export const sampleChapters: Chapter[] = [
         title: "Reading a whole session",
         position: 3,
         estimatedMinutes: 18,
-        isFreePreview: false,
+        isFreePreview: true,
         // Published in French, still draft in English. The single most
         // common real-world state, and the one that bites hardest.
         status: "published",
         availableLocales: ["fr"],
-        accessState: null,
         completed: false,
       },
     ],
@@ -647,7 +676,6 @@ export const sampleChapters: Chapter[] = [
         isFreePreview: false,
         status: "published",
         availableLocales: ["fr", "en"],
-        accessState: "requires-subscription",
         completed: false,
       },
       {
@@ -659,7 +687,6 @@ export const sampleChapters: Chapter[] = [
         isFreePreview: false,
         status: "published",
         availableLocales: ["fr", "en"],
-        accessState: "requires-subscription",
         completed: false,
       },
     ],
