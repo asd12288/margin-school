@@ -33,6 +33,49 @@
       "description": "Essayez une autre recherche, ou parcourez le catalogue complet."
     }
   },
+  "risk": {
+    "title": "De la pédagogie, pas des conseils",
+    "body": "Margin School explique le fonctionnement des marchés. Rien ici ne constitue un conseil en investissement, une recommandation, ni un signal d'achat ou de vente. Le trading et l'investissement comportent un risque réel de perte en capital — y compris au-delà des sommes engagées lorsqu'il y a effet de levier."
+  },
+  "courseDetail": {
+    "outcomes": {
+      "title": "Ce que vous saurez faire"
+    },
+    "concepts": {
+      "title": "Les notions abordées",
+      "description": "Des idées, pas des leçons. Chacune est suivie séparément : terminer un cours n'équivaut pas à savoir ce qu'il enseignait."
+    },
+    "curriculum": {
+      "title": "Contenu du cours",
+      "summary": "{chapters, plural, one {# chapitre} other {# chapitres}} · {lessons, plural, one {# leçon} other {# leçons}} · {hours} h"
+    },
+    "requirements": {
+      "title": "Avant de commencer"
+    },
+    "description": {
+      "title": "À propos de ce cours"
+    },
+    "audience": {
+      "title": "À qui s'adresse ce cours"
+    },
+    "related": {
+      "title": "Où aller ensuite",
+      "description": "Tout est inclus, il n'y a donc pas de mauvais ordre — mais voici ce que la plupart des gens prennent après.",
+      "railLabel": "Autres cours du catalogue",
+      "action": "Voir tous les cours"
+    },
+    "aside": {
+      "includes": "Ce que contient ce cours",
+      "reading": "{hours} h de lecture",
+      "bothLanguages": "Français et anglais",
+      "oneLanguage": "En français uniquement",
+      "practice": "Exercices, quiz et cartes mémoire",
+      "preview": "Une leçon gratuite pour essayer",
+      "action": "Commencer l'essai gratuit",
+      "secondaryAction": "Voir ce qui est inclus",
+      "note": "Un seul abonnement couvre tous les cours du site, dans les deux langues. Rien n'est vendu à l'unité."
+    }
+  },
   "curriculum": {
     "chapterProgress": "{completed} leçons terminées sur {total}",
     "chapterCount": "{completed} / {total}",
@@ -144,9 +187,76 @@
   },
   "pages": {
     "home": {
-      "badge": "Contenu provisoire",
-      "title": "Margin School",
-      "description": "Apprenez les marchés financiers depuis le début, en langage clair. Le site complet est encore en cours de rédaction — le catalogue est le meilleur point de départ."
+      "hero": {
+        "eyebrow": "Écrit pour les débutants",
+        "title": "Comprenez enfin le fonctionnement des marchés, une idée à la fois.",
+        "description": "Un langage clair, des exemples travaillés et des leçons courtes — en français et en anglais. Un seul abonnement donne accès à tout, et rien ici ne vous dira jamais quoi acheter.",
+        "primary": "Parcourir le catalogue",
+        "secondary": "Ce qui est inclus"
+      },
+      "stats": {
+        "courses": "{count, plural, one {cours} other {cours}}",
+        "lessons": "{count, plural, one {leçon} other {leçons}}",
+        "hours": "{count, plural, one {heure de lecture} other {heures de lecture}}",
+        "languages": "{count, plural, one {langue} other {langues}}"
+      },
+      "startHere": {
+        "title": "Commencez ici",
+        "description": "Les fondamentaux d'abord. Chaque cours ne suppose que le précédent, et les premières leçons sont en accès libre.",
+        "action": "Voir tous les cours",
+        "railLabel": "Cours pour débuter"
+      },
+      "included": {
+        "title": "Ce que comprend l'abonnement",
+        "description": "Des faits sur ce qui est ici, plutôt que des affirmations sur ceux qui l'utilisent.",
+        "everything": {
+          "title": "Tous les cours, toujours",
+          "description": "Un seul tarif pour l'ensemble du catalogue, y compris tout ce qui sera publié ensuite. Aucun cours n'est vendu séparément."
+        },
+        "languages": {
+          "title": "Français et anglais",
+          "description": "Rédigés dans les deux langues, et non traduits automatiquement depuis l'une d'elles. Changez de langue à tout moment sans perdre votre place."
+        },
+        "beginner": {
+          "title": "Vraiment pensé pour débuter",
+          "description": "Aucun vocabulaire supposé acquis. Chaque terme est défini à sa première apparition, et les calculs sont faits lentement."
+        },
+        "practice": {
+          "title": "De la pratique, pas seulement de la lecture",
+          "description": "Exemples travaillés, exercices, quiz et cartes mémoire, avec une progression suivie par notion plutôt que par leçon."
+        }
+      },
+      "categories": {
+        "title": "Parcourir par thème",
+        "description": "Trois ensembles, dans l'ordre où la plupart des gens les abordent.",
+        "count": "{count, plural, one {# cours} other {# cours}}"
+      },
+      "concepts": {
+        "title": "Ce que vous finissez par savoir",
+        "description": "Les cours sont le chemin que vous suivez ; les notions sont ce que vous gardez. La maîtrise est suivie sur celles-ci, si bien que réorganiser le catalogue ne vous coûte jamais votre progression.",
+        "action": "Parcourir toutes les notions"
+      },
+      "steps": {
+        "title": "Comment ça se passe",
+        "one": {
+          "title": "Lisez d'abord une leçon gratuite",
+          "description": "Plusieurs cours s'ouvrent sur des leçons accessibles à tous, sans compte. Commencez par là et voyez si le ton vous convient."
+        },
+        "two": {
+          "title": "Dites-nous d'où vous partez",
+          "description": "Quatre questions à l'inscription — votre langue, ce que vous savez déjà, et ce qui vous amène. Cela prend une trentaine de secondes."
+        },
+        "three": {
+          "title": "Avancez à votre rythme",
+          "description": "Des leçons courtes : vingt minutes suffisent pour une séance utile. Votre position est enregistrée, et les notions acquises reviennent en révision."
+        }
+      },
+      "cta": {
+        "title": "Commencez par le premier graphique",
+        "description": "Les premières leçons sont en accès libre. Si elles vous conviennent, un seul abonnement ouvre le reste.",
+        "primary": "Commencer l'essai gratuit",
+        "secondary": "Parcourir le catalogue"
+      }
     },
     "about": {
       "badge": "Contenu provisoire",

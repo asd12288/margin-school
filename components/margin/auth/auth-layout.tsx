@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 
-import { AuthFigure } from "@/components/margin/auth/auth-figure";
+import { PriceFigure } from "@/components/margin/price-figure";
 import { Logo } from "@/components/margin/shell/logo";
 import { Link } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
@@ -77,7 +77,10 @@ function AuthLayout({
          * the loudest thing on the screen and competes with the form, which
          * is the one thing on this page anybody came here to use.
          */}
-        <AuthFigure className="absolute inset-0 size-full opacity-45" />
+        <PriceFigure
+          id="auth-figure"
+          className="absolute inset-0 size-full opacity-45"
+        />
 
         {/*
          * A wash between the figure and the text.

@@ -32,6 +32,9 @@ export interface Category {
   id: string;
   slug: string;
   name: string;
+  /** One line on what belongs in this group. Translatable, so it lives on
+   *  `category_translation` in the real schema. */
+  description: string;
   /** Two levels: group → subcategory. */
   parentId: string | null;
 }
@@ -60,6 +63,33 @@ export interface Course {
    * photograph (AGENTS.md rule 1).
    */
   coverImageUrl?: string | null;
+
+  /* -----------------------------------------------------------------------
+     Detail-page copy.
+
+     Translatable, so in the real schema these live on `course_translation`
+     alongside `title` and `summary` — never on the parent row, which carries
+     only locale-invariant data (content-model.md, localisation rule 2).
+     Modelled as arrays of plain strings rather than as authored HTML: each
+     one renders into a list or a paragraph stack, none of them needs inline
+     markup, and a `string[]` cannot carry a stray `<script>` from the CMS the
+     way a `TextBlock`'s `html` can.
+     ----------------------------------------------------------------------- */
+
+  /** "What you'll learn" — capabilities, phrased as things the reader will be
+   *  able to do. */
+  outcomes: string[];
+  /** What a reader needs before starting. Facts about the course, not
+   *  promises — see `BulletList` vs `CheckList`. */
+  requirements: string[];
+  /** Who this course is for. */
+  audience: string[];
+  /** The long description, one string per paragraph. */
+  description: string[];
+  /** Concepts this course teaches. Derived in the real schema by rolling up
+   *  `lesson_concept` over the course's lessons — mastery attaches to these,
+   *  never to the course or its lessons (ADR-0004). */
+  conceptIds: string[];
 }
 
 /** User-domain. Never cached, never joined to the content above inside a
@@ -269,6 +299,30 @@ export const sampleCourses: Course[] = [
     availableLocales: ["fr", "en"],
     accessState: null,
     hasFreePreview: true,
+    outcomes: [
+      "Open any price chart and know what you are looking at",
+      "Tell a line, a bar and a candlestick apart, and say why it matters",
+      "Read the four numbers inside a single candle",
+      "Set a chart's timeframe and scale on purpose rather than by accident",
+      "Describe what one session did, out loud, without hedging",
+      "Recognise support and resistance without treating them as rules",
+    ],
+    requirements: [
+      "No prior knowledge of the markets. This is the first course in the catalog.",
+      "No trading account, no money at risk, and nothing to install.",
+      "About twenty minutes at a time is enough — the lessons are short on purpose.",
+    ],
+    audience: [
+      "Anyone who has opened a chart and closed it again feeling lost",
+      "People who want to understand the news about markets rather than trade on it",
+      "Beginners who would rather start at the beginning than halfway through",
+    ],
+    description: [
+      "A price chart is a summary of an argument between buyers and sellers. Once you can read it, most of what sounds like jargon turns out to be plain description — and most of what sounds like insight turns out to be a guess.",
+      "This course starts with why anybody draws a price at all, and ends with you able to look at a chart and say what happened. It does not teach a strategy, and it will not tell you what to buy. It teaches you to see what is on the screen.",
+      "Every idea gets a worked example and a short exercise. Nothing is assumed, and nothing is rushed.",
+    ],
+    conceptIds: ["c2", "c1", "c5"],
   },
   {
     id: "co2",
@@ -286,6 +340,28 @@ export const sampleCourses: Course[] = [
     availableLocales: ["fr", "en"],
     accessState: null,
     hasFreePreview: false,
+    outcomes: [
+      "Explain why a price moves at all, in one sentence",
+      "Separate supply and demand from the story told about them afterwards",
+      "Read an economic release without needing the commentary",
+      "Say what a market has already priced in, and what it has not",
+      "Spot the difference between news and a change in expectation",
+    ],
+    requirements: [
+      "Reading a price chart, or an equivalent grasp of what a chart shows.",
+      "No mathematics beyond arithmetic.",
+    ],
+    audience: [
+      "Readers who understand a chart and now want to know what is behind it",
+      "Anyone who finds market commentary confidently unfalsifiable",
+      "People preparing to invest who want the mechanics first",
+    ],
+    description: [
+      "Prices move because somebody was willing to pay more, or accept less, than the last person. Everything else — the headlines, the forecasts, the explanations after the close — is commentary on that one fact.",
+      "This course takes the commentary apart. It covers supply and demand as they actually appear in a market, what an expectation is and how it gets priced, and why the same piece of news can move a price in either direction.",
+      "It is deliberately unglamorous. The goal is that market news stops sounding like a language you do not speak.",
+    ],
+    conceptIds: ["c2", "c5"],
   },
   {
     id: "co3",
@@ -303,6 +379,29 @@ export const sampleCourses: Course[] = [
     availableLocales: ["fr", "en"],
     accessState: "requires-subscription",
     hasFreePreview: true,
+    outcomes: [
+      "Decide how much you are willing to lose before you decide anything else",
+      "Size a position from that number rather than from conviction",
+      "Calculate risk per trade and keep it consistent",
+      "Understand why a run of losses is normal and how to survive one",
+      "Recognise the arithmetic that makes a large drawdown hard to recover from",
+      "Write down a rule you will actually follow",
+    ],
+    requirements: [
+      "Reading a price chart, or an equivalent grasp of what a chart shows.",
+      "A calculator. The arithmetic is simple but it is done, not hand-waved.",
+    ],
+    audience: [
+      "Anyone about to put real money at risk for the first time",
+      "People who have traded and been surprised by how fast an account shrank",
+      "Readers who want the unexciting part before the exciting part",
+    ],
+    description: [
+      "This is the part most people skip, and skipping it is the single most reliable way to lose money in a market. It is also the only part that is entirely within your control.",
+      "The course covers what a loss actually costs, how to size a position from a number you chose in advance, and why the arithmetic of recovery is so unforgiving. It works through the calculations slowly and repeats them until they are boring.",
+      "Nothing here is a strategy or a recommendation. It is the framework you apply to whatever you eventually decide to do.",
+    ],
+    conceptIds: ["c3", "c4"],
   },
   {
     id: "co4",
@@ -320,6 +419,28 @@ export const sampleCourses: Course[] = [
     availableLocales: ["fr"],
     accessState: "requires-subscription",
     hasFreePreview: false,
+    outcomes: [
+      "Say exactly what leverage is, without using the word 'multiply'",
+      "Work out what a 2% move does to a leveraged position",
+      "Explain margin, and what a margin call is asking for",
+      "Recognise when a product is leveraged even though it does not say so",
+      "Understand how you can lose more than you put in",
+    ],
+    requirements: [
+      "Risk before reward, or an equivalent grasp of position sizing.",
+      "Comfort with percentages.",
+    ],
+    audience: [
+      "Anyone who has been offered a leveraged product and did not fully follow the terms",
+      "Readers who understand risk in principle and want the arithmetic",
+      "People who want to know what they are declining before they decline it",
+    ],
+    description: [
+      "Leverage is borrowed money, and borrowed money magnifies both directions equally. That sentence is the whole idea; the rest of the course is what it means in practice, worked out slowly enough that the numbers stop being abstract.",
+      "It covers margin, maintenance requirements, what a margin call actually demands, and the specific arithmetic by which a leveraged position can cost more than the money you put into it.",
+      "This is the course most likely to talk you out of something. That is intentional.",
+    ],
+    conceptIds: ["c4", "c3"],
   },
   {
     id: "co5",
@@ -337,6 +458,29 @@ export const sampleCourses: Course[] = [
     availableLocales: ["fr", "en"],
     accessState: "requires-subscription",
     hasFreePreview: false,
+    outcomes: [
+      "Decide what a portfolio is for before deciding what is in it",
+      "Understand diversification as a mechanism rather than a slogan",
+      "Choose proportions and write down why",
+      "Rebalance on a schedule instead of on a feeling",
+      "Recognise how much of a return is fees",
+      "Leave it alone for long enough to find out whether it works",
+    ],
+    requirements: [
+      "What moves a market and Risk before reward, or equivalent.",
+      "No minimum amount of money. The proportions are what matter.",
+    ],
+    audience: [
+      "First-time investors deciding what to actually hold",
+      "People with a pile of positions and no plan connecting them",
+      "Readers who want a process they can repeat rather than a tip",
+    ],
+    description: [
+      "A portfolio is a set of decisions about proportion, made once and revisited on a schedule. Most of the difficulty is not in choosing what to hold — it is in choosing how much, and then in not touching it.",
+      "This course puts the pieces from the earlier courses together: what you are trying to achieve, over what horizon, and what mix of holdings serves that. It covers diversification, rebalancing, and the quiet drag of costs.",
+      "It ends where most beginners' problems start: what to do when nothing has happened for six months.",
+    ],
+    conceptIds: ["c3", "c5", "c2"],
   },
   {
     id: "co6",
@@ -354,6 +498,28 @@ export const sampleCourses: Course[] = [
     availableLocales: ["fr", "en"],
     accessState: "requires-prerequisite",
     hasFreePreview: false,
+    outcomes: [
+      "Read a book of bids and asks and say where the price is",
+      "Explain the spread, and what widens it",
+      "Follow an order from placed to filled",
+      "Tell a limit order from a market order and know when each costs you",
+      "Understand why the displayed price is not always the price you get",
+    ],
+    requirements: [
+      "Reading a price chart and What moves a market. This one assumes both.",
+      "It is the last course in the path for a reason — start earlier if you are new.",
+    ],
+    audience: [
+      "Readers who have finished the foundations and want the mechanism underneath",
+      "People whose orders have filled at prices they did not expect",
+      "Anyone curious about where a quoted price actually comes from",
+    ],
+    description: [
+      "Every price on a chart was, a moment earlier, two numbers: the most anybody would pay and the least anybody would accept. The order book is where those two numbers live, and watching it is the closest you can get to seeing a market decide.",
+      "This course covers the book itself, the queue behind each level, what the spread is and what makes it move, and how an order travels from your screen to a fill.",
+      "It is the most technical course in the catalog and deliberately the last one. Nothing in it is required in order to invest sensibly.",
+    ],
+    conceptIds: ["c2", "c5", "c1"],
   },
 ];
 
@@ -672,7 +838,28 @@ export const sampleBlocks: Block[] = [
 ];
 
 export const sampleCategories: Category[] = [
-  { id: "cat1", slug: "foundations", name: "Foundations", parentId: null },
-  { id: "cat2", slug: "risk", name: "Risk", parentId: null },
-  { id: "cat3", slug: "practice", name: "Practice", parentId: null },
+  {
+    id: "cat1",
+    slug: "foundations",
+    name: "Foundations",
+    description:
+      "What a chart is, what a price is, and why either of them moves. Start here.",
+    parentId: null,
+  },
+  {
+    id: "cat2",
+    slug: "risk",
+    name: "Risk",
+    description:
+      "How much you can lose, how to size a position, and what leverage really does.",
+    parentId: null,
+  },
+  {
+    id: "cat3",
+    slug: "practice",
+    name: "Practice",
+    description:
+      "Putting it together: a first portfolio, and the machinery underneath a quoted price.",
+    parentId: null,
+  },
 ];

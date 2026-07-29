@@ -27,8 +27,8 @@ If mastery is ever stored per-lesson, Phase 12 becomes a rewrite and the catalog
 
 | Entity | Notes |
 | --- | --- |
-| `category` | Two levels: group → subcategory |
-| `course` | Belongs to a category. Has level, estimated duration, ordering |
+| `category` | Two levels: group → subcategory. Translatable name and description |
+| `course` | Belongs to a category. Has level, estimated duration, ordering. Also carries the detail page's copy — `outcomes[]`, `requirements[]`, `audience[]`, `description[]` — all translatable, so they live on `course_translation`, never on the parent row |
 | `chapter` | Belongs to a course. Ordered |
 | `lesson` | Belongs to a chapter. Ordered. Carries `is_free_preview` |
 | `block` | Belongs to a lesson. Ordered. Typed. Carries locale-invariant data |

@@ -33,6 +33,49 @@
       "description": "Try a different search, or browse the full catalog."
     }
   },
+  "risk": {
+    "title": "Education, not advice",
+    "body": "Margin School teaches how markets work. Nothing here is investment advice, a recommendation, or a signal to buy or sell. Trading and investing carry a real risk of losing money — including more than you put in, where leverage is involved."
+  },
+  "courseDetail": {
+    "outcomes": {
+      "title": "What you'll be able to do"
+    },
+    "concepts": {
+      "title": "Concepts you'll pick up",
+      "description": "Ideas, not lessons. Each one is tracked on its own, so finishing a course is not the same as knowing what it taught."
+    },
+    "curriculum": {
+      "title": "Course content",
+      "summary": "{chapters, plural, one {# chapter} other {# chapters}} · {lessons, plural, one {# lesson} other {# lessons}} · {hours} h"
+    },
+    "requirements": {
+      "title": "Before you start"
+    },
+    "description": {
+      "title": "About this course"
+    },
+    "audience": {
+      "title": "Who this is for"
+    },
+    "related": {
+      "title": "Where to go next",
+      "description": "Everything is included, so there is no wrong order — but this is the one most people take after.",
+      "railLabel": "Other courses in the catalog",
+      "action": "See all courses"
+    },
+    "aside": {
+      "includes": "What's inside",
+      "reading": "{hours} h of reading",
+      "bothLanguages": "French and English",
+      "oneLanguage": "French only",
+      "practice": "Exercises, quizzes and flashcards",
+      "preview": "A free lesson to try first",
+      "action": "Start free trial",
+      "secondaryAction": "See what's included",
+      "note": "One subscription covers every course on the site, in both languages. Nothing is sold per course."
+    }
+  },
   "curriculum": {
     "chapterProgress": "{completed} of {total} lessons complete",
     "chapterCount": "{completed} / {total}",
@@ -144,9 +187,76 @@
   },
   "pages": {
     "home": {
-      "badge": "Placeholder",
-      "title": "Margin School",
-      "description": "Learn the financial markets from the beginning, in plain language. The full site is still being written — the catalog is the place to start."
+      "hero": {
+        "eyebrow": "Written for beginners",
+        "title": "Learn how markets actually work, one idea at a time.",
+        "description": "Plain language, worked examples and short lessons — in French and English. One subscription covers everything, and nothing here will ever tell you what to buy.",
+        "primary": "Browse the catalog",
+        "secondary": "What's included"
+      },
+      "stats": {
+        "courses": "{count, plural, one {course} other {courses}}",
+        "lessons": "{count, plural, one {lesson} other {lessons}}",
+        "hours": "{count, plural, one {hour of reading} other {hours of reading}}",
+        "languages": "{count, plural, one {language} other {languages}}"
+      },
+      "startHere": {
+        "title": "Start here",
+        "description": "Foundations first. Each course assumes only the one before it, and the first lessons are free to read.",
+        "action": "See all courses",
+        "railLabel": "Courses to start with"
+      },
+      "included": {
+        "title": "What a subscription gets you",
+        "description": "Facts about what is here, rather than claims about who else is using it.",
+        "everything": {
+          "title": "Every course, always",
+          "description": "One price for the whole catalog, including everything published later. No course is sold on its own."
+        },
+        "languages": {
+          "title": "French and English",
+          "description": "Written in both, not machine-translated into one. Switch language at any point without losing your place."
+        },
+        "beginner": {
+          "title": "Genuinely beginner-first",
+          "description": "No assumed vocabulary. Every term is defined the first time it appears, and the arithmetic is done slowly."
+        },
+        "practice": {
+          "title": "Practice, not just reading",
+          "description": "Worked examples, exercises, quizzes and flashcards, with progress tracked per concept rather than per lesson."
+        }
+      },
+      "categories": {
+        "title": "Browse by subject",
+        "description": "Three groups, in the order most people work through them.",
+        "count": "{count, plural, one {# course} other {# courses}}"
+      },
+      "concepts": {
+        "title": "What you end up knowing",
+        "description": "Courses are the path you follow; concepts are what you keep. Mastery is tracked on these, so reorganising the catalog never costs you progress.",
+        "action": "Browse all concepts"
+      },
+      "steps": {
+        "title": "How it works",
+        "one": {
+          "title": "Read a free lesson first",
+          "description": "Several courses open with lessons anyone can read, without an account. Start there and see whether the tone suits you."
+        },
+        "two": {
+          "title": "Tell us where you're starting from",
+          "description": "Four questions at sign-up — your language, how much you already know, and what brought you here. It takes about thirty seconds."
+        },
+        "three": {
+          "title": "Work through it at your own pace",
+          "description": "Short lessons, so twenty minutes is a useful session. Your position is saved, and finished concepts come back for review."
+        }
+      },
+      "cta": {
+        "title": "Start with the first chart",
+        "description": "The first lessons are free to read. If they suit you, one subscription opens the rest.",
+        "primary": "Start free trial",
+        "secondary": "Browse the catalog"
+      }
     },
     "about": {
       "badge": "Placeholder",
