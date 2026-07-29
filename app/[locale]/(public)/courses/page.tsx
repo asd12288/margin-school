@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { locale as rootLocale } from "next/root-params";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import { CourseCard, CourseGrid } from "@/components/margin/course-card";
@@ -45,6 +46,24 @@ import type { Locale } from "@/i18n/routing";
  * box after a submitted search is the accepted trade — see the comment on
  * `SiteHeader`.
  */
+/**
+ * `searchParams` is declared as well as `params`, and `q: null` is the
+ * meaningful value: it says "validate the page as a visitor who searched for
+ * nothing", which is the state that has to be prerendered. Omitting the key
+ * fails the build rather than defaulting — `Route "/[locale]/courses" accessed
+ * searchParam "q" which is not defined in the samples`.
+ *
+ * This sits on the page and not on `(public)/layout.tsx`, where it would cover
+ * the whole shell in one export. See that file for why it cannot.
+ */
+export const unstable_instant = {
+  prefetch: "static",
+  samples: [
+    { params: { locale: "fr" }, searchParams: { q: null } },
+    { params: { locale: "en" }, searchParams: { q: null } },
+  ],
+};
+
 function normalizeQuery(raw: string | string[] | undefined): string | undefined {
   const value = Array.isArray(raw) ? raw[0] : raw;
   const trimmed = value?.trim();
@@ -120,13 +139,17 @@ async function CourseResults({
 }
 
 export default async function CoursesPage({
-  params,
   searchParams,
 }: {
-  params: Promise<{ locale: string }>;
   searchParams: Promise<{ q?: string | string[] }>;
 }) {
-  const { locale } = await params;
+  // `next/root-params`, not `await params`. Under instant validation every
+  // server `params` access defers to the Runtime stage, so `await params` here
+  // — even only to hand the locale to `setRequestLocale` — blocks the static
+  // shell and fails the build. `locale` is a root param, so this resolves
+  // immediately and the page keeps a real static frame. Same reasoning as
+  // `app/[locale]/layout.tsx`, which has the long version of the note.
+  const locale: string = await rootLocale();
   setRequestLocale(locale);
 
   const t = await getTranslations();

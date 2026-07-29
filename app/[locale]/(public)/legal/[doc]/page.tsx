@@ -20,6 +20,24 @@ function isLegalDoc(value: string): value is LegalDoc {
  * docs/ux-architecture.md, and there is no reason for a legal document to
  * ever be a loading skeleton.
  */
+/**
+ * Instant-navigation validation. `doc` has to be named here even though it is
+ * read inside `<Suspense>`: an inner segment's `samples` replace the outer
+ * segment's rather than merging, and a `<Suspense>` boundary does not exempt a
+ * param from being declared. A real doc, because the validator renders the
+ * sample for real — an unlisted one would `notFound()` and validate the
+ * not-found path instead of this page. Written out rather than
+ * `LEGAL_DOCS[0]`, because segment configs are statically analysed, not
+ * evaluated.
+ */
+export const unstable_instant = {
+  prefetch: "static",
+  samples: [
+    { params: { locale: "fr", doc: "terms" } },
+    { params: { locale: "en", doc: "terms" } },
+  ],
+};
+
 export function generateStaticParams() {
   return LEGAL_DOCS.map((doc) => ({ doc }));
 }
