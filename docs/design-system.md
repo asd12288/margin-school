@@ -151,6 +151,9 @@ Dark is not an inversion. The ground is a deep cool neutral rather than black, t
 | Component | Notes |
 | --- | --- |
 | `course-card` · `course-cover` | Udemy's IA, none of its commerce. See below. |
+| `marketing/*` | The public-page kit: `section` (+ `PageContainer`, `SectionHeader`), `hero`, `lists` (`CheckList`/`BulletList`), `feature-grid`, `stat-band`, `course-rail`, `category-grid`, `step-list`, `cta-band`, `risk-note` |
+| `course/*` | `course-hero`, `course-aside` (+ `CourseFact`) — the two pieces specific to a course detail page |
+| `price-figure` | The decorative invented price series. Used by the auth panel, the home hero and the course hero |
 | `curriculum` | Chapter accordion, per-chapter progress, per-lesson state |
 | `lesson/blocks` | All ten v1 block types from [content-model.md](content-model.md) |
 | `lesson/candlestick-chart` | Server-rendered SVG. No charting library, no client JS |
@@ -167,6 +170,21 @@ Dark is not an inversion. The ground is a deep cool neutral rather than black, t
 Udemy's card carries a price, a struck-through price, a rating, a rating count, a "Bestseller" flag and an instructor name. All six exist to convert a one-off purchase.
 
 None of them appear here. Access is one all-access subscription ([ADR-0001](decisions/0001-subscription-only-single-publisher.md)), and we are the sole publisher and do not invent social proof ([ADR-0002](decisions/0002-no-fictional-instructors.md)). What survives is the argument from depth: how long the course is, how much of it there is, and how far you have got.
+
+### The marketing pages
+
+`/` and `/course/[course]` take Udemy's information architecture module for module and drop every module that exists to convert a purchase or to borrow a crowd's authority. Each page's file comment carries the full module-by-module table; the two rules that decide it every time:
+
+- **ADR-0001** removes the price, the struck-through price, the cart, the coupon, the countdown and the money-back badge. The rotating promotional hero goes with them — a carousel exists to cycle deadlines, and there is no deadline in a subscription. What is left of Udemy's sticky purchase card is `CourseAside`: cover, what is inside, one call to action.
+- **ADR-0002** removes the instructor panel, the star rating, the rating count, the enrolment count, the review histogram, the individual reviews and the "trusted by 17,000 companies" logo wall. These are *not* replaced with weaker social proof; the slots are filled with facts about the catalog (`StatBand`, `FeatureGrid`) or removed outright.
+
+What the pages add that Udemy has no equivalent for is **state**: `hasFreePreview`, `accessState` and `availableLocales` appear as chips in the course hero, so a reader knows before scrolling whether they can start now, whether it sits behind the subscription, and whether it exists in their language.
+
+`StatBand`'s figures are **derived from the catalog, never authored**. A hand-written "6 courses" is a claim that goes stale the moment a seventh is published, and a stale count on a marketing page is indistinguishable from a false one.
+
+Neither page passes `progress` to a course card. Progress is user-domain; the home page is prerendered and the course page is `use cache`, so reading it would bake one visitor's progress into HTML everyone receives (rule 3).
+
+`lib/course-labels.ts` owns the course → `CourseCardLabels` mapping for all three surfaces that render cards. It exists because `accessState` has two values with two different labels, and collapsing them to one tells a reader that a course needing a *prerequisite* can be unlocked by paying.
 
 ### Covers
 

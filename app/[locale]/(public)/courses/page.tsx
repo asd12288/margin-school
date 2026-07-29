@@ -4,7 +4,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import { CourseCard, CourseGrid } from "@/components/margin/course-card";
 import { CourseGridSkeleton } from "@/components/margin/skeletons";
 import { EmptyState } from "@/components/margin/states";
-import { getPathname } from "@/i18n/navigation";
+import { getCourseCardLabels, getCourseHref } from "@/lib/course-labels";
 import { sampleCourses, sampleProgress } from "@/lib/fixtures/content";
 import type { Course } from "@/lib/fixtures/content";
 import type { Locale } from "@/i18n/routing";
@@ -81,54 +81,40 @@ async function CourseResults({
     );
   }
 
+  // `labels` is async now, so the whole list is resolved before rendering
+  // rather than per-card inside the map. `getCourseCardLabels` is the one
+  // place the `accessState` → label mapping lives, shared with the home
+  // page's rail and the course page's "where to go next" rail — three copies
+  // of it was three chances for "needs a prerequisite" to be mislabelled as
+  // "needs a subscription".
+  const cards = await Promise.all(
+    courses.map(async (course) => {
+      const progress = sampleProgress.find((p) => p.courseId === course.id);
+
+      return {
+        course,
+        progress,
+        href: getCourseHref(course, locale as Locale),
+        labels: await getCourseCardLabels({
+          course,
+          locale: locale as Locale,
+          progress,
+        }),
+      };
+    })
+  );
+
   return (
     <CourseGrid className="mt-8">
-      {courses.map((course) => {
-        const progress = sampleProgress.find((p) => p.courseId === course.id);
-
-        return (
-          <CourseCard
-            key={course.id}
-            course={course}
-            progress={progress}
-            href={getPathname({
-              href: { pathname: "/course/[course]", params: { course: course.slug } },
-              locale: locale as Locale,
-            })}
-            labels={{
-              lessons: t("course.lessons", { count: course.lessonCount }),
-              chapters: t("course.chapters", { count: course.chapterCount }),
-              duration: t("course.duration", {
-                hours: Math.round(course.estimatedMinutes / 60),
-              }),
-              freePreview: course.hasFreePreview ? t("course.freePreview") : undefined,
-              locked:
-                course.accessState === "requires-subscription"
-                  ? t("course.included")
-                  : course.accessState === "requires-prerequisite"
-                    ? t("course.laterInPath")
-                    : undefined,
-              unavailableInLocale: course.availableLocales.includes(locale as Locale)
-                ? undefined
-                : t("course.notInThisLanguage"),
-              progress: progress
-                ? t("course.progress", {
-                    completed: progress.lessonsCompleted,
-                    total: progress.lessonsTotal,
-                  })
-                : undefined,
-              progressShort: progress
-                ? t("course.progressShort", {
-                    percent: Math.round(
-                      (progress.lessonsCompleted / progress.lessonsTotal) * 100
-                    ),
-                  })
-                : undefined,
-              coverAlt: t("course.coverAlt", { title: course.title }),
-            }}
-          />
-        );
-      })}
+      {cards.map(({ course, progress, href, labels }) => (
+        <CourseCard
+          key={course.id}
+          course={course}
+          progress={progress}
+          href={href}
+          labels={labels}
+        />
+      ))}
     </CourseGrid>
   );
 }

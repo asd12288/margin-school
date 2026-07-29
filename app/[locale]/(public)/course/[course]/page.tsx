@@ -1,22 +1,84 @@
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
+import { BookOpen, Clock, Languages, Layers, PenLine, Play } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
+import { CourseCard } from "@/components/margin/course-card";
+import { CourseAside, CourseFact } from "@/components/margin/course/course-aside";
+import { CourseHero } from "@/components/margin/course/course-hero";
 import { Curriculum } from "@/components/margin/curriculum";
+import { CourseRail } from "@/components/margin/marketing/course-rail";
+import { BulletList, CheckList } from "@/components/margin/marketing/lists";
+import { RiskNote } from "@/components/margin/marketing/risk-note";
+import { SectionHeader } from "@/components/margin/marketing/section";
+import {
+  ConceptChip,
+  FreePreviewBadge,
+  MetaRow,
+  MetaStat,
+} from "@/components/margin/meta";
 import { CurriculumSkeleton } from "@/components/margin/skeletons";
+import { LockedHint, UnavailableInLocaleHint } from "@/components/margin/states";
+import { Button } from "@/components/ui/button";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
-import { sampleChapters, sampleCourses } from "@/lib/fixtures/content";
+// `next/link`, NOT the wrapper from `@/i18n/navigation` — see the note on
+// `hrefs` in `CourseContent` below. This is the one file in the repo where
+// that import is wrong.
+import Link from "next/link";
+import { getPathname } from "@/i18n/navigation";
+import { courseHours, getCourseCardLabels, getCourseHref } from "@/lib/course-labels";
+import { sampleChapters, sampleConcepts, sampleCourses } from "@/lib/fixtures/content";
 import type { Locale } from "@/lib/fixtures/content";
+import type { Locale as RoutingLocale } from "@/i18n/routing";
 
 /**
- * Course detail, from fixtures. Phase 8 replaces the data source and adds
- * metadata, hreflang and structured data.
+ * Course detail — the marketing page for a course, not the player.
  *
- * The shape — `params.then(…)` inside `<Suspense>`, feeding a `use cache`
- * component that receives a plain slug string — is the one the framework's own
- * instant-navigation guide prescribes for `/store/[slug]`
- * (`node_modules/next/dist/docs/01-app/02-guides/instant-navigation.md`). Two
- * different constraints land on it, and they fail differently.
+ * **Udemy's IA with the commerce cut out.** Udemy's course landing page runs,
+ * top to bottom: category breadcrumb, preview video, title, subtitle,
+ * "Bestseller" flag, star rating, rating count, enrolment count, "Created by
+ * <instructor>", last-updated date, language list, a sticky purchase card
+ * (price, struck-through price, "X hours left at this price", Add to cart, Buy
+ * now, 30-day money-back guarantee, share/gift/coupon), "What you'll learn",
+ * related topics, "Course content", "Requirements", "Description", "Who this
+ * course is for", an instructor panel with a bio and photo, a student-feedback
+ * rating histogram, individual reviews, and a "More courses by…" carousel.
+ *
+ * Six of those modules cannot exist here, and both reasons are hard rules
+ * rather than taste:
+ *
+ * - **The purchase card, price anchoring and the deadline** — ADR-0001. Access
+ *   is one all-access subscription; there is no cart, no per-course price, no
+ *   coupon and no timer anywhere in this product. What is left of that card is
+ *   `CourseAside`: the cover, what is inside, and one call to action.
+ * - **Instructor panel, star rating, rating count, enrolment count, reviews** —
+ *   ADR-0002. We are the sole publisher and do not invent people or social
+ *   proof. There is nothing to put in their place, so the sections are gone
+ *   rather than emptied.
+ *
+ * What replaces them is the argument this product actually has: depth, and
+ * *state*. `hasFreePreview`, `accessState` and `availableLocales` are shown in
+ * the hero, which is information Udemy's banner does not carry at all — a
+ * reader can see before scrolling whether they can start now, whether it is
+ * behind the subscription, and whether it exists in their language.
+ *
+ * ---
+ *
+ * **The rendering shape below is load-bearing and was not chosen for
+ * readability.** It is the one the framework's own instant-navigation guide
+ * prescribes for `/store/[slug]`
+ * (`node_modules/next/dist/docs/01-app/02-guides/instant-navigation.md`):
+ * a synchronous page body, `params.then(…)` inside `<Suspense>`, and a
+ * `use cache` component that receives plain values. Two different constraints
+ * land on it, and they fail differently.
  *
  * **1. Cache Components.** `generateStaticParams` is what keeps this Tier 1
  * for every slug it lists — prerendered, no loading state. It only lists the
@@ -83,6 +145,11 @@ import type { Locale } from "@/lib/fixtures/content";
  * behind its own `<Suspense>`. That is the "stream anything genuinely dynamic"
  * half of the guide's pattern; this page has nothing genuinely dynamic today,
  * which is why there is one boundary here and not two.
+ *
+ * The same rule is why `CourseAside` shows no "resume where you left off" and
+ * the related rail passes no `progress` to its cards, even though
+ * `sampleProgress` exists two imports away. Both would be user data inside a
+ * cached function, and both belong on the Tier 2 routes instead.
  *
  * `Curriculum` is a client component, so its per-entity labels are records
  * keyed by id rather than formatter functions: functions cannot cross the
@@ -152,6 +219,37 @@ async function CourseContent({
   // that would make this function uncacheable.
   const t = await getTranslations({ locale });
 
+  const typedLocale = locale as Locale;
+  const routingLocale = locale as RoutingLocale;
+  const available = course.availableLocales.includes(typedLocale);
+  const locked = course.accessState !== null;
+  const hours = courseHours(course);
+
+  /**
+   * **Every link on this page resolves its href here, and renders with
+   * `next/link` rather than the wrapper from `@/i18n/navigation`.**
+   *
+   * That wrapper is normally mandatory — i18n/routing.ts says so, and a bare
+   * `next/link` elsewhere drops a French reader onto the default locale. It
+   * cannot be used *here*, and the failure is not subtle: the wrapper resolves
+   * the active locale through next-intl's `getServerLocale()`, which falls
+   * through to `headers()` when no request-scoped locale is set — and this
+   * component is a `use cache` scope, where `setRequestLocale` is invisible
+   * (see the note on `getTranslations({ locale })` above). The result is a
+   * hard render error, "used `headers()` inside \"use cache\"", on every
+   * course page. Found by rendering the page, not by the type checker.
+   *
+   * `getPathname` is the escape hatch the wrapper is built on and takes the
+   * locale as an argument, so it reads nothing from the request. Resolving
+   * the three static destinations once, up front, keeps the rule visible in
+   * one place instead of at five call sites.
+   */
+  const hrefs = {
+    courses: getPathname({ href: "/courses", locale: routingLocale }),
+    signUp: getPathname({ href: "/sign-up", locale: routingLocale }),
+    pricing: getPathname({ href: "/pricing", locale: routingLocale }),
+  };
+
   // The fixtures carry one course's curriculum, with no courseId on Chapter —
   // every course shows the same chapters until Phase 8 supplies real queries.
   const chapters = sampleChapters;
@@ -174,39 +272,300 @@ async function CourseContent({
     }
   }
 
+  const concepts = course.conceptIds
+    .map((id) => sampleConcepts.find((concept) => concept.id === id))
+    .filter((concept) => concept !== undefined);
+
+  // Three others from the catalog. Ordered by how close they sit to this one —
+  // same category first — rather than by popularity, which would be a student
+  // count and is forbidden (ADR-0002).
+  const related = sampleCourses
+    .filter((other) => other.id !== course.id)
+    .sort((a, b) => {
+      const near = (c: typeof course) => (c.categoryId === course.categoryId ? 0 : 1);
+      return near(a) - near(b);
+    })
+    .slice(0, 3);
+
+  const relatedCards = await Promise.all(
+    related.map(async (other) => ({
+      course: other,
+      href: getCourseHref(other, locale as RoutingLocale),
+      // No `progress`: user data must never be read inside a cached function.
+      labels: await getCourseCardLabels({
+        course: other,
+        locale: locale as RoutingLocale,
+      }),
+    }))
+  );
+
   return (
     <>
-      <h1 className="text-display font-bold tracking-tight text-foreground">
-        {course.title}
-      </h1>
-      <p className="measure-prose mt-3 text-prose text-muted-foreground">
-        {course.summary}
-      </p>
-
-      <Curriculum
-        className="mt-10"
-        chapters={chapters}
-        locale={locale as Locale}
-        labels={{
-          chapterProgress,
-          chapterCount,
-          lessonDuration,
-          completed: t("curriculum.completed"),
-          freePreview: t("curriculum.free"),
-          locked: t("curriculum.locked"),
-          unavailableInLocale: t("curriculum.notInThisLanguage"),
-        }}
+      <CourseHero
+        eyebrow={course.categoryName}
+        title={course.title}
+        summary={course.summary}
+        breadcrumb={
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link href={hrefs.courses}>{t("shell.nav.courses")}</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage>{course.categoryName}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        }
+        badges={
+          <>
+            {course.hasFreePreview ? (
+              <FreePreviewBadge>
+                <Play className="mr-1.5 size-2.5 fill-current" />
+                {t("course.freePreview")}
+              </FreePreviewBadge>
+            ) : null}
+            {locked ? (
+              <LockedHint
+                label={
+                  course.accessState === "requires-prerequisite"
+                    ? t("course.laterInPath")
+                    : t("course.included")
+                }
+              />
+            ) : null}
+            {available ? null : (
+              <UnavailableInLocaleHint label={t("course.notInThisLanguage")} />
+            )}
+          </>
+        }
+        meta={
+          <MetaRow>
+            <MetaStat icon={Clock}>
+              <span data-numeric>{t("course.duration", { hours })}</span>
+            </MetaStat>
+            <MetaStat icon={BookOpen}>
+              <span data-numeric>
+                {t("course.lessons", { count: course.lessonCount })}
+              </span>
+            </MetaStat>
+            <MetaStat icon={Layers}>
+              <span data-numeric>
+                {t("course.chapters", { count: course.chapterCount })}
+              </span>
+            </MetaStat>
+          </MetaRow>
+        }
       />
+
+      {/*
+        Main column plus aside. The aside comes *second* in the DOM and is
+        pulled to the right by `lg:order-last` on a wide screen, so a reader
+        on a phone — and anyone tabbing or using a screen reader — reaches the
+        course itself before the panel about it. Source order is reading
+        order; the grid only decides where things sit.
+      */}
+      <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_20rem] lg:gap-12">
+        <div className="flex min-w-0 flex-col gap-12">
+          <section>
+            <SectionHeader
+              headingLevel="h2"
+              title={t("courseDetail.outcomes.title")}
+            />
+            <CheckList className="mt-6" items={course.outcomes} />
+          </section>
+
+          {concepts.length ? (
+            <section>
+              <SectionHeader
+                headingLevel="h2"
+                title={t("courseDetail.concepts.title")}
+                description={t("courseDetail.concepts.description")}
+              />
+              {/* Every chip unknown: `known` is `concept_mastery`, which is
+                  user data and cannot be read in here. */}
+              <ul className="mt-6 flex flex-wrap gap-2">
+                {concepts.map((concept) => (
+                  <li key={concept.id}>
+                    <ConceptChip>{concept.name}</ConceptChip>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+
+          <section>
+            <SectionHeader
+              headingLevel="h2"
+              title={t("courseDetail.curriculum.title")}
+              description={t("courseDetail.curriculum.summary", {
+                chapters: course.chapterCount,
+                lessons: course.lessonCount,
+                hours,
+              })}
+            />
+            <Curriculum
+              className="mt-6"
+              chapters={chapters}
+              locale={typedLocale}
+              labels={{
+                chapterProgress,
+                chapterCount,
+                lessonDuration,
+                completed: t("curriculum.completed"),
+                freePreview: t("curriculum.free"),
+                locked: t("curriculum.locked"),
+                unavailableInLocale: t("curriculum.notInThisLanguage"),
+              }}
+            />
+          </section>
+
+          <section>
+            <SectionHeader
+              headingLevel="h2"
+              title={t("courseDetail.requirements.title")}
+            />
+            <BulletList className="mt-6" items={course.requirements} />
+          </section>
+
+          <section>
+            <SectionHeader
+              headingLevel="h2"
+              title={t("courseDetail.description.title")}
+            />
+            <div className="measure-prose mt-6 flex flex-col gap-4">
+              {course.description.map((paragraph, i) => (
+                <p key={i} className="text-prose text-muted-foreground">
+                  {paragraph}
+                </p>
+              ))}
+            </div>
+          </section>
+
+          <section>
+            <SectionHeader
+              headingLevel="h2"
+              title={t("courseDetail.audience.title")}
+            />
+            <BulletList className="mt-6" items={course.audience} />
+          </section>
+
+          <RiskNote title={t("risk.title")}>{t("risk.body")}</RiskNote>
+        </div>
+
+        <div className="lg:order-last">
+          <CourseAside
+            courseId={course.id}
+            coverImageUrl={course.coverImageUrl}
+            coverAlt={t("course.coverAlt", { title: course.title })}
+            includesTitle={t("courseDetail.aside.includes")}
+            facts={
+              <>
+                <CourseFact icon={BookOpen}>
+                  {t("course.lessons", { count: course.lessonCount })}
+                </CourseFact>
+                <CourseFact icon={Layers}>
+                  {t("course.chapters", { count: course.chapterCount })}
+                </CourseFact>
+                <CourseFact icon={Clock}>
+                  {t("courseDetail.aside.reading", { hours })}
+                </CourseFact>
+                <CourseFact icon={Languages}>
+                  {course.availableLocales.length > 1
+                    ? t("courseDetail.aside.bothLanguages")
+                    : t("courseDetail.aside.oneLanguage")}
+                </CourseFact>
+                <CourseFact icon={PenLine}>
+                  {t("courseDetail.aside.practice")}
+                </CourseFact>
+                {course.hasFreePreview ? (
+                  <CourseFact icon={Play}>
+                    {t("courseDetail.aside.preview")}
+                  </CourseFact>
+                ) : null}
+              </>
+            }
+            action={
+              <Button asChild size="lg" className="w-full">
+                <Link href={hrefs.signUp}>{t("courseDetail.aside.action")}</Link>
+              </Button>
+            }
+            secondaryAction={
+              <Button asChild variant="outline" className="w-full">
+                <Link href={hrefs.pricing}>
+                  {t("courseDetail.aside.secondaryAction")}
+                </Link>
+              </Button>
+            }
+            note={t("courseDetail.aside.note")}
+          />
+        </div>
+      </div>
+
+      <section className="mt-16">
+        <SectionHeader
+          headingLevel="h2"
+          title={t("courseDetail.related.title")}
+          description={t("courseDetail.related.description")}
+          action={
+            <Button asChild variant="outline">
+              <Link href={hrefs.courses}>{t("courseDetail.related.action")}</Link>
+            </Button>
+          }
+        />
+        <CourseRail className="mt-8" label={t("courseDetail.related.railLabel")}>
+          {relatedCards.map(({ course: other, href, labels }) => (
+            <CourseCard
+              key={other.id}
+              course={other}
+              href={href}
+              labels={labels}
+              className="h-full"
+            />
+          ))}
+        </CourseRail>
+      </section>
     </>
   );
 }
 
+/**
+ * Layout-identical to the real content, per skeleton rule 1 — the hero band,
+ * the two-column split and the aside panel all hold their dimensions, so
+ * nothing shifts when the content arrives.
+ *
+ * On the six slugs in `generateStaticParams` this never paints: they resolve
+ * at build time and ship as static HTML. It exists for the unlisted-slug path
+ * described in the file comment.
+ */
 function CoursePageFallback() {
   return (
     <>
-      <Skeleton className="h-9 w-2/3" />
-      <Skeleton className="mt-3 h-5 w-full max-w-xl" />
-      <CurriculumSkeleton className="mt-10" />
+      <div className="rounded-xl border border-border bg-subtle/60 px-6 py-8 sm:px-8 sm:py-10">
+        <Skeleton className="h-4 w-40" />
+        <Skeleton className="mt-4 h-9 w-2/3" />
+        <Skeleton className="mt-3 h-5 w-full max-w-xl" />
+        <Skeleton className="mt-4 h-4 w-52" />
+      </div>
+
+      <div className="mt-10 grid gap-10 lg:grid-cols-[1fr_20rem] lg:gap-12">
+        <div className="flex min-w-0 flex-col gap-8">
+          <Skeleton className="h-7 w-56" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            {Array.from({ length: 6 }, (_, i) => (
+              <Skeleton key={i} className="h-4 w-full" />
+            ))}
+          </div>
+          <CurriculumSkeleton className="mt-4" />
+        </div>
+        <div className="lg:order-last">
+          <Skeleton className="aspect-video w-full rounded-xl" />
+          <Skeleton className="mt-4 h-40 w-full rounded-xl" />
+        </div>
+      </div>
     </>
   );
 }

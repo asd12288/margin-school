@@ -55,6 +55,16 @@ Whatever sits outside the boundary is what renders instantly — that is the who
 
 Precedent for the pattern: `app/[locale]/(internal)/debug/observability/page.tsx`.
 
+### `Link` from `i18n/navigation` cannot be used inside `use cache`
+
+[i18n/routing.ts](../i18n/routing.ts) makes one import mandatory everywhere — `Link` from [i18n/navigation.ts](../i18n/navigation.ts), never `next/link` — because the wrapper carries the active locale and a bare link drops a French reader onto the default one.
+
+**Inside a `use cache` scope that rule inverts, and the failure is a hard render error rather than a wrong URL.** The wrapper resolves the active locale through next-intl's `getServerLocale()`, which falls through to `headers()` whenever no request-scoped locale is set — and `setRequestLocale` is invisible inside a cache scope, for the same reason `getTranslations()` has to be called as `getTranslations({ locale })` there. The result is *"used `headers()` inside \"use cache\""* on every render of the route.
+
+The fix is `getPathname({ href, locale })` — the function the wrapper is built on, which takes the locale as an argument and reads nothing from the request — with `next/link` rendering the resolved string. `app/[locale]/(public)/course/[course]/page.tsx` resolves its three static destinations once at the top of the cached component so the exception is visible in one place.
+
+TypeScript cannot catch this: the wrapper's signature is identical either side of the boundary. It only appears when the page is rendered.
+
 ## Tier 3 — Optimistic. Never a spinner.
 
 **Applies to:** mark complete, favorite, enroll, save note, progress ticks, quiz answers.
